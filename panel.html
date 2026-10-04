@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Interviewer panel · Dhirise</title>
+<link rel="icon" href="assets/dhirise-logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Yatra+One&family=Mukta:wght@300;400;500;600;700&family=Tiro+Devanagari+Sanskrit&display=swap">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="panel-page">
+
+<div class="pwrap">
+  <header class="ptop">
+    <div class="brand">
+      <img src="assets/dhirise-logo.svg" alt="">
+      <div class="wm"><b>Dhirise</b><small>Interviewer panel · <span class="private">private, don’t share this window</span></small></div>
+    </div>
+    <div class="who" id="who"></div>
+    <div class="acts">
+      <span class="live" id="live"><i></i><span>Waiting</span></span>
+      <button class="pbtn" id="copyBtn" type="button">Copy summary</button>
+      <button class="pbtn gold" id="pdfBtn" type="button">Save report as PDF</button>
+    </div>
+  </header>
+  <div class="pgrid">
+    <div class="pcol">
+      <section class="pcard" id="now"></section>
+      <section class="pcard" id="flags"></section>
+      <section class="pcard" id="snap"></section>
+      <section class="pcard" id="talk"></section>
+    </div>
+    <div class="pcol">
+      <section class="pcard" id="answers"></section>
+      <section class="pcard" id="follow"></section>
+    </div>
+  </div>
+</div>
+
+<div class="print-only" id="printSheet"></div>
+
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+<script src="js/panel.js"></script>
+</body>
+</html>
