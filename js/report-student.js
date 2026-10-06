@@ -91,6 +91,11 @@
   var first = cap(profile.name ? String(profile.name).trim().split(/\s+/)[0] : "");
   var activeFlags = T.flagOrder.filter(function (f) { return r.flags[f] === true; });
 
+  var fullKey = blend ? blendKey : styleOrder[0];          /* v, p, k, or a blend vp / vk / pk */
+
+  /* ---------- 0. soft warning chip ---------- */
+  add(root, el("p", "warn span2", T.warnChip));
+
   /* ---------- 1. header ---------- */
   (function header() {
     var h = el("header", "card head span2");
@@ -276,6 +281,41 @@
     add(root, c);
   })();
 
+  /* ---------- 8b. food, sports & hobbies, careers (style + strongest areas) ---------- */
+  var topAreas = r.top.map(function (t) { return t.area; });
+  (function food() {
+    var f = T.food[fullKey];
+    var c = card("food", T.foodTitle);
+    function list(label, items, cls) {
+      var ul = el("ul", "foods " + cls);
+      items.forEach(function (x) { add(ul, el("li", null, x)); });
+      return add(el("div", "food-col"), el("p", "food-k", label), ul);
+    }
+    add(c, add(el("div", "food-grid"), list(T.foodGoodLabel, f.good, "good"), list(T.foodHeavyLabel, f.heavy, "heavy")),
+      el("p", "note", T.foodLine));
+    add(root, c);
+  })();
+  (function sports() {
+    var picks = T.sports[fullKey].slice(0, 3);
+    var extra = topAreas.length && T.areaSports[topAreas[0]];
+    picks.push(extra && picks.every(function (p) { return p[0] !== extra[0]; }) ? extra : T.sports[fullKey][3]);
+    var c = card("sports", T.sportsTitle);
+    var grid = el("div", "chipgrid");
+    picks.forEach(function (p) { add(grid, add(el("div", "hchip"), el("span", "hchip-k", p[0]), el("span", "hchip-tip", p[1]))); });
+    add(c, grid);
+    add(root, c);
+  })();
+  (function careers() {
+    var list = T.careers[fullKey].slice(0, 3);
+    topAreas.slice(0, 2).forEach(function (a) { var x = T.areaCareers[a]; if (x && list.indexOf(x) < 0) list.push(x); });
+    T.careers[fullKey].slice(3).forEach(function (x) { if (list.length < 5 && list.indexOf(x) < 0) list.push(x); });
+    var c = card("careers", T.careersTitle);
+    var wrap = el("div", "cchips");
+    list.slice(0, 5).forEach(function (x) { add(wrap, el("span", "cchip", x)); });
+    add(c, wrap, el("p", "note", T.careersLine));
+    add(root, c);
+  })();
+
   /* ---------- 9. 21-day path ---------- */
   (function path() {
     var KEY = "dhirise.path.v1";
@@ -382,6 +422,64 @@
       if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(T.shareText + " " + url).then(done, function () {});
     });
     add(c, share, status);
+    add(root, c);
+  })();
+
+  /* ---------- 11b. feedback: stars, a note, optional share; saved locally and POSTed to feedbackEndpoint ---------- */
+  (function feedback() {
+    var KEY = "dhirise.reportFeedback.v1";
+    var cfg = window.DHI_FUNNEL || {};
+    var c = card("feedback span2", T.feedbackTitle);
+    var prior = null;
+    try { prior = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
+    var thanks = el("p", "thanks", T.feedbackThanks);
+    thanks.setAttribute("aria-live", "polite");
+    if (prior && prior.completedAt === check.completedAt) { add(c, thanks); add(root, c); return; }
+
+    var rating = 0;
+    var stars = el("div", "stars");
+    stars.setAttribute("role", "radiogroup");
+    stars.setAttribute("aria-label", T.feedbackAsk);
+    var starBtns = [1, 2, 3, 4, 5].map(function (n) {
+      var b = el("button", "star", "★");
+      b.type = "button";
+      b.setAttribute("role", "radio");
+      b.setAttribute("aria-checked", "false");
+      b.setAttribute("aria-label", fill(T.feedbackStar, { n: n }));
+      b.addEventListener("click", function () { rating = n; paint(); hint.textContent = ""; });
+      add(stars, b);
+      return b;
+    });
+    function paint() { starBtns.forEach(function (b, i) { b.classList.toggle("on", i < rating); b.setAttribute("aria-checked", i + 1 === rating ? "true" : "false"); }); }
+    var text = el("textarea", "fb-text");
+    text.rows = 4; text.maxLength = 1000; text.placeholder = T.feedbackPlaceholder;
+    text.setAttribute("aria-label", T.feedbackPlaceholder);
+    var share = el("input"); share.type = "checkbox"; share.id = "fbShare";
+    var shareLabel = el("label", null, T.feedbackShare); shareLabel.htmlFor = "fbShare";
+    var hint = el("p", "fb-hint"); hint.setAttribute("aria-live", "polite");
+    var submit = el("button", "btn-gold", T.feedbackSubmit); submit.type = "button";
+
+    submit.addEventListener("click", function () {
+      if (!rating) { hint.textContent = T.feedbackNeedStars; starBtns[0].focus(); return; }
+      var lead = null;
+      try { lead = JSON.parse(localStorage.getItem("dhirise.lead.v1")); } catch (e) {}
+      var l = lead && lead.completedAt === check.completedAt ? lead.lead : null;
+      var payload = { type: "feedback", rating: rating, text: text.value.trim(), canShare: share.checked,
+        styleKey: r.styleKey, completedAt: check.completedAt };
+      if (l && l.phone) payload.phone = l.phone;
+      try { localStorage.setItem(KEY, JSON.stringify({ feedback: payload, completedAt: check.completedAt, sent: !!cfg.feedbackEndpoint, at: new Date().toISOString() })); } catch (e) {}
+      if (cfg.feedbackEndpoint) {
+        try {
+          fetch(cfg.feedbackEndpoint, { method: "POST", mode: "no-cors", keepalive: true,
+            headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) }).catch(function () {});
+        } catch (e) {}
+      }
+      c.textContent = "";
+      add(c, el("h2", "eyebrow", T.feedbackTitle), thanks);
+    });
+
+    add(c, el("p", "fb-ask", T.feedbackAsk), stars, text,
+      add(el("div", "fb-share"), share, shareLabel), hint, submit);
     add(root, c);
   })();
 

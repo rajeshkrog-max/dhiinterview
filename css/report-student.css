@@ -154,6 +154,42 @@ p{margin:0}
 .soon{padding:12px;border-radius:14px;text-align:center;font-size:16px;color:var(--muted);border:1px dashed rgba(255,255,255,.2)}
 .share-status{min-height:1.4em;margin-top:6px;text-align:center;font-size:13px;color:var(--gold)}
 
+/* ---------- 0. soft warning chip ---------- */
+.warn{justify-self:center;max-width:100%;padding:8px 14px;border-radius:14px;text-align:center;font-size:13px;line-height:1.45;
+  color:#c9d6e2;background:rgba(127,148,168,.14);border:1px solid rgba(127,148,168,.32)}
+
+/* ---------- 8b. food, sports, careers ---------- */
+.food-grid{display:grid;gap:14px}
+.food-k{margin-bottom:6px;font-size:13px;font-weight:700;color:var(--muted)}
+.foods{margin:0;padding:0;list-style:none}
+.foods li{position:relative;padding:6px 0 6px 20px;font-size:16px;line-height:1.4;border-top:1px solid var(--line)}
+.foods li:first-child{border-top:0}
+.foods li::before{content:"";position:absolute;left:2px;top:.95em;width:8px;height:8px;border-radius:50%}
+.foods.good li::before{background:var(--gold)}
+.foods.heavy li::before{background:transparent;border:1.5px solid var(--low)}
+.chipgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.hchip{padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--line)}
+.hchip-k{display:block;font-size:16px;font-weight:700;line-height:1.3;margin-bottom:2px}
+.hchip-tip{display:block;font-size:13px;line-height:1.4;color:var(--muted)}
+.cchips{display:flex;flex-wrap:wrap;gap:8px}
+.cchip{padding:6px 12px;border-radius:999px;font-size:16px;font-weight:600;color:var(--gold);background:var(--gold-soft);border:1px solid rgba(233,185,92,.35)}
+
+/* ---------- 11b. feedback ---------- */
+.fb-ask{margin-bottom:8px;font-size:16px}
+.stars{display:flex;gap:6px;margin-bottom:12px}
+.star{width:44px;height:44px;padding:0;border-radius:12px;cursor:pointer;font-size:24px;line-height:1;color:rgba(255,255,255,.3);
+  background:rgba(255,255,255,.04);border:1px solid var(--line);transition:color .2s ease}
+.star.on{color:var(--gold)}
+.star:focus-visible{outline:2px solid var(--white);outline-offset:2px}
+.fb-text{display:block;width:100%;min-height:96px;padding:10px 12px;resize:vertical;font:400 16px/1.45 var(--f-body);color:var(--white);
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.22);border-radius:12px;outline:none}
+.fb-text:focus{border-color:var(--gold)}
+.fb-share{display:flex;align-items:flex-start;gap:10px;margin:12px 0 4px;font-size:13px;line-height:1.45;color:var(--muted)}
+.fb-share input{width:18px;height:18px;margin:1px 0 0;flex:none;accent-color:var(--gold)}
+.fb-hint{min-height:1.4em;margin-bottom:6px;font-size:13px;color:#ffb3a8}
+.thanks{padding:14px;border-radius:14px;text-align:center;font-size:16px;font-weight:600;color:var(--gold);background:var(--gold-soft)}
+@media (min-width:900px){ .food-grid{grid-template-columns:1fr 1fr} .feedback{max-width:none} }
+
 /* ---------- 12. footer ---------- */
 .foot{padding:6px 8px 0;text-align:center;font-size:13px;line-height:1.5;color:var(--faint)}
 

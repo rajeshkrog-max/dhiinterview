@@ -300,6 +300,80 @@ window.DhiReportText = {
     k: ["Habit Tracker", "A steady streak for a steady learner."]
   },
 
+  /* top-of-report chip */
+  warnChip: "For self-reflection only · Not a medical or psychological assessment. For concerns, talk to a professional.",
+
+  /* food, sports & hobbies, careers: per style and per blend (vp, vk, pk); all soft, nothing strict */
+  foodTitle: "Food that may suit your energy",
+  foodGoodLabel: "May feel good at study time",
+  foodHeavyLabel: "May feel heavy at study time",
+  foodLine: "Notice how your body feels; it knows best.",
+  food: {
+    v:  { good: ["Warm khichdi with a little ghee", "Poha with peanuts", "A banana or a few soaked almonds", "A warm glass of milk in the evening"],
+          heavy: ["Ice-cold drinks", "Dry packet snacks like chips", "Tea or coffee, cup after cup"] },
+    p:  { good: ["Curd rice or a glass of buttermilk", "Cucumber and seasonal fruit", "Fresh coconut water", "Simple dal, rice and sabzi"],
+          heavy: ["Very spicy, oily snacks", "Tea or coffee, cup after cup", "Fried food just before study"] },
+    k:  { good: ["Light, warm upma or idli", "Moong dal chilla", "Seasonal fruit like guava or apple", "Warm water with ginger and lemon"],
+          heavy: ["A big, heavy lunch just before study", "Sweets and mithai at study time", "Fried snacks like samosa"] },
+    vp: { good: ["Warm dal and rice", "Curd rice", "A banana between study blocks", "Fresh coconut water"],
+          heavy: ["Ice-cold drinks", "Very spicy fried snacks", "Tea or coffee, cup after cup"] },
+    vk: { good: ["Warm khichdi", "Poha with peas", "Seasonal fruit", "Warm water with ginger"],
+          heavy: ["Heavy fried snacks", "Ice-cold drinks", "Sweets at study time"] },
+    pk: { good: ["Idli or dosa", "A glass of buttermilk", "Moong dal chilla", "Fresh seasonal fruit"],
+          heavy: ["Oily, spicy snacks", "A big, heavy lunch just before study", "Sugary drinks"] }
+  },
+
+  sportsTitle: "Sports & hobbies you may enjoy",
+  /* three from the style, then one from the student's strongest area */
+  sports: {
+    v:  [["Dance", "Music and movement give your energy somewhere to go."], ["Cycling", "Fresh air and new routes keep things lively."], ["Drawing or doodling", "Your ideas get a place to land."], ["Gentle stretching", "Settles a busy mind between study blocks."]],
+    p:  [["Badminton", "Quick, competitive and done in half an hour."], ["Swimming", "Cools you down after an intense day."], ["Chess", "Strategy with a clear goal."], ["Football", "Team goals suit your drive."]],
+    k:  [["Brisk morning walks", "Gets your energy moving early."], ["Football or kabaddi", "Lively games lift a steady body."], ["Gardening", "Slow work you can watch grow."], ["Learning an instrument", "Steady practice rewards your patience."]],
+    vp: [["Badminton", "Fast and fun, with a score to chase."], ["Dance", "Movement for an energetic mind."], ["Cycling", "Freedom with somewhere to go."], ["Chess", "Ideas, with a goal."]],
+    vk: [["Cycling", "Easy, open-air movement."], ["Drawing or painting", "Calm space for your ideas."], ["Morning walks", "A gentle start to the day."], ["Learning an instrument", "Curiosity, practised slowly."]],
+    pk: [["Swimming", "Steady effort that also cools you down."], ["Football", "Team goals, played with stamina."], ["Gardening", "Patience you can see grow."], ["Chess", "Long games for a focused mind."]]
+  },
+  areaSports: {
+    routine: ["Yoga at the same time each morning", "Fits the rhythm you already keep."],
+    emotions: ["Journaling", "A quiet page for what you feel."],
+    drive: ["Martial arts", "Discipline you can feel in your body."],
+    connection: ["Team games like cricket or volleyball", "You bring out the best in a group."],
+    expression: ["Debate or theatre", "A stage for your words."],
+    clarity: ["A reading club", "Books that widen your map."],
+    purpose: ["Volunteering", "Your time, given to something you care about."]
+  },
+
+  careersTitle: "Career paths you might explore",
+  careersLine: "Explore, don't decide yet. Dhi's DHI desk can help you think it through.",
+  /* three from the style, two from the strongest areas; never from a test of ability */
+  careers: {
+    v:  ["Design", "Writing and media", "Architecture", "Starting a business", "Film and animation"],
+    p:  ["Engineering", "Law", "Business and management", "Research science", "Medicine"],
+    k:  ["Healthcare and nursing", "Teaching", "Accounting and finance", "Environmental science", "Agriculture and food science"],
+    vp: ["Product design", "Marketing", "Starting a business", "Architecture", "Journalism"],
+    vk: ["Writing and media", "Teaching", "Design", "Environmental science", "Music and the arts"],
+    pk: ["Engineering", "Medicine", "Accounting and finance", "Civil services", "Research science"]
+  },
+  areaCareers: {
+    routine: "Operations and planning",
+    emotions: "Psychology",
+    drive: "Sports and fitness coaching",
+    connection: "Social work",
+    expression: "Journalism",
+    clarity: "Data and analytics",
+    purpose: "Public service"
+  },
+
+  /* feedback card */
+  feedbackTitle: "Your feedback",
+  feedbackAsk: "How well does this report fit you?",
+  feedbackStar: "{n} of 5",
+  feedbackPlaceholder: "What did this get right? What did it miss?",
+  feedbackShare: "You may share my feedback anonymously",
+  feedbackSubmit: "Submit",
+  feedbackNeedStars: "Tap a star first.",
+  feedbackThanks: "Thank you. This helps us build Dhi for you.",
+
   /* join */
   joinTitle: "Dhi early access",
   joinLine: "A quiet WhatsApp group for students. Be first in when Dhi opens.",

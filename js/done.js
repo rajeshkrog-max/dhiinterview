@@ -1,12 +1,12 @@
 /* Dhirise · wait, teaser, join. The gold line fills once over 8 s while four sentences show one at a time;
    then "See your result" opens a teaser (name, style badge, Dhi starting score, two locked cards).
-   "Unlock my full report" opens the join: mobile + WhatsApp early-access tick → report-student.html.
+   "Unlock my full report" opens the join: mobile + WhatsApp early-access tick → who.html (the story), then report-student.html.
    The lead is kept in localStorage "dhirise.lead.v1" and, if DHI_FUNNEL.leadEndpoint is set, POSTed there (no-cors).
-   Skip also opens the report; nothing is sent. */
+   Skip also opens the story; nothing is sent. */
 (function () {
   "use strict";
   var $ = function (id) { return document.getElementById(id); };
-  var REPORT = "report-student.html", LEAD = "dhirise.lead.v1";
+  var REPORT = "who.html", LEAD = "dhirise.lead.v1";
 
   /* only a finished check reaches this page */
   var check = DhiStore.get();

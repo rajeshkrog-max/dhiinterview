@@ -1,14 +1,15 @@
-# Lead sheet setup (5 steps)
+# Lead and feedback sheet setup (5 steps)
 
-Every student who submits their mobile number on the "Unlock my full report" screen becomes one row in a Google Sheet.
+Every student who submits their mobile number on the "Unlock my full report" screen becomes one row in the **Leads** tab.
+Every feedback note sent from the report becomes one row in the **Feedback** tab. Both go to the same sheet and the same script.
 
 1. **Make the sheet.** Open https://sheets.new and name it, for example, "Dhi leads".
 2. **Add the script.** In the sheet choose **Extensions → Apps Script**. Delete what is there, paste the whole of `tools/lead-sheet.gs`, and click **Save**.
 3. **Deploy it.** Click **Deploy → New deployment**, pick the type **Web app**, set *Execute as* to **Me** and *Who has access* to **Anyone**, then click **Deploy** and allow the permissions Google asks for.
-4. **Copy the link.** Copy the **Web app URL** (it ends in `/exec`). Open `js/funnel-config.js` and paste it between the quotes of `leadEndpoint`. Paste your WhatsApp group invite link into `whatsappInvite` too.
-5. **Test it.** Finish the check once on your phone, enter a number and tap Submit. A tab called **Leads** appears in the sheet with a header row and your row under it.
+4. **Copy the link.** Copy the **Web app URL** (it ends in `/exec`). Open `js/funnel-config.js` and paste it between the quotes of **both** `leadEndpoint` and `feedbackEndpoint`. Paste your WhatsApp group invite link into `whatsappInvite` too.
+5. **Test it.** Finish the check once, enter a number and tap Submit. A **Leads** tab appears with your row. On the report, rate it and tap Submit; a **Feedback** tab appears with that row.
 
 Notes
-- If `leadEndpoint` is empty, leads stay only in the student's browser (`dhirise.lead.v1`), with no error.
-- After you edit the script, use **Deploy → Manage deployments → Edit → New version**, or the old code keeps running.
-- The sheet holds students' phone numbers. Share it only with people who need it.
+- If an endpoint is empty, that data stays only in the student's browser (`dhirise.lead.v1`, `dhirise.reportFeedback.v1`), with no error.
+- Already deployed the older script? Paste the new one, then **Deploy → Manage deployments → Edit → New version**. The URL stays the same.
+- The sheet holds students' phone numbers and comments. Share it only with people who need it.
