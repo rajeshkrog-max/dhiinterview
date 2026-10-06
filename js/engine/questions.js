@@ -209,6 +209,10 @@
 
   root.DhiQuestions = {
     AREAS: AREAS,
+    /* words a student may see */
+    AREA_NAMES: { routine: "Daily routine", emotions: "Feelings", drive: "Study drive", connection: "Connection",
+      expression: "Speaking and recall", clarity: "Clarity", purpose: "Purpose" },
+    STYLE_NAMES: { v: "Quick and creative", p: "Sharp and driven", k: "Steady and patient" },
     TOTAL: LIST.length,
     list: LIST,
     byN: byN,

@@ -9,13 +9,17 @@
 
   function read() { try { var g = JSON.parse(localStorage.getItem(KEY)); return g && g.name ? g : null; } catch (e) { return null; } }
   function write(v) { try { localStorage.setItem(KEY, JSON.stringify(v)); return true; } catch (e) { return false; } }
-  /* resume the check (localStorage "dhirise.check.v1"): first unanswered question, or the result once finished */
+  /* a new student meets Dhi first (meet.html); a returning one resumes the check (localStorage "dhirise.check.v1"):
+     first unanswered question, or once finished the teaser (done.html), or the report once they joined or skipped */
   function go() {
-    var url = "question.html";
+    var url = "meet.html";
     try {
       var c = JSON.parse(localStorage.getItem("dhirise.check.v1")), g = read();
-      if (c && c.answers && c.profile && g && c.profile.name === g.name) {
-        if (c.completedAt) url = "result.html";
+      if (c && c.answers && c.profile && g && c.profile.name === g.name && Object.keys(c.answers).length) {
+        if (c.completedAt) {
+          var lead = JSON.parse(localStorage.getItem("dhirise.lead.v1"));
+          url = lead && lead.completedAt === c.completedAt ? "report-student.html" : "done.html";
+        }
         else {
           url = "questions.html?q=18";
           for (var n = 1; n <= 18; n++) if (!c.answers["q" + n]) { url = n === 1 ? "question.html" : n === 2 ? "question2.html" : "questions.html?q=" + n; break; }
