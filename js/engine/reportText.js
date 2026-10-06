@@ -1,11 +1,12 @@
-/* Dhirise · every word the student report shows (report-student.html). Short placeholders; Part 4B writes the final text.
-   Keys: areas by score.js area id, styles by styleKey (v/p/k, internal), flags by score.js flag name.
-   {name} and {area} are filled in by js/report-student.js. Never: weak, average, bright; no chakra/Ayurveda words. */
+/* Dhirise · every word the student report shows (report-student.html), in second person.
+   Keys: areas by score.js area id; styles by styleKey (v/p/k, internal only); flags by score.js flag name.
+   Slots filled by js/report-student.js: {name} {answer} {pct} {area} {block} {pace}.
+   Arrays of two are variants: the report picks one per student (seeded), so two students rarely read the same page.
+   House rules: warm, specific, no labels about ability, no medical words, no traditional-medicine terms. */
 window.DhiReportText = {
   title: "{name}'s Mind & Study Profile",
-  startLine: "This is where you start. In Dhi it grows with every tick, hour and module.",
   startLabel: "Dhi starting score",
-
+  startLine: "This is where you start. In Dhi it grows with every tick, hour and module.",
   overviewTitle: "Overview",
   styleTitle: "Learning style",
 
@@ -16,113 +17,288 @@ window.DhiReportText = {
   },
   bands: { "Strong": "Strong", "Growing": "Growing", "Next to grow": "Next to grow" },
 
+  /* KPI tiles: name, and a band word per index */
   indices: {
-    studyReadiness: "Study Readiness",
-    emotionalBalance: "Emotional Balance",
-    focusEnergy: "Focus Energy",
-    direction: "Direction"
+    studyReadiness:   { name: "Study Readiness",   bands: { "Strong": "Ready to go", "Growing": "Getting there", "Next to grow": "Building up" } },
+    emotionalBalance: { name: "Emotional Balance", bands: { "Strong": "Steady", "Growing": "Finding balance", "Next to grow": "Needs care" } },
+    focusEnergy:      { name: "Focus Energy",      bands: { "Strong": "Sharp", "Growing": "Comes in waves", "Next to grow": "Recharging" } },
+    direction:        { name: "Direction",         bands: { "Strong": "Clear", "Growing": "Forming", "Next to grow": "Wide open" } }
   },
 
-  /* mind-state donut */
+  /* mind-state donut: the line follows the biggest slice; {pct} is its share */
   states: { calm: "Calm", restless: "Restless", low: "Low energy" },
   stateLine: {
-    calm: "Most of your answers come from a calm, settled place.",
-    restless: "Your mind moves fast. A lot is happening inside right now.",
-    low: "Some answers show low energy lately. Rest is part of the plan."
+    calm: ["{pct}% of your answers come from a calm, settled place. That is a good floor to build on.",
+           "Mostly calm: {pct}% of your answers. Your mind has a quiet centre to come back to."],
+    restless: ["{pct}% of your answers carry a restless edge. A lot is moving inside you right now.",
+               "Your mind is running fast ({pct}% restless). Short breaks will help it land."],
+    low: ["{pct}% of your answers sound tired. Rest is part of studying, not a break from it.",
+          "Your energy has been running low ({pct}% of your answers). Small steps count double now."]
   },
 
   /* learning style */
-  confidence: { clear: "Clear", leaning: "Leaning", blended: "Blended" },
+  confidence: { clear: "Clear match", leaning: "Leaning", blended: "Blended" },
   peersLine: "{pct}% of students share your style",
   styles: {
-    v: { name: "Quick and creative", peers: 36, lines: ["Ideas come fast and from many sides.", "You learn best in short, lively bursts.", "Variety keeps you going."] },
-    p: { name: "Sharp and driven", peers: 29, lines: ["You like goals and a clear target.", "You learn best when you can test yourself.", "Progress keeps you going."] },
-    k: { name: "Steady and patient", peers: 35, lines: ["You take your time and it stays.", "You learn best with rhythm and repetition.", "Calm routine keeps you going."] }
+    v: {
+      name: "The Creative Explorer", peers: 36,
+      headline: "Your mind moves fast and wide. You learn by connecting ideas nobody handed you.",
+      learn: ["New ideas wake you up; repeating the same page puts you to sleep.",
+              "You understand best when you can see it, draw it or tell it as a story.",
+              "Short, lively bursts work better for you than one long sit."],
+      bestTime: "Mid-morning, once your body has moved",
+      session: "20–25 minutes, then a 5-minute stretch",
+      revision: "Quick rounds on day 1, 3 and 7",
+      notes: "Mind maps, colours and small drawings",
+      exam: "Scan the paper, bank the easy marks, then return",
+      natural: ["Languages, art and big-idea subjects", "Teach one idea a day to a friend. Your mind loves to explain."],
+      care: ["Long memorising and step-by-step maths", "Turn a list into a story or a sketch before you learn it."]
+    },
+    p: {
+      name: "The Focused Achiever", peers: 29,
+      headline: "You like a clear target and the feeling of hitting it. Goals bring out your best.",
+      learn: ["A clear goal for each session keeps you sharp.",
+              "You learn fastest when you can test yourself straight away.",
+              "Seeing your own progress is your favourite fuel."],
+      bestTime: "Late morning, when your focus peaks",
+      session: "40–45 minutes, then a real 10-minute break",
+      revision: "One timed mock test each week",
+      notes: "Short lists, key points and formulas",
+      exam: "Plan your minutes first, then go section by section",
+      natural: ["Maths, science and anything with a clear answer", "Set a target score for each practice set and chase it."],
+      care: ["Slow reading and long written answers", "Give your reading a time limit too, not just your answers."]
+    },
+    k: {
+      name: "The Steady Builder", peers: 35,
+      headline: "You take your time, and what you build stays. Patience is your quiet strength.",
+      learn: ["Once you truly understand something, you rarely lose it.",
+              "Rhythm helps you: same time, same place, same first step.",
+              "Writing it in your own words is how it sinks in."],
+      bestTime: "Early morning, at the same time each day",
+      session: "45–50 minutes of steady work",
+      revision: "A little daily; each chapter twice a week",
+      notes: "Neat notes in your own words",
+      exam: "Read each question twice, then begin calmly",
+      natural: ["Biology, history and subjects that reward deep memory", "Revise by writing a one-page summary from memory."],
+      care: ["Fast, timed papers", "Do five timed questions a day. Speed grows with rhythm."]
+    }
   },
-  blendLabel: "A blend: {a} and {b}",
+  /* a blend: the two strongest styles, in the order v, p, k */
+  blends: {
+    vp: { name: "The Creative Achiever", headline: "Ideas come fast, and you want them to count. Imagination and drive live side by side in you." },
+    vk: { name: "The Thoughtful Explorer", headline: "Curious and calm at once. You wander through ideas, then let them settle deep." },
+    pk: { name: "The Steady Achiever", headline: "Driven and patient together. You set big goals and keep walking towards them." }
+  },
+  /* the class that feels heaviest (question 15) sets "Needs extra care"; tips follow the style */
+  subjects: {
+    memory:  { name: "Memory-heavy subjects", tips: { v: "Turn each list into a short story or a quick drawing.", p: "Make it a game: ten terms, timed, beat yesterday's score.", k: "Ten terms a day, written once, read again at night." } },
+    writing: { name: "Long written answers", tips: { v: "Say your answer aloud first, then write what you said.", p: "Outline in three points, then write against the clock.", k: "One paragraph a day. Small and steady builds the habit." } },
+    numbers: { name: "Timed maths and physics", tips: { v: "Five sums, then move. Short rounds keep you fresh.", p: "Time one section at a time and track your speed.", k: "Five timed questions daily. Speed grows with rhythm." } }
+  },
 
   /* what's working / next to grow */
   workingTitle: "What's working",
   growTitle: "Next to grow",
-  youSaid: "You said",
   noticedLabel: "What we noticed",
   mattersLabel: "Why it matters for your marks",
+  stepLabel: "Your first step",
+  /* 7 areas × 3 bands: title, noticed (2 variants, with the student's own {answer}), matters, step */
   areas: {
-    routine:    { noticed: "Your days don't always follow a rhythm.", matters: "A steady day leaves more energy for study." },
-    emotions:   { noticed: "Feelings can stay with you for a while.", matters: "A settled mind remembers more in exams." },
-    drive:      { noticed: "Long study blocks are hard to hold.", matters: "Short, regular sessions add up before exams." },
-    connection: { noticed: "You often handle things on your own.", matters: "Studying with others keeps you going on slow days." },
-    expression: { noticed: "Getting answers out can feel hard.", matters: "Clear answers earn marks in written and oral papers." },
-    clarity:    { noticed: "Your direction is still forming.", matters: "Knowing why you study makes the hard chapters lighter." },
-    purpose:    { noticed: "Some things feel heavy right now.", matters: "A lighter heart makes room for focus." }
+    routine: {
+      "Strong": { title: "Your day has a rhythm",
+        noticed: ["You told us “{answer}” That steadiness gives your study a firm floor.", "“{answer}” Your days have a shape, and your mind works better inside it."],
+        matters: "Regular sleep and meals keep memory and focus steady through exam season.",
+        step: "Guard one fixed hour each day and give it to your hardest subject." },
+      "Growing": { title: "Your rhythm is forming",
+        noticed: ["You said “{answer}” Some days hold together, others slip a little.", "“{answer}” Part of your routine is already there. It just needs an anchor."],
+        matters: "A steadier day means your energy turns up when the exam does.",
+        step: "Pick one anchor, a wake-up time or a meal time, and keep it for seven days." },
+      "Next to grow": { title: "Your days need an anchor",
+        noticed: ["You said “{answer}” Your days pull you in different directions.", "“{answer}” Your body and your timetable are not in step yet."],
+        matters: "Sleep, meals and wake-up time quietly decide how much you remember.",
+        step: "Start with one thing: the same wake-up time, every day this week." }
+    },
+    emotions: {
+      "Strong": { title: "You find your balance",
+        noticed: ["You said “{answer}” You let feelings pass without letting them steer.", "“{answer}” When something goes wrong, you find your feet again."],
+        matters: "A settled mind recalls more when the exam hall gets tense.",
+        step: "Notice what keeps you steady: one line each night about your day." },
+      "Growing": { title: "Your feelings are finding their footing",
+        noticed: ["You said “{answer}” Some days feel lighter than others, and you notice it.", "“{answer}” Feelings move through you strongly, and you are learning their pattern."],
+        matters: "When feelings settle sooner, study time stops leaking away.",
+        step: "Name your mood in one word each evening. A pattern shows up within a week." },
+      "Next to grow": { title: "Your heart is carrying a lot",
+        noticed: ["You said “{answer}” That sounds heavy, and you have been holding it.", "“{answer}” Feelings have been staying with you for a while."],
+        matters: "A heavy heart makes focus and memory harder, however hard you try.",
+        step: "Tell one person you trust how this week has felt. Just one." }
+    },
+    drive: {
+      "Strong": { title: "You know how to keep going",
+        noticed: ["You said “{answer}” You stay with work until it is done.", "“{answer}” You have a way of turning effort into progress."],
+        matters: "Steady effort across weeks is what lifts marks the most.",
+        step: "Add one short revision round each week to protect what you have built." },
+      "Growing": { title: "Your focus comes in good waves",
+        noticed: ["You said “{answer}” You focus well when the conditions are right.", "“{answer}” Your drive is real. It just switches on and off."],
+        matters: "Turning good days into regular days adds up fast before exams.",
+        step: "Study at the same time for 25 minutes, four days this week." },
+      "Next to grow": { title: "Your focus likes shorter laps",
+        noticed: ["You said “{answer}” Long sessions run out of fuel for you.", "“{answer}” Staying with study is hard right now, and that is useful to know."],
+        matters: "Short, regular sessions often beat long, tired ones on exam day.",
+        step: "Try one 20-minute block with your phone in another room. Then stop." }
+    },
+    connection: {
+      "Strong": { title: "People are part of your strength",
+        noticed: ["You said “{answer}” You know how to be with others, and they feel it.", "“{answer}” You give something to every group you are part of."],
+        matters: "Studying with others keeps motivation up on slow days.",
+        step: "Start one weekly study session with a friend and keep it going." },
+      "Growing": { title: "Your circle is there when you reach for it",
+        noticed: ["You said “{answer}” You connect, sometimes, on your own terms.", "“{answer}” You have people, though you do not always lean on them."],
+        matters: "Talking a topic through with someone helps it stick.",
+        step: "Explain one topic to a friend this week, and ask them to explain one back." },
+      "Next to grow": { title: "You carry a lot on your own",
+        noticed: ["You said “{answer}” You tend to handle things by yourself.", "“{answer}” Going it alone has become a habit."],
+        matters: "Students who share the load tire less before exams.",
+        step: "Share one small thing about your week with someone you trust." }
+    },
+    expression: {
+      "Strong": { title: "Your words come out clear",
+        noticed: ["You said “{answer}” What you learn, you can say.", "“{answer}” You hold on to what you learn and can put it into words."],
+        matters: "Clear answers earn marks, on paper and out loud.",
+        step: "Write one past-paper answer a week and compare it with the model answer." },
+      "Growing": { title: "Your answers are taking shape",
+        noticed: ["You said “{answer}” You know more than you sometimes manage to show.", "“{answer}” Your memory and your words are close to lining up."],
+        matters: "Marks go to what reaches the page, not just what is in your head.",
+        step: "After each chapter, write three lines from memory. Check them the next day." },
+      "Next to grow": { title: "What you know needs a way out",
+        noticed: ["You said “{answer}” Getting your thoughts out can feel stuck.", "“{answer}” Learning goes in, but it does not always come back out easily."],
+        matters: "Practising recall is often the quickest way to more marks.",
+        step: "Say one answer out loud each day this week, alone, in your own words." }
+    },
+    clarity: {
+      "Strong": { title: "You know where you are headed",
+        noticed: ["You said “{answer}” Your direction is clear to you.", "“{answer}” You carry a picture of your path."],
+        matters: "A clear goal makes the hard chapters feel worth it.",
+        step: "Name the one subject that matters most for your goal and give it extra time." },
+      "Growing": { title: "Your direction is forming",
+        noticed: ["You said “{answer}” You are exploring, and that is a good place to be.", "“{answer}” A picture is forming, piece by piece."],
+        matters: "Even a rough direction helps you decide where your study hours go.",
+        step: "List three things you enjoy learning. Look for what they share." },
+      "Next to grow": { title: "Your path is still open",
+        noticed: ["You said “{answer}” The future feels unclear right now.", "“{answer}” You have not found your own answer yet, and that is allowed."],
+        matters: "Knowing even a little about why you study makes starting easier.",
+        step: "Spend 10 minutes writing what you would study if nobody was watching." }
+    },
+    purpose: {
+      "Strong": { title: "You feel what you are working towards",
+        noticed: ["You said “{answer}” Your dreams give your days meaning.", "“{answer}” You hold a picture of your future that pulls you forward."],
+        matters: "Purpose keeps you going when motivation runs thin.",
+        step: "Link this week's hardest chapter to that picture, in one line." },
+      "Growing": { title: "Your dreams are taking shape",
+        noticed: ["You said “{answer}” You have a sense of what matters to you.", "“{answer}” You can see where you would like to go."],
+        matters: "A clear reason makes daily study feel lighter.",
+        step: "Write one sentence about who you want to be in five years. Keep it on your desk." },
+      "Next to grow": { title: "Something is weighing on you",
+        noticed: ["You said “{answer}” Something is sitting heavy right now.", "“{answer}” It is hard to dream freely with that weight on you."],
+        matters: "A lighter heart makes room for focus and memory.",
+        step: "Write down the one thing that feels heaviest. Seeing it on paper helps." }
+    }
   },
 
-  /* gentle signals (max 2 shown) */
+  /* gentle signals: max 2 shown, in this order */
   signalsTitle: "Gentle signals",
   flagOrder: ["lowMood", "keepsFeelingsInside", "selfDoubt", "heavyExpectations", "sleepStrain", "lowCareerClarity", "lowConsistency"],
   flags: {
-    lowMood: "Your energy has felt low lately. Be kind to yourself this week.",
-    keepsFeelingsInside: "You often keep feelings inside. Sharing one thing can help.",
-    selfDoubt: "A quiet doubt shows up. Your finished work says otherwise.",
-    heavyExpectations: "Other people's hopes feel heavy. Your own pace matters too.",
-    sleepStrain: "Sleep before big days is uneasy. A wind-down can help.",
-    lowCareerClarity: "Your path is still forming. That is normal at this stage.",
-    lowConsistency: "Some answers came quickly. A slower retake may show more."
+    lowMood: ["Your energy has been low lately. Go gently with yourself this week.", "Some of your answers sound tired. That is worth noticing, kindly."],
+    keepsFeelingsInside: ["You tend to keep feelings to yourself. Sharing even one thing can lighten it.", "You hold a lot inside. You do not have to carry all of it alone."],
+    selfDoubt: ["A quiet doubt about being good enough showed up. Your finished work tells another story.", "You wonder if you are enough. Many students do, and the doubt is not the truth."],
+    heavyExpectations: ["Other people's hopes feel heavy right now. Your own pace matters too.", "Expectations sit on your shoulders. It is okay to set some of them down."],
+    sleepStrain: ["Sleep before big days does not come easily. A calm wind-down can help.", "Your nights before important days are uneasy. Sleep is part of studying too."],
+    lowCareerClarity: ["Your path is still forming. That is normal, and there is time.", "You have not settled on a direction yet. Exploring is the right step for now."],
+    lowConsistency: ["Some answers looked quick. A short chat with a Dhi mentor will sharpen this picture."]
   },
 
-  /* study blueprint, by style */
+  /* study blueprint */
   blueprintTitle: "Study blueprint",
   blueprintLabels: { bestTime: "Best time", session: "Session length", revision: "Revision", notes: "Note style", exam: "Exam approach" },
   naturalLabel: "Comes naturally",
   careLabel: "Needs extra care",
-  blueprint: {
-    v: { bestTime: "Morning, after a short walk", session: "25 minutes, then move", revision: "Day 1, 3 and 7", notes: "Colour, mind maps, drawings", exam: "Easy questions first, then the rest",
-         natural: ["New ideas", "Link topics to things you love."], care: ["Finishing", "Close one chapter before you open the next."] },
-    p: { bestTime: "Late morning, when you're sharp", session: "45 minutes, then a real break", revision: "Weekly mock test", notes: "Short lists and key points", exam: "Plan your time, then attack",
-         natural: ["Focus", "Set one clear target per session."], care: ["Rest", "Stop before you burn out."] },
-    k: { bestTime: "Early morning, same time daily", session: "50 minutes, steady", revision: "Little and often", notes: "Your own words, written out", exam: "Read twice, then start calmly",
-         natural: ["Memory", "Trust what you learned slowly."], care: ["Starting", "Begin with a five-minute task."] }
-  },
 
-  /* 21-day path */
+  /* 21-day path: per area, 3 weeks × 3 small daily actions, each week carried by one Dhi room.
+     {block} and {pace} follow the style. */
   pathTitle: "Your 21-day path",
-  week1Title: "Week 1 · Start small",
+  weekLabel: "Week {n}",
   dayLabel: "Day",
-  actions: {
-    routine: "Wake at the same time",
-    emotions: "Pick one word for your mood",
-    drive: "One 25-minute focus block",
-    connection: "Study with one friend",
-    expression: "Explain one topic aloud",
-    clarity: "Write one line about a goal",
-    purpose: "Note one thing that went well"
+  block: { v: "20-minute", p: "40-minute", k: "45-minute" },
+  pace: { v: "in short bursts", p: "with one clear target", k: "at the same time each day" },
+  weekHow: {
+    v: "Keep it light: short rounds, and switch spots when you get restless.",
+    p: "Set a target each day and tick it the moment it is done.",
+    k: "Same time, same place, every day. The rhythm does the work."
   },
-  styleAction: { v: "Clear your desk for 2 minutes", p: "Take a real break after study", k: "Start with a 5-minute task" },
-  week2: { title: "Week 2 · Grow your {area}", detail: "Longer blocks, a weekly check and a friend to study with." },
-  week3: { title: "Week 3 · Make {area} yours", detail: "Your own routine, a mock test and a look back at three weeks." },
+  plan: {
+    routine: [
+      { room: "Habit Tracker", title: "Find your anchor", actions: ["Wake up at the same time", "Eat breakfast before you study", "Books closed 30 minutes before bed"] },
+      { room: "Meal Tracker", title: "Fuel your day", actions: ["Log every plate you eat", "Keep lunch within the same hour", "One {block} study block at your best time"] },
+      { room: "Habit Tracker", title: "Make it yours", actions: ["Keep your wake-up streak alive", "Write tomorrow's three tasks tonight", "One screen-free hour before sleep"] }
+    ],
+    emotions: [
+      { room: "Mood Tracker", title: "Notice the weather inside", actions: ["Pick one colour for your mood", "Name one thing that went well", "Five slow breaths before you study"] },
+      { room: "Mood Tracker", title: "Give feelings a place", actions: ["Write two lines about your day", "Move your body for 10 minutes", "Tell someone one thing you felt"] },
+      { room: "Modules", title: "Build your calm", actions: ["Watch one short Mental health film", "Keep your colour streak going", "End the day with one kind line to yourself"] }
+    ],
+    drive: [
+      { room: "Study hour", title: "Short laps", actions: ["One {block} focus block {pace}", "Phone in another room while you study", "Tick one finished task"] },
+      { room: "Study hour", title: "Longer laps", actions: ["Two focus blocks with a break between", "Join one live Study hour", "Five minutes on yesterday's topic"] },
+      { room: "DHI desk", title: "Test yourself", actions: ["One short practice paper", "Fix one mistake from it", "Set next week's three targets"] }
+    ],
+    connection: [
+      { room: "Study hour", title: "Study side by side", actions: ["Join one live Study hour", "Message one classmate about a topic", "Thank someone who helped you"] },
+      { room: "Blog", title: "Share what you know", actions: ["Explain one topic to a friend", "Read one post by another student", "Ask one question you have been holding"] },
+      { room: "Study hour", title: "Keep your circle", actions: ["Plan a weekly session with a friend", "Write one short Blog post", "Check in on someone who seems quiet"] }
+    ],
+    expression: [
+      { room: "DHI desk", title: "Say it out loud", actions: ["Explain one topic aloud in 2 minutes", "Write three lines from memory after class", "Ask DHI desk to clarify one doubt"] },
+      { room: "DHI desk", title: "Write it your way", actions: ["Answer one past question in writing", "Turn one chapter into a mind map or story", "Read your answer aloud once"] },
+      { room: "Modules", title: "Make it stick", actions: ["Watch one short Academic film", "Take a quick mock test on it", "Teach the topic to someone at home"] }
+    ],
+    clarity: [
+      { room: "DHI desk", title: "Wonder out loud", actions: ["Write one thing you enjoyed learning today", "Talk one career idea through with DHI desk", "Notice which class makes time fly"] },
+      { room: "Blog", title: "Look around", actions: ["Read about one path that interests you", "Ask one adult how they chose their work", "Write three things you are curious about"] },
+      { room: "DHI desk", title: "Draw your map", actions: ["Pick one subject to give extra time", "Write one small goal for this term", "Talk that goal through with DHI desk"] }
+    ],
+    purpose: [
+      { room: "Mood Tracker", title: "Lighten the load", actions: ["Write down what feels heaviest", "Do one thing just for you", "Pick a colour for your day"] },
+      { room: "Modules", title: "Find your why", actions: ["Watch one short Self help film", "Write one line about your dream", "Link one chapter to that dream"] },
+      { room: "Blog", title: "Say what matters", actions: ["Write a short post about what matters to you", "Celebrate one finished week", "Keep one dream note on your desk"] }
+    ]
+  },
   continuesLine: "Continues inside Dhi: Habit Tracker keeps your ticks, Study hour keeps you company, DHI desk explains what's stuck.",
 
-  /* your Dhi rooms: area → [room, line], with a second choice if the room is already used */
+  /* your Dhi rooms: area or flag → [room, line], with a second choice if that room is already listed */
   roomsTitle: "Your Dhi rooms",
   areaRooms: {
-    routine:    [["Habit Tracker", "A daily tick and a streak for your routine."], ["Meal Tracker", "Log your plate so meals keep their time."]],
-    emotions:   [["Mood Tracker", "One colour a day to notice how you feel."], ["Counseling", "A private talk, only if you want one."]],
-    drive:      [["Study hour", "Study live with others, DND mode on."], ["DHI desk", "A quick practice paper when you're ready."]],
-    connection: [["Study hour", "Company while you study, without the noise."], ["Blog", "Write and share with other students."]],
-    expression: [["DHI desk", "Practise answers aloud, in private."], ["Modules", "Short films that make topics clear."]],
-    clarity:    [["DHI desk", "Talk your options through, any time."], ["Blog", "Read what other students are exploring."]],
-    purpose:    [["Modules", "Short Self help films for your goals."], ["Blog", "Write about where you're headed."]]
+    routine:    [["Habit Tracker", "One wake-up tick a day and a streak that shows your rhythm growing."], ["Meal Tracker", "Log your Indian plate in seconds, so meals keep their time."]],
+    emotions:   [["Mood Tracker", "One colour a day and a Dhi line, so you see your inner weather."], ["Counseling", "A private talk with a counsellor, never recorded, only if you want it."]],
+    drive:      [["Study hour", "A live study room with other students, DND mode on, for short laps."], ["DHI desk", "A quick mock test or practice paper whenever you are ready."]],
+    connection: [["Study hour", "Company while you study, without the noise of a feed."], ["Blog", "Write and share with other students, at your own pace."]],
+    expression: [["DHI desk", "Practise answers aloud, in private, until the words come easily."], ["Modules", "Short Academic films that make a topic clear in minutes."]],
+    clarity:    [["DHI desk", "Talk your options through, any time, with no one judging."], ["Blog", "Read what other students are exploring and write your own."]],
+    purpose:    [["Modules", "Short Self help films for the days you need a reason."], ["Blog", "Write about where you are headed and what matters to you."]]
   },
   flagRooms: {
-    lowMood:             [["Mood Tracker", "A colour a day; the help button is there if you need it."], ["Counseling", "A private talk, only if you want one."]],
-    keepsFeelingsInside: [["Counseling", "Private, never recorded, always your choice."], ["Mood Tracker", "A quiet place to note how you feel."]],
-    selfDoubt:           [["Progress", "See what you've already done, week by week."], ["Habit Tracker", "Small ticks that show you keep going."]],
-    heavyExpectations:   [["Counseling", "Private, never recorded, always your choice."], ["Progress", "Your own steps, at your own pace."]],
-    sleepStrain:         [["Habit Tracker", "A wind-down habit with a streak."], ["Mood Tracker", "Notice how sleep changes your days."]],
-    lowCareerClarity:    [["DHI desk", "Talk through what you like, in private."], ["Blog", "Read what other students are exploring."]],
-    lowConsistency:      [["Study hour", "Slow down and study with others."], ["Habit Tracker", "One small tick a day."]]
+    lowMood:             [["Mood Tracker", "A colour a day; its help button can book a counsellor when you want one."], ["Counseling", "Private, never recorded, always your choice."]],
+    keepsFeelingsInside: [["Counseling", "A private booking with a counsellor, never recorded, only if you want it."], ["Mood Tracker", "A quiet place to put a feeling, one colour a day."]],
+    selfDoubt:           [["Progress", "Your finished work, week by week, where you can see it."], ["Habit Tracker", "Small daily ticks that show you keep showing up."]],
+    heavyExpectations:   [["Counseling", "A private space to talk about the pressure, never recorded, always optional."], ["Progress", "Your own steps, measured against you, not anyone else."]],
+    sleepStrain:         [["Habit Tracker", "A wind-down habit with a streak, so nights get calmer."], ["Mood Tracker", "See how your sleep and your mood move together."]],
+    lowCareerClarity:    [["DHI desk", "Talk through what you enjoy, privately, as often as you like."], ["Blog", "Read how other students are finding their way."]],
+    lowConsistency:      [["Study hour", "Slow down and study alongside others for a while."], ["Habit Tracker", "One small tick a day to build a steady rhythm."]]
   },
-  styleRooms: { v: ["Study hour", "Short live sessions that keep you moving."], p: ["Exams", "Teacher papers and remarks to aim at."], k: ["Habit Tracker", "A steady streak for a steady learner."] },
+  styleRooms: {
+    v: ["Study hour", "Short live sessions with others that keep your mind moving."],
+    p: ["Exams", "Teacher papers, a hint slider for MCQs and remarks to aim at."],
+    k: ["Habit Tracker", "A steady streak for a steady learner."]
+  },
 
   /* join */
   joinTitle: "Dhi early access",

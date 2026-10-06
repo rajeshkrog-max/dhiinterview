@@ -76,9 +76,18 @@
   }
 
   var styleOrder = ["v", "p", "k"].sort(function (a, b) { return r.style[b] - r.style[a]; });
-  var styleName = r.confidence === "blended"
-    ? fill(T.blendLabel, { a: T.styles[styleOrder[0]].name.toLowerCase(), b: T.styles[styleOrder[1]].name.toLowerCase() })
-    : T.styles[r.styleKey].name;
+  /* the style the page speaks to: one style, or a blend of the two strongest (key in v, p, k order) */
+  var blendKey = ["v", "p", "k"].filter(function (k) { return k === styleOrder[0] || k === styleOrder[1]; }).join("");
+  var blend = r.confidence === "blended" ? T.blends[blendKey] : null;
+  var S1 = T.styles[styleOrder[0]], S2 = T.styles[styleOrder[1]];
+  var styleName = blend ? blend.name : S1.name;
+
+  /* one variant per student: seeded by the student and the key, so the same page always reads the same */
+  var seed = DhiStore.seed();
+  function hash(s) { var h = 2166136261 >>> 0; for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h; }
+  function pick(list, key) { return Array.isArray(list) ? list[hash(seed + "~" + key) % list.length] : list; }
+  function styled(text) { return fill(text, { block: T.block[styleOrder[0]], pace: T.pace[styleOrder[0]] }); }
+  function answerOf(said) { return said ? said.text : ""; }
   var first = cap(profile.name ? String(profile.name).trim().split(/\s+/)[0] : "");
   var activeFlags = T.flagOrder.filter(function (f) { return r.flags[f] === true; });
 
@@ -119,8 +128,8 @@
     ["studyReadiness", "emotionalBalance", "focusEnergy", "direction"].forEach(function (k) {
       var v = r.indices[k];
       add(grid, add(el("div", "kpi"),
-        el("p", "kpi-name", T.indices[k]),
-        add(el("p", "kpi-val"), counter(v), el("span", "band", T.bands[DhiScore.band(v)])),
+        el("p", "kpi-name", T.indices[k].name),
+        add(el("p", "kpi-val"), counter(v), el("span", "band", T.indices[k].bands[DhiScore.band(v)])),
         bar(v)));
     });
     add(c, grid);
@@ -189,42 +198,55 @@
     keys.forEach(function (k) { add(legend, add(el("li"), el("i", "dot dot-" + k), el("span", null, T.states[k]), el("b", null, r.state[k] + "%"))); });
 
     add(wrap, add(el("div", "radar-box"), svg),
-      add(el("div", "state-box"), donut, legend, el("p", "note", T.stateLine[dominant])));
+      add(el("div", "state-box"), donut, legend, el("p", "note", fill(pick(T.stateLine[dominant], "state"), { pct: r.state[dominant] }))));
     add(c, wrap);
     add(root, c);
   })();
 
   /* ---------- 5. learning style ---------- */
   (function style() {
-    var s = T.styles[r.styleKey];
     var c = card("style", T.styleTitle);
     var list = el("ul", "lines");
-    s.lines.slice(0, 3).forEach(function (ln) { add(list, el("li", null, ln)); });
+    /* a blend takes two how-you-learn lines from the stronger style and one from the other */
+    var lines = blend ? S1.learn.slice(0, 2).concat(S2.learn[hash(seed + "~learn") % S2.learn.length]) : S1.learn;
+    lines.forEach(function (ln) { add(list, el("li", null, ln)); });
     add(c, el("p", "big", styleName),
+      el("p", "lede headline", blend ? blend.headline : S1.headline),
       list,
-      add(el("p", "row-meta"), el("span", "tag", T.confidence[r.confidence]), el("span", null, fill(T.peersLine, { pct: s.peers }))));
+      add(el("p", "row-meta"), el("span", "tag", T.confidence[r.confidence]), el("span", null, fill(T.peersLine, { pct: S1.peers }))));
     add(root, c);
   })();
 
   /* ---------- 6. what's working / next to grow ---------- */
   (function areas() {
+    /* the words for one area at its band, with the student's own answer in "what we noticed" */
+    function words(item) {
+      var a = (T.areas[item.area] || {})[item.band] || {};
+      return { title: a.title || "", matters: a.matters || "", step: a.step || "",
+        noticed: a.noticed ? fill(pick(a.noticed, item.area), { answer: answerOf(item.said) }) : "" };
+    }
+
     var w = card("working", T.workingTitle);
     r.top.forEach(function (t) {
+      var x = words(t);
       add(w, add(el("div", "arow"),
         add(el("p", "arow-head"), el("span", null, T.axes[t.area]), el("b", null, T.bands[t.band])),
         bar(t.score),
-        t.said ? el("p", "said", T.youSaid + ": “" + t.said.text + "”") : null));
+        el("p", "atitle", x.title),
+        el("p", "said", x.noticed)));
     });
     add(root, w);
 
     var g = card("grow", T.growTitle);
     r.bottom.forEach(function (b) {
-      var a = T.areas[b.area] || {};
+      var x = words(b);
       add(g, add(el("div", "arow"),
         add(el("p", "arow-head"), el("span", null, T.axes[b.area]), el("b", null, T.bands[b.band])),
         bar(b.score),
-        add(el("p", "kv"), el("span", "k", T.noticedLabel), el("span", null, a.noticed || "")),
-        add(el("p", "kv"), el("span", "k", T.mattersLabel), el("span", null, a.matters || ""))));
+        el("p", "atitle", x.title),
+        add(el("p", "kv"), el("span", "k", T.noticedLabel), el("span", null, x.noticed)),
+        add(el("p", "kv"), el("span", "k", T.mattersLabel), el("span", null, x.matters)),
+        add(el("p", "kv"), el("span", "k", T.stepLabel), el("span", null, x.step))));
     });
     add(root, g);
   })();
@@ -232,21 +254,25 @@
   /* ---------- 7. gentle signals (only if any; max 2) ---------- */
   if (activeFlags.length) (function signals() {
     var c = card("signals span2", T.signalsTitle);
-    activeFlags.slice(0, 2).forEach(function (f) { add(c, add(el("p", "signal"), el("i", "leafdot"), el("span", null, T.flags[f]))); });
+    activeFlags.slice(0, 2).forEach(function (f) { add(c, add(el("p", "signal"), el("i", "leafdot"), el("span", null, pick(T.flags[f], f)))); });
     add(root, c);
   })();
 
   /* ---------- 8. study blueprint ---------- */
   (function blueprint() {
-    var b = T.blueprint[r.styleKey];
+    /* a blend takes revision and notes from the second style; the rest from the stronger one */
+    var from = { bestTime: S1, session: S1, revision: blend ? S2 : S1, notes: blend ? S2 : S1, exam: S1 };
     var c = card("blueprint", T.blueprintTitle);
     var dl = el("dl", "bp");
     ["bestTime", "session", "revision", "notes", "exam"].forEach(function (k) {
-      add(dl, add(el("div", "bp-row"), el("dt", null, T.blueprintLabels[k]), el("dd", null, b[k])));
+      add(dl, add(el("div", "bp-row"), el("dt", null, T.blueprintLabels[k]), el("dd", null, from[k][k])));
     });
+    /* "needs extra care" is the class they said feels heaviest (question 15), with a tip for their style */
+    var heavy = r.subject && T.subjects[r.subject.heavy];
+    var care = heavy ? [heavy.name, heavy.tips[styleOrder[0]]] : S1.care;
     add(c, dl, add(el("div", "chips"),
-      add(el("div", "chip chip-good"), el("span", "chip-k", T.naturalLabel + " · " + b.natural[0]), el("span", "chip-tip", b.natural[1])),
-      add(el("div", "chip chip-care"), el("span", "chip-k", T.careLabel + " · " + b.care[0]), el("span", "chip-tip", b.care[1]))));
+      add(el("div", "chip chip-good"), el("span", "chip-k", T.naturalLabel + " · " + S1.natural[0]), el("span", "chip-tip", S1.natural[1])),
+      add(el("div", "chip chip-care"), el("span", "chip-k", T.careLabel + " · " + care[0]), el("span", "chip-tip", care[1]))));
     add(root, c);
   })();
 
@@ -258,11 +284,14 @@
     if (!saved || saved.completedAt !== check.completedAt) saved = { completedAt: check.completedAt, ticks: {} };
     function keep() { try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {} }
 
-    var lowA = r.bottom[0] ? r.bottom[0].area : "routine", lowB = r.bottom[1] ? r.bottom[1].area : "drive";
-    var actions = [T.actions[lowA], T.actions[lowB], T.styleAction[r.styleKey]];
+    /* the plan for their lowest area; {block} and {pace} follow their style */
+    var lowA = r.bottom[0] ? r.bottom[0].area : "routine";
+    var plan = T.plan[lowA];
+    function weekHead(i) { return fill(T.weekLabel, { n: i + 1 }) + " · " + plan[i].title; }
     var c = card("path", T.pathTitle);
-    add(c, el("p", "week-title", T.week1Title));
-    actions.forEach(function (text, ai) {
+    add(c, add(el("div", "week-head"), el("p", "week-title", weekHead(0)), el("span", "room-pill", "In Dhi · " + plan[0].room)));
+    add(c, el("p", "note week-how", T.weekHow[styleOrder[0]]));
+    plan[0].actions.map(styled).forEach(function (text, ai) {
       var days = el("div", "days");
       for (var d = 1; d <= 7; d++) (function (d) {
         var id = "a" + ai + "d" + d;
@@ -280,11 +309,12 @@
       })(d);
       add(c, add(el("div", "action"), el("p", "action-text", text), days));
     });
-    [[T.week2, lowA], [T.week3, lowB]].forEach(function (w) {
+    [1, 2].forEach(function (i) {
+      var detail = el("p", "blur", plan[i].actions.map(styled).join(" · "));
+      detail.setAttribute("aria-hidden", "true");
       add(c, add(el("div", "week-locked"),
-        el("p", "week-title", fill(w[0].title, { area: T.axes[w[1]].toLowerCase() })),
-        add(el("p", "blur"), document.createTextNode(w[0].detail))));
-      c.lastChild.lastChild.setAttribute("aria-hidden", "true");
+        add(el("div", "week-head"), el("p", "week-title", weekHead(i)), el("span", "room-pill", "In Dhi · " + plan[i].room)),
+        detail));
     });
     add(c, el("p", "note", T.continuesLine));
     add(root, c);

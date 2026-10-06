@@ -92,6 +92,13 @@ p{margin:0}
 .arow:first-of-type{border-top:0;padding-top:0}
 .arow-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:8px;font-size:16px;font-weight:600}
 .arow-head b{font-size:13px;font-weight:600;color:var(--gold);white-space:nowrap}
+.atitle{margin-top:10px;font-size:16px;font-weight:700;line-height:1.35}
+.headline{margin:-4px 0 12px}
+.week-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 10px;margin-bottom:8px}
+.week-head .week-title{margin:0}
+.room-pill{padding:1px 10px;border-radius:999px;font-size:13px;font-weight:700;color:var(--ink-text);background:var(--gold)}
+.week-locked .room-pill{color:var(--gold);background:var(--gold-soft)}
+.week-how{margin:0 0 4px}
 .said{margin-top:8px;font-size:13px;line-height:1.45;color:var(--muted);font-style:italic}
 .kv{margin-top:8px;font-size:13px;line-height:1.45;color:var(--muted)}
 .kv .k{display:block;font-weight:700;color:var(--white)}

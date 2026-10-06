@@ -219,7 +219,7 @@
     q4o4: ["You pause, then look for the lesson. That takes quiet strength.", "Exams", "Teacher remarks in Exams point to the exact questions, so your lesson-finding has something real to work with."],
 
     q5o1: ["Your mood shifts like the wind. Hour to hour, it keeps moving.", "Mood Tracker", "Mood Tracker asks for one colour a day. Over weeks, even the windy days start to show a shape."],
-    q5o2: ["Bright and intense. You feel things fully, and you run warm.", "Mood Tracker", "One colour a day in Mood Tracker, plus a short Dhi line, helps you notice the heat early."],
+    q5o2: ["Hot and intense. You feel things fully, and you run warm.", "Mood Tracker", "One colour a day in Mood Tracker, plus a short Dhi line, helps you notice the heat early."],
     q5o3: ["Heavy and slow, like clouds that won't move. Thank you for saying it.", "Mood Tracker", "Mood Tracker takes one colour a day. If grey lingers, its help button can book a private counsellor."],
     q5o4: ["Calm and open. Your inner weather feels clear these days.", "Mood Tracker", "Keep a colour a day in Mood Tracker; your clear days show you what helps keep them clear."],
 
@@ -234,14 +234,14 @@
     q7o4: ["A little every day, with revision rounds. You plan for the long run.", "DHI desk", "DHI desk can turn each revision round into a quick mock test, so you see what has stuck."],
 
     q8o1: ["After twenty minutes, your body wants to move. That is how you're built.", "Study hour", "Join a short Study hour round, stretch, then come back. DND mode keeps the pause phone-free."],
-    q8o2: ["One stubborn problem, and frustration builds. You hate leaving things unsolved.", "Study hour", "In Study hour, others work beside you live, so you can switch tasks for a while and return calmer."],
+    q8o2: ["One stubborn sum, and frustration builds. You hate leaving things unsolved.", "Study hour", "In Study hour, others work beside you live, so you can switch tasks for a while and return calmer."],
     q8o3: ["You can keep sitting, but the pages stop going in. You notice that.", "Study hour", "Study hour with DND mode on helps you keep shorter, fuller blocks instead of long, foggy ones."],
     q8o4: ["You rest before you run out. That is a wise rhythm.", "Study hour", "Study hour fits that rhythm: focus with others in DND mode, take your break, then rejoin."],
 
-    q9o1: ["A hard problem lights you up, then something new catches your eye.", "DHI desk", "Ask DHI desk to clarify just the next step. One small step keeps the spark on this problem."],
-    q9o2: ["A tough problem feels like a match you want to win.", "DHI desk", "When you're stuck, DHI desk can clarify the idea underneath, so the win comes from understanding, not guessing."],
-    q9o3: ["A hard problem feels like a wall. Familiar ground feels safer.", "DHI desk", "DHI desk can explain it step by step, or draw it out, until the wall has a door."],
-    q9o4: ["You break hard things into small steps. That is a real skill.", "DHI desk", "DHI desk can check each step with you, or turn the problem into a story when the steps run out."],
+    q9o1: ["A hard question lights you up, then something new catches your eye.", "DHI desk", "Ask DHI desk to clarify just the next step. One small step keeps the spark on this question."],
+    q9o2: ["A tough question feels like a match you want to win.", "DHI desk", "When you're stuck, DHI desk can clarify the idea underneath, so the win comes from understanding, not guessing."],
+    q9o3: ["A hard question feels like a wall. Familiar ground feels safer.", "DHI desk", "DHI desk can explain it step by step, or draw it out, until the wall has a door."],
+    q9o4: ["You break hard things into small steps. That is a real skill.", "DHI desk", "DHI desk can check each step with you, or turn the question into a story when the steps run out."],
 
     q10o1: ["You bring the ideas and keep the conversation alive.", "Blog", "Write and share those ideas on Blog, where other students can read them after the talk ends."],
     q10o2: ["You step up and keep the group moving. People look to you.", "Study hour", "Start a Study hour with your group; studying live together keeps everyone on track, you included."],
