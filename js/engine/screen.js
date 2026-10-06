@@ -15,9 +15,22 @@
       tips[i + 1] = DhiQuestions.tipText(o);
     });
 
+    /* the card: mirror line, gold room pill, how Dhi helps, and how many students chose the same */
+    function renderTip(el, choice) {
+      var o = DhiQuestions.option(ids[choice - 1]), t = o.tip || {};
+      el.textContent = "";
+      if (!t.mirror && !t.line) { el.textContent = tips[choice]; return; }
+      function part(cls, text) { if (!text) return; var s = document.createElement("span"); s.className = cls; s.textContent = text; el.appendChild(s); }
+      part("tip-mirror", t.mirror);
+      part("tip-room", t.room ? "In Dhi · " + t.room : "");
+      part("tip-line", t.line);
+      part("tip-peer", typeof o.peerSeed === "number" ? o.peerSeed + "% of students chose this too" : "");
+    }
+
     dhiriseQuestion({
       n: n,
       tips: tips,
+      renderTip: renderTip,
       load: function () { var i = ids.indexOf(DhiStore.get().answers["q" + n]); return i < 0 ? null : i + 1; },
       save: function (choice) { DhiStore.answer(n, ids[choice - 1]); },
       back: back,

@@ -64,6 +64,13 @@ body{font-family:var(--f-body);color:var(--white);-webkit-font-smoothing:antiali
 }
 .tip b{display:block;margin-bottom:6px;font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold)}
 .tip p{margin:0;font-size:16px;line-height:1.5;color:var(--white)}
+/* tip parts (js/engine/screen.js): mirror, gold room pill, the Dhi line, peer footer */
+.tip p span{display:block}
+.tip .tip-mirror{font-weight:600}
+.tip .tip-room{display:inline-block;margin:10px 0 6px;padding:2px 10px;border-radius:999px;font-size:13px;font-weight:700;line-height:1.6;
+  color:var(--ink-text);background:var(--gold)}
+.tip .tip-line{color:rgba(255,255,255,.88)}
+.tip .tip-peer{margin-top:10px;font-size:13px;color:rgba(255,255,255,.6)}
 /* a thin gold line that drains across the reading time */
 .tip .drain{position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--gold);transform-origin:left center}
 .tip.reading .drain{animation:drain var(--read,10s) linear forwards}

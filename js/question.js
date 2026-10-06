@@ -30,7 +30,7 @@
     function clearTimers() { clearTimeout(readTimer); clearTimeout(outTimer); readTimer = outTimer = 0; }
     function showTip(choice) {
       clearTimers();
-      $("tipText").textContent = cfg.tips[choice];
+      if (cfg.renderTip) cfg.renderTip($("tipText"), choice); else $("tipText").textContent = cfg.tips[choice];
       tip.classList.remove("enter", "leave", "reading");
       tip.hidden = false;
       placeTip();

@@ -3,7 +3,7 @@
    the screen shuffles positions per student, so ids, never positions, are stored.
    Each option: { id, text, style:{v,p,k}, state:"calm|restless|low", areas:{area: -2..+2}, peerSeed, tip:{mirror,room,line}, flags, oldTip }
    style is internal only (v = quick and creative, p = sharp and driven, k = steady and patient); never shown to a student.
-   tip is filled in Part 3; until then the screen shows oldTip (the tip text the screens had before). */
+   tip comes from the TIPS table below; oldTip is the earlier tip text, kept only as a fallback. */
 (function (root) {
   "use strict";
   var AREAS = ["routine", "emotions", "drive", "connection", "expression", "clarity", "purpose"];
@@ -196,11 +196,106 @@
         "Nothing heavy. The Dhirise dashboard does not add a target to a day that is already holding.")] }
   ];
 
-  /* ids, and a 0 for every listed area an option leaves out */
+  /* tip cards: [mirror (≤14 words), room, line (≤20 words)], by option id */
+  var TIPS = {
+    q1o1: ["Your mind wakes before your feet do. That is a lot of energy.", "Habit Tracker", "A Habit Tracker tick for one calm first task gives that early rush somewhere steady to land."],
+    q1o2: ["You wake ready to go, and hunger arrives right on time.", "Habit Tracker", "Make breakfast one of your five habits; the daily tick keeps that sharp start fed."],
+    q1o3: ["Some mornings the blanket wins. The start feels heavy, and that is real.", "Habit Tracker", "Habit Tracker asks for just one tick: feet on the floor. Streaks grow from small starts."],
+    q1o4: ["Your mornings change day to day. You never know which one will arrive.", "Habit Tracker", "With a single wake-up tick, Habit Tracker shows the pattern. Misses stay visible, without any scolding."],
+
+    q2o1: ["When you're deep in study, food slips away until your body notices.", "Meal Tracker", "Meal Tracker lets you log an Indian plate in seconds, so a skipped lunch shows up early."],
+    q2o2: ["Hunger turns up your edge. You feel it before anyone else does.", "Meal Tracker", "Logging each plate in Meal Tracker helps you see which skipped meals come before the snappy hours."],
+    q2o3: ["You can go long without food and hardly feel it.", "Meal Tracker", "Your plate log in Meal Tracker quietly shows the gaps your body is too busy to mention."],
+    q2o4: ["You keep your meals on time, even on busy days. That is steady.", "Meal Tracker", "Meal Tracker keeps that rhythm visible, so you can hold on to it through exam weeks too."],
+
+    q3o1: ["Ideas everywhere, books open everywhere. Your table shows a curious mind.", "Study hour", "Study hour is a live room with other students and DND mode, so one book gets your full attention."],
+    q3o2: ["You like a plan you can see. Order helps you think.", "Habit Tracker", "Pin up to five daily habits in Habit Tracker; ticking them off helps the plan last past week one."],
+    q3o3: ["Your table is cosy and lived-in. It has been that way a while.", "Habit Tracker", "Try one small habit, like clearing one thing each night. Habit Tracker counts the streak for you."],
+    q3o4: ["Only what you need today. You keep things light and clear.", "Study hour", "Bring that clean focus into Study hour, where DND mode keeps the phone quiet while you work."],
+
+    q4o1: ["A low mark makes your mind race ahead to what comes next.", "Progress", "Progress shows your steps over the weeks, so one result sits inside a longer story."],
+    q4o2: ["It stings, and you feel it hot. You expected more, and you care.", "Exams", "In Exams, your teacher's remarks show where the marks slipped, so that heat has one clear place to go."],
+    q4o3: ["The sadness stays quietly for days. That is heavy to carry alone.", "Progress", "Progress keeps every small step you have taken, so one mark never erases the work behind it."],
+    q4o4: ["You pause, then look for the lesson. That takes quiet strength.", "Exams", "Teacher remarks in Exams point to the exact questions, so your lesson-finding has something real to work with."],
+
+    q5o1: ["Your mood shifts like the wind. Hour to hour, it keeps moving.", "Mood Tracker", "Mood Tracker asks for one colour a day. Over weeks, even the windy days start to show a shape."],
+    q5o2: ["Bright and intense. You feel things fully, and you run warm.", "Mood Tracker", "One colour a day in Mood Tracker, plus a short Dhi line, helps you notice the heat early."],
+    q5o3: ["Heavy and slow, like clouds that won't move. Thank you for saying it.", "Mood Tracker", "Mood Tracker takes one colour a day. If grey lingers, its help button can book a private counsellor."],
+    q5o4: ["Calm and open. Your inner weather feels clear these days.", "Mood Tracker", "Keep a colour a day in Mood Tracker; your clear days show you what helps keep them clear."],
+
+    q6o1: ["Forty minutes in, your mind takes ten trips at once. A lively mind.", "Modules", "Modules are short films, so a tricky lesson comes in pieces your attention can hold."],
+    q6o2: ["You don't just listen, you question. Your mind wants to push back.", "Modules", "Watch the Academic film in Modules, then test your own argument against it at your own pace."],
+    q6o3: ["Long lectures pull you toward sleep. Your body is asking for a break.", "Modules", "Modules break lessons into short films, so you can learn in fresh bursts instead of one long sit."],
+    q6o4: ["You stay with the lesson and the notes just flow. That is steady attention.", "Modules", "Short films in Modules let you go deeper into the topics you enjoy, beyond the class hour."],
+
+    q7o1: ["You work in bursts, and the last week turns into a sprint.", "DHI desk", "DHI desk can make a short practice paper any day, so revision comes in small rounds, not one rush."],
+    q7o2: ["Day one, a timetable. You like to see the whole road ahead.", "DHI desk", "Add a weekly mock test from DHI desk to that timetable to check each chapter as you go."],
+    q7o3: ["You take time to start, then you keep going. Steady counts.", "DHI desk", "Once you're moving, a practice paper from DHI desk gives that steady pace a clear target each week."],
+    q7o4: ["A little every day, with revision rounds. You plan for the long run.", "DHI desk", "DHI desk can turn each revision round into a quick mock test, so you see what has stuck."],
+
+    q8o1: ["After twenty minutes, your body wants to move. That is how you're built.", "Study hour", "Join a short Study hour round, stretch, then come back. DND mode keeps the pause phone-free."],
+    q8o2: ["One stubborn problem, and frustration builds. You hate leaving things unsolved.", "Study hour", "In Study hour, others work beside you live, so you can switch tasks for a while and return calmer."],
+    q8o3: ["You can keep sitting, but the pages stop going in. You notice that.", "Study hour", "Study hour with DND mode on helps you keep shorter, fuller blocks instead of long, foggy ones."],
+    q8o4: ["You rest before you run out. That is a wise rhythm.", "Study hour", "Study hour fits that rhythm: focus with others in DND mode, take your break, then rejoin."],
+
+    q9o1: ["A hard problem lights you up, then something new catches your eye.", "DHI desk", "Ask DHI desk to clarify just the next step. One small step keeps the spark on this problem."],
+    q9o2: ["A tough problem feels like a match you want to win.", "DHI desk", "When you're stuck, DHI desk can clarify the idea underneath, so the win comes from understanding, not guessing."],
+    q9o3: ["A hard problem feels like a wall. Familiar ground feels safer.", "DHI desk", "DHI desk can explain it step by step, or draw it out, until the wall has a door."],
+    q9o4: ["You break hard things into small steps. That is a real skill.", "DHI desk", "DHI desk can check each step with you, or turn the problem into a story when the steps run out."],
+
+    q10o1: ["You bring the ideas and keep the conversation alive.", "Blog", "Write and share those ideas on Blog, where other students can read them after the talk ends."],
+    q10o2: ["You step up and keep the group moving. People look to you.", "Study hour", "Start a Study hour with your group; studying live together keeps everyone on track, you included."],
+    q10o3: ["You listen and keep the mood easy. People feel safe around you.", "Study hour", "Study hour lets you study live beside others, with the same easy calm you bring to any group."],
+    q10o4: ["You notice who's stuck and help without any fuss.", "Blog", "On Blog you can write a clear explanation once and share it, so more students find your help."],
+
+    q11o1: ["You share with many people for a moment, then you move forward.", "Mood Tracker", "A colour a day in Mood Tracker gives your feelings one steady place, not just quick moments."],
+    q11o2: ["You carry it on your own. You've learned to be strong that way.", "Counseling", "If you ever want someone to talk to, Counseling is a private booking, never recorded, and always your choice."],
+    q11o3: ["You go quiet and hold it inside. That is a lot to hold.", "Counseling", "Counseling lets you book a private session, never recorded, only when you feel ready. You never have to use it."],
+    q11o4: ["You open up to one or two people you trust. A strong circle.", "Mood Tracker", "Mood Tracker adds one colour a day, so you notice low days early and reach your people sooner."],
+
+    q12o1: ["You know it and want it out fast, so the words race ahead.", "DHI desk", "Practise answers aloud with DHI desk in talk mode and find your own pace before class."],
+    q12o2: ["You answer with confidence, even before you're fully sure. You trust your voice.", "DHI desk", "Talk it through with DHI desk first; it can clarify the parts you're unsure of before you speak."],
+    q12o3: ["Put on the spot, you freeze or keep it short. Many students feel that.", "DHI desk", "DHI desk lets you practise speaking aloud in private, one short answer at a time, with no one watching."],
+    q12o4: ["You take a breath, then answer simply. Calm under the spotlight.", "DHI desk", "Use DHI desk's talk mode to practise longer answers, building on the calm you already have."],
+
+    q13o1: ["You learn fast, and it slips away just as fast.", "DHI desk", "A quick mock test from DHI desk a few days later helps catch what is fading before it goes."],
+    q13o2: ["One clear look and you've got it. You learn by seeing.", "Modules", "The short films in Modules give you that clear look, and you can replay them whenever you need."],
+    q13o3: ["You take your time, and what you learn stays with you.", "Modules", "Modules let you watch a short film at your own pace, as many times as you like."],
+    q13o4: ["Writing it in your own words makes it yours.", "DHI desk", "Put a topic in your own words with DHI desk's write mode, then let a mock test check it."],
+
+    q14o1: ["So many paths interest you. Your answer keeps changing, and that is okay.", "DHI desk", "Talk each option through with DHI desk; saying it aloud shows you which one keeps coming back."],
+    q14o2: ["You know where you're headed, and you're already walking.", "Blog", "Write about your goal on Blog. Putting it in words helps you share it and stay true to it."],
+    q14o3: ["You're not sure yet, and family ideas feel easier to follow.", "DHI desk", "DHI desk is a private place to talk through what you like, before any big decision is made."],
+    q14o4: ["A direction is slowly forming. You're exploring without rushing.", "Blog", "Blog lets you read what other students are exploring, and write about the paths you're curious about."],
+
+    q15o1: ["Dates and terms pile up. Memory-heavy classes weigh on you.", "DHI desk", "DHI desk can turn a list of terms into a story, or a short practice paper you come back to."],
+    q15o2: ["Long answers and essays feel heavy. There is so much to put down.", "DHI desk", "Try DHI desk's write mode to outline an answer first, then fill it in one part at a time."],
+    q15o3: ["Timed problems and numbers feel heavy. The clock adds pressure.", "Exams", "Exams has an MCQ hint slider, so you can practise teacher papers with as much help as you need."],
+    q15o4: ["It's less the subject, more the teacher. You notice how things are taught.", "Exams", "Exams keeps teacher papers and their remarks in one place, whatever the subject."],
+
+    q16o1: ["The night before, your mind keeps working long after the lights go off.", "Habit Tracker", "Add a habit of closing the books an hour before bed. Habit Tracker shows the streak as the wind-down grows."],
+    q16o2: ["Short, deep sleep, and you wake already planning. You're ready to go.", "Habit Tracker", "A night habit of writing tomorrow's list, ticked in Habit Tracker, lets mornings start with action, not planning."],
+    q16o3: ["Your sleep runs long and heavy. Waking up feels like climbing out.", "Habit Tracker", "Habit Tracker can hold one fixed wake-up time as a daily tick, with your streak building each morning."],
+    q16o4: ["You sleep on time, even before big days. That is a gift to yourself.", "Habit Tracker", "Keep sleep as one of your five habits. Its streak helps you protect it in exam week too."],
+
+    q17o1: ["You see colour, travel and making things. A life you create yourself.", "Blog", "Blog is a place to write and share what you make, starting now, not ten years from now."],
+    q17o2: ["You see yourself leading, respected for what you do.", "Modules", "Short Self help films in Modules can help you build the daily habits that leading is made of."],
+    q17o3: ["You see a calm, secure life with family close. That matters.", "Modules", "Modules has short Self help films for building the steady habits a secure life rests on."],
+    q17o4: ["You want your work to genuinely help people. That is a big heart.", "Blog", "Write on Blog about the people you want to help. Sharing it can turn a wish into a plan."],
+
+    q18o1: ["Everyone's hopes sit on your shoulders. That weight is real.", "Counseling", "If it gets heavy, Counseling offers a private talk with a counsellor, never recorded, booked only if you want."],
+    q18o2: ["A quiet fear that you're not enough. Many students carry it too.", "Progress", "Progress shows what you have already done, week by week, so the fear has something real to meet."],
+    q18o3: ["Phone, people, noise. Everything pulls at your attention.", "Progress", "Progress shows the work you finished on quieter days, so you can see what helps you focus."],
+    q18o4: ["Nothing heavy right now. You're at peace with your own pace.", "Mood Tracker", "A colour a day in Mood Tracker keeps a record of these calm days to look back on."]
+  };
+
+  /* ids, tips, and a 0 for every listed area an option leaves out */
   var byN = {}, byId = {};
   LIST.forEach(function (q) {
     q.options.forEach(function (o, i) {
       o.id = "q" + q.n + "o" + (i + 1);
+      var t = TIPS[o.id];
+      if (t) o.tip = { mirror: t[0], room: t[1], line: t[2] };
       q.areas.forEach(function (a) { if (typeof o.areas[a] !== "number") o.areas[a] = 0; });
       byId[o.id] = o;
     });
