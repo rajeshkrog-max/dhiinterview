@@ -1,5 +1,5 @@
 /* Dhirise · landing gate. No backend: the Gmail button is a stub that saves who the student is,
-   with their consent, in localStorage (dhirise.gate.v1) and opens the check (index.html). */
+   with their consent, in localStorage (dhirise.gate.v1) and opens the check where the student left it. */
 (function () {
   "use strict";
   var KEY = "dhirise.gate.v1";
@@ -9,7 +9,21 @@
 
   function read() { try { var g = JSON.parse(localStorage.getItem(KEY)); return g && g.name ? g : null; } catch (e) { return null; } }
   function write(v) { try { localStorage.setItem(KEY, JSON.stringify(v)); return true; } catch (e) { return false; } }
-  function go() { location.href = "index.html"; }
+  /* resume the check (localStorage "dhirise.check.v1"): first unanswered question, or the result once finished */
+  function go() {
+    var url = "question.html";
+    try {
+      var c = JSON.parse(localStorage.getItem("dhirise.check.v1")), g = read();
+      if (c && c.answers && c.profile && g && c.profile.name === g.name) {
+        if (c.completedAt) url = "result.html";
+        else {
+          url = "questions.html?q=18";
+          for (var n = 1; n <= 18; n++) if (!c.answers["q" + n]) { url = n === 1 ? "question.html" : n === 2 ? "question2.html" : "questions.html?q=" + n; break; }
+        }
+      }
+    } catch (e) {}
+    location.href = url;
+  }
 
   /* returning student: "Continue as <name>" / "Not you" */
   var saved = read();
