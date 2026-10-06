@@ -135,12 +135,12 @@ $("#copyBtn").onclick = async () => {
   const b = $("#copyBtn"), ok = await copyText(C.summaryText(rep));
   b.textContent = ok ? "Copied ✓" : "Copy failed"; setTimeout(() => b.textContent = "Copy summary", 2000);
 };
-/* the one downloadable report is the Parent Report: open it for this student */
 $("#pdfBtn").onclick = () => {
-  if (!state || !rep || !rep.complete) { alert("The Parent Report is available once all 18 questions are answered."); return; }
-  const saved = C.loadStore().sessions.find(x => x.date === state.date && C.capName(x.name) === C.capName(state.name));
-  const d = { id: saved ? saved.id : "", name: C.capName(state.name), pronoun: saved && saved.pronoun || "they", cls: state.cls, stream: state.stream, date: state.date, ans: state.ans };
-  window.open(`report.html?sid=${encodeURIComponent(d.id)}#d=${encodeURIComponent(JSON.stringify(d))}`, "_blank");
+  if (!ready()) return;
+  $("#printSheet").innerHTML = C.summarySheetHTML(rep);
+  const t = document.title; document.title = `Dhirise Mind Mirror - ${rep.name} - ${new Date(rep.date).toISOString().slice(0, 10)}`;
+  window.print();
+  document.title = t;
 };
 
 /* ---------- start ---------- */

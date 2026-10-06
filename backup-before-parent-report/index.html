@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Dhirise · Manas Darpan</title>
-<link rel="icon" href="assets/dhirise-logo.png" type="image/png">
+<link rel="icon" href="assets/dhirise-logo.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Yatra+One&family=Mukta:wght@300;400;500;600;700&family=Tiro+Devanagari+Sanskrit&display=swap">
 <link rel="stylesheet" href="css/styles.css">
@@ -14,7 +14,7 @@
 <div class="app" id="app">
   <header class="top">
     <div class="brand">
-      <img class="logo" src="assets/dhirise-logo-light.png" alt="Dhirise" onerror="this.onerror=null;this.src='assets/dhirise-logo.png'">
+      <img src="assets/dhirise-logo.svg" alt="">
       <div class="wm"><b>Dhirise</b><small>Manas Darpan · <span class="skt">मनस् दर्पण</span></small></div>
     </div>
   </header>
@@ -36,31 +36,13 @@
     <button class="item" type="button" data-act="fullscreen">Full screen <kbd>F</kbd></button>
     <button class="item" type="button" data-act="new">New student</button>
     <hr>
-    <button class="item" type="button" data-act="reports">Reports</button>
     <button class="item" type="button" data-act="csv">Export sessions (CSV)</button>
-    <button class="item" type="button" data-act="exportjson">Export all sessions (JSON)</button>
-    <button class="item" type="button" data-act="importjson">Import sessions (JSON)</button>
     <button class="item danger" type="button" data-act="reset">Reset counts</button>
     <hr>
     <button class="item" type="button" data-act="close">Close <kbd>Esc</kbd></button>
     <p class="keys">Student keys: 1–4 choose · → / Enter next · ← back · H this menu</p>
   </div>
 </div>
-
-<!-- interviewer-only buttons on the report screen (never part of a PDF) -->
-<div class="hostbar" id="hostbar" hidden>
-  <button type="button" id="prepParent">Prepare Parent Report</button>
-</div>
-
-<!-- saved sessions: reopen any past student and download either PDF -->
-<div class="hostmenu" id="reportsDlg" hidden>
-  <div class="box reports" role="dialog" aria-modal="true" aria-labelledby="rpTitle">
-    <h3 id="rpTitle"><span>Reports</span><button type="button" class="x" data-close aria-label="Close">×</button></h3>
-    <div id="reportsList"></div>
-  </div>
-</div>
-
-<input type="file" id="importFile" accept="application/json,.json" hidden>
 
 <!-- A4 summary used by Ctrl+P on the report -->
 <div class="print-only" id="printSheet"></div>

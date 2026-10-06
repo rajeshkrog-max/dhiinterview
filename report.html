@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Student Insight Report · Dhirise</title>
+<link rel="icon" href="assets/dhirise-logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Mukta:wght@300;400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/report.css">
+</head>
+<body>
+
+<!-- interviewer toolbar: never part of the PDF or the printout -->
+<aside class="toolbar no-print" id="toolbar">
+  <div class="tb-head">
+    <img class="logo" src="assets/dhirise-logo.png" alt="" onerror="this.onerror=null;this.src='assets/dhirise-logo.jpeg'">
+    <div><b>Parent Report</b><span>Fill in, check the preview, then download.</span></div>
+  </div>
+  <label>Interviewer name<input id="fInterviewer" autocomplete="off"></label>
+  <label>Parent name <em>(optional)</em><input id="fParent" autocomplete="off" placeholder="e.g. Mrs Sharma"></label>
+  <div class="tb-row">
+    <label>Class<select id="fClass"></select></label>
+    <label>Stream<select id="fStream"></select></label>
+  </div>
+  <label>Pronoun<select id="fPronoun"><option value="they">They / them</option><option value="she">She / her</option><option value="he">He / him</option></select></label>
+  <label>Interviewer's note<textarea id="fNote" rows="6" placeholder="A few personal lines for the family: what you noticed, what you admired, what you suggest next."></textarea></label>
+  <p class="tb-warn" id="tbWarn" hidden></p>
+  <div class="tb-actions">
+    <button type="button" class="btn gold" id="pdfBtn">Download Report</button>
+    <button type="button" class="btn" id="printBtn">Print</button>
+  </div>
+  <p class="tb-status" id="tbStatus" role="status"></p>
+</aside>
+
+<main class="doc" id="doc"><p class="empty">Loading report…</p></main>
+
+<script src="assets/dhirise-logo-data.js"></script>
+<script src="js/vendor/html2pdf.bundle.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+<script src="js/reportContent.js"></script>
+<script src="js/report.js"></script>
+</body>
+</html>

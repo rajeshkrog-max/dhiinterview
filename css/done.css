@@ -1,0 +1,46 @@
+/* Dhirise · wait and join. Black screen, logo on top, one gold line. No leaves, no spinner, no percent. */
+:root{
+  --white:#fff; --muted:rgba(255,255,255,.72); --ink-text:#1c140c; --gold:#e9b95c; --err:#ffb3a8;
+  --f-head:"Playfair Display",Georgia,serif;
+  --f-body:"Mukta",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#000}
+body{font-family:var(--f-body);color:var(--white);-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
+[hidden]{display:none!important}
+
+.done{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;
+  max-width:440px;margin:0 auto;
+  padding:calc(24px + env(safe-area-inset-top)) calc(20px + env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) calc(20px + env(safe-area-inset-left))}
+.logo{width:72px;height:72px;object-fit:contain}
+
+/* wait */
+.wait{width:100%;display:flex;flex-direction:column;align-items:center;gap:22px;text-align:center}
+.fill{width:160px;height:3px;border-radius:3px;background:rgba(255,255,255,.14);overflow:hidden}
+.fill i{display:block;height:100%;width:100%;background:var(--gold);transform:scaleX(0);transform-origin:left center}
+.fill i.go{animation:fill 8s linear forwards}
+@keyframes fill{to{transform:scaleX(1)}}
+.line{margin:0;min-height:1.6em;font-size:18px;color:var(--white);opacity:0;transition:opacity .4s ease}
+.line.on{opacity:1}
+
+.gold{display:block;width:100%;min-height:48px;padding:12px 18px;border:0;border-radius:14px;cursor:pointer;
+  font:700 17px var(--f-body);color:var(--ink-text);background:var(--gold)}
+.gold:focus-visible,input:focus-visible{outline:2px solid var(--white);outline-offset:3px}
+.wait .gold{opacity:0;transition:opacity .8s ease}
+.wait .gold.on{opacity:1}
+
+/* join */
+.join{width:100%}
+.join h1{margin:0 0 10px;font-family:var(--f-head);font-weight:700;font-size:28px;line-height:1.2;text-align:center}
+.join > p{margin:0 0 22px;font-size:16px;line-height:1.5;color:var(--muted);text-align:center}
+.join label{display:block;margin-bottom:6px;font-size:14px;font-weight:600;color:var(--muted)}
+.join input{width:100%;min-height:48px;padding:10px 14px;margin-bottom:6px;font:500 18px var(--f-body);letter-spacing:.04em;color:var(--white);
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.28);border-radius:12px;outline:none}
+.join input:focus{border-color:var(--gold)}
+.join input[aria-invalid="true"]{border-color:var(--err)}
+.err{margin:0 0 8px;font-size:14px;color:var(--err)}
+.err:empty{display:none}
+.join .gold{margin-top:8px}
+
+@media (prefers-reduced-motion:reduce){.line,.wait .gold{transition:none}}

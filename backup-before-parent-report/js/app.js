@@ -170,7 +170,7 @@ function chakraSymbol(c) {
 
 /* ---------- summary: A4 sheet, copyable text, CSV ---------- */
 function brandHTML() {
-  return `<div class="brand"><img class="logo on-dark" src="assets/dhirise-logo-light.png" alt="" onerror="this.onerror=null;this.src='assets/dhirise-logo.png'"><img class="logo on-light" src="assets/dhirise-logo.png" alt="" onerror="this.onerror=null;this.src='assets/dhirise-logo.jpeg'"><div class="wm"><b>${BRAND.name}</b><small>${BRAND.product} · <span class="skt">${BRAND.productSkt}</span></small></div></div>`;
+  return `<div class="brand"><img src="assets/dhirise-logo.svg" alt=""><div class="wm"><b>${BRAND.name}</b><small>${BRAND.product} · <span class="skt">${BRAND.productSkt}</span></small></div></div>`;
 }
 function metaLine(rep) { return [fmtDate(rep.date), rep.cls, rep.stream].filter(Boolean).map(esc).join(" · "); }
 function summarySheetHTML(rep) {
@@ -238,32 +238,7 @@ function sessionsCSV(store) {
   return "﻿" + [head, ...rows].map(r => r.map(csvCell).join(",")).join("\r\n");
 }
 
-/* ---------- PDF pagination (shared by both PDFs) ----------
-   html2pdf avoids splits by inserting a spacer before an element, which misbehaves inside CSS grids.
-   Instead we lay the page out at the exact PDF width, then push page-starting blocks to the next page top
-   and nudge any card that would straddle a page boundary onto the next page. */
-function pdfPageHeight(innerWmm, innerHmm, scale) {
-  /* html2pdf lays the content out at innerW mm, renders a canvas ceil(px × scale) wide,
-     then slices it every floor(canvasWidth × innerH / innerW) canvas pixels */
-  const canvasW = Math.ceil(innerWmm * 96 / 25.4 * scale);
-  return Math.floor(canvasW * innerHmm / innerWmm) / scale;
-}
-function paginate(root, H, breakSel, avoidSel, keepSel) {
-  const addTop = (el, px) => { el.style.marginTop = (parseFloat(getComputedStyle(el).marginTop) || 0) + px + "px"; };
-  const sel = [breakSel, avoidSel, keepSel].filter(Boolean).join(", ");
-  root.querySelectorAll(sel).forEach(el => {
-    const base = root.getBoundingClientRect().top, r = el.getBoundingClientRect();
-    const top = r.top - base, bottom = r.bottom - base;
-    if (breakSel && el.matches(breakSel)) { const off = top % H; if (top > 1 && off > 0.5) addTop(el, H - off); return; }
-    if (bottom - top > H - 40) return;                                   // taller than a page: let it flow
-    const tail = keepSel && el.matches(keepSel) ? 160 : 8;               // headings keep ~160px of what follows with them
-    if (Math.floor(top / H) !== Math.floor((bottom + tail) / H)) addTop(el, H - top % H + 14);
-  });
-  const h = root.getBoundingClientRect().height;
-  return Math.max(1, Math.ceil(h / H - 0.002));                         // pages needed
-}
-
-window.DHIcore = { pdfPageHeight, paginate, esc, capName, firstName, fmtDate, reduced, loadStore, saveStore, pcts, typeShare, score, build, parseD,
+window.DHIcore = { esc, capName, firstName, fmtDate, reduced, loadStore, saveStore, pcts, typeShare, score, build, parseD,
   donutSVG, radarSVG, gunaBars, mandalaSVG, chakraSymbol, brandHTML, summarySheetHTML, summaryText, sessionsCSV, LIVE_KEY, CHANNEL };
 
 /* =========================================================== student screen */
@@ -274,7 +249,7 @@ const $ = s => document.querySelector(s);
 const stage = $("#stage"), menu = $("#hostmenu");
 let store = loadStore();
 let S = fresh();
-function fresh() { return { phase: "welcome", name: "", pronoun: "they", cls: "", stream: "", date: null, i: 0, ans: Array(Q.length).fill(null), slide: 0, sid: null, savedAns: null, back: false }; }
+function fresh() { return { phase: "welcome", name: "", cls: "", stream: "", date: null, i: 0, ans: Array(Q.length).fill(null), slide: 0, sid: null, savedAns: null, back: false }; }
 const meta = () => ({ name: S.name, cls: S.cls, stream: S.stream, date: S.date });
 const firstOfChakra = i => i === 0 || Q[i - 1][0] !== Q[i][0];
 
@@ -298,14 +273,10 @@ function renderWelcome() {
       <p class="eyebrow">${W.eyebrow}</p>
       <h1>${W.title}</h1>
       <p class="lede">${W.body}</p>
-      ${pendingResume ? (() => { const r = pendingResume, n = r.S.ans.filter(a => a != null).length; return `<div class="resume" role="group" aria-label="Unfinished session">
-        <div><b>Resume ${esc(capName(r.S.name))}’s session?</b><span>${n === Q.length ? "All 18 answered" : `${n} of ${Q.length} answered`} · saved ${fmtAgo(r.savedAt)}</span></div>
-        <button type="button" class="cta" id="resumeYes">Resume</button><button type="button" class="ghost" id="resumeNo">Start fresh</button></div>`; })() : ""}
       <div class="fields">
         <div class="field full"><label for="nm">Name</label><input id="nm" autocomplete="off" spellcheck="false" placeholder="Enter your name" value="${esc(S.name)}"></div>
         <div class="field"><label for="cls">Class / Year <em>(optional)</em></label><select id="cls">${opt(DATA.CLASSES, S.cls)}</select></div>
         <div class="field"><label for="str">Stream <em>(optional)</em></label><select id="str">${opt(DATA.STREAMS, S.stream)}</select></div>
-        <div class="field"><label for="pro">Pronoun</label><select id="pro">${[["they", "They / them"], ["she", "She / her"], ["he", "He / him"]].map(([v, l]) => `<option value="${v}" ${S.pronoun === v ? "selected" : ""}>${l}</option>`).join("")}</select></div>
       </div>
       <button class="cta" id="go" type="button" ${S.name.trim() ? "" : "disabled"}>${W.button}</button>
     </div>
@@ -317,15 +288,6 @@ function renderWelcome() {
   nm.addEventListener("keydown", e => { if (e.key === "Enter") begin(); });
   $("#cls").onchange = e => { S.cls = e.target.value; sync(); };
   $("#str").onchange = e => { S.stream = e.target.value; sync(); };
-  $("#pro").onchange = e => { S.pronoun = e.target.value; };
-  if (pendingResume) {
-    $("#resumeYes").onclick = resumeSession;
-    $("#resumeNo").onclick = () => {
-      const r = pendingResume, done = r.S.sid && r.S.savedAns;   /* completed sessions are already in Reports */
-      if (!done && !confirm(`Discard ${capName(r.S.name)}’s unfinished answers?`)) return;
-      clearResume(); go(1);
-    };
-  }
   goBtn.onclick = begin;
 }
 function begin() {
@@ -403,7 +365,7 @@ function choose(i) {
   const tn = $("#togN"); if (!reduced()) tn.textContent = "0%";
   countUp(tn, p[i], 900, "%");
   $("#next").disabled = false;
-  rail(); sync(); autosave();
+  rail(); sync();
 }
 function next() {
   if (S.phase !== "q" || S.ans[S.i] == null) return;
@@ -420,51 +382,18 @@ function back() {
 }
 
 /* ---------- reading + saving the session ---------- */
-const resultsOf = rep => ({ typeKey: rep.typeKey, typeName: rep.typeName, dp: rep.R.dp, gp: rep.R.gp, guna: rep.guna.n,
-  chak: rep.chakras.map(c => c.pct), high: rep.high.n, low: rep.low.n, flags: rep.flags.map(f => f.t) });
 function saveSession() {
-  store = loadStore();   /* always merge into what is stored now (another tab may have added or edited sessions) */
   if (S.savedAns) S.savedAns.forEach((a, qi) => { if (a != null && store.counts[qi][a] > 0) store.counts[qi][a]--; });
   S.ans.forEach((a, qi) => { store.counts[qi][a] = (store.counts[qi][a] || 0) + 1; });
   S.savedAns = S.ans.slice();
   const rep = build(S.ans, meta(), null);
-  const prev = store.sessions.find(s => s.id === S.sid);
-  const rec = { id: S.sid || "s" + Date.now().toString(36), date: S.date, name: rep.name, pronoun: S.pronoun, cls: S.cls, stream: S.stream, ans: S.ans.slice(),
-    extra: prev && prev.extra ? prev.extra : {}, results: resultsOf(rep) };
+  const rec = { id: S.sid || "s" + Date.now().toString(36), date: S.date, name: rep.name, cls: S.cls, stream: S.stream, ans: S.ans.slice(),
+    results: { typeKey: rep.typeKey, typeName: rep.typeName, dp: rep.R.dp, gp: rep.R.gp, guna: rep.guna.n,
+      chak: rep.chakras.map(c => c.pct), high: rep.high.n, low: rep.low.n, flags: rep.flags.map(f => f.t) } };
   const at = store.sessions.findIndex(s => s.id === rec.id);
   if (at >= 0) store.sessions[at] = rec; else store.sessions.push(rec);
   S.sid = rec.id;
   saveStore(store);
-  /* a JSON backup of every completed session lands in Downloads, so no session lives only in one browser */
-  downloadText(JSON.stringify(sessionsFile([rec]), null, 2), "application/json", `Dhirise_Session_${safeName(rec.name)}_${isoDate(rec.date)}.json`);
-}
-
-/* ---------- autosave + resume after a refresh ---------- */
-const RESUME_KEY = "dhirise.inprogress";
-let pendingResume = null;
-function autosave() {
-  try {
-    if (S.phase === "welcome" && !S.ans.some(a => a != null)) return;
-    const keep = ["phase", "name", "pronoun", "cls", "stream", "date", "i", "ans", "slide", "sid", "savedAns"];
-    localStorage.setItem(RESUME_KEY, JSON.stringify({ savedAt: Date.now(), S: Object.fromEntries(keep.map(k => [k, S[k]])) }));
-  } catch (e) {}
-}
-function readResume() {
-  try {
-    const r = JSON.parse(localStorage.getItem(RESUME_KEY));
-    if (r && r.S && r.S.name && Array.isArray(r.S.ans) && r.S.ans.length === Q.length && r.S.ans.some(a => a != null)) return r;
-  } catch (e) {}
-  return null;
-}
-function clearResume() { pendingResume = null; try { localStorage.removeItem(RESUME_KEY); } catch (e) {} }
-function resumeSession() {
-  const r = pendingResume; if (!r) return;
-  pendingResume = null;
-  S = Object.assign(fresh(), r.S);
-  if (S.phase === "reading" || (S.phase === "report" && S.ans.every(a => a != null))) {
-    if (!S.sid || !S.savedAns) { S.phase = "reading"; } else S.phase = "report";
-  } else if (S.phase !== "q" && S.phase !== "chakra") { S.phase = "q"; }
-  go(1);
 }
 function renderReading() {
   stage.innerHTML = `<section class="slide reading"><div><div class="mandala">${mandalaSVG("spin")}</div><h2>Reading your pattern…</h2><p>Bringing your eighteen answers together</p></div></section>`;
@@ -588,9 +517,7 @@ function go(dir) {
   S.back = dir < 0;
   if (S.phase !== "report") $("#printSheet").innerHTML = "";
   ({ welcome: renderWelcome, chakra: renderChakra, q: renderQ, reading: renderReading, report: renderReport })[S.phase]();
-  const hb = S.phase === "report";
-  $("#hostbar").hidden = !hb; document.body.classList.toggle("has-hostbar", hb);
-  rail(); sync(); autosave();
+  rail(); sync();
   window.scrollTo({ top: 0, behavior: reduced() ? "auto" : "smooth" });
 }
 
@@ -622,7 +549,6 @@ function openPanel() {
 let menuReturn = null;
 function openMenu() {
   menuReturn = document.activeElement;
-  store = loadStore();
   $("#hmCount").textContent = `${store.sessions.length} saved`;
   menu.hidden = false;
   menu.querySelector("button.item").focus();
@@ -638,60 +564,7 @@ function toggleFS() {
 function newStudent() {
   const inProgress = S.phase !== "welcome" || S.name.trim();
   if (inProgress && S.phase !== "report" && !confirm("Start a new student? The current answers will be cleared.")) return;
-  clearResume(); S = fresh(); go(1);
-}
-function downloadText(text, type, filename) {
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([text], { type: type + ";charset=utf-8" }));
-  a.download = filename;
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-}
-function fmtAgo(t) {
-  const m = Math.round((Date.now() - t) / 60000);
-  return m < 1 ? "just now" : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : fmtDate(t);
-}
-
-/* ---------- sessions as JSON: export all, import (merge, never overwrite) ---------- */
-const sessionsFile = list => ({ app: "dhirise-manas-darpan", version: 2, exported: new Date().toISOString(), origin: location.origin, sessions: list });
-function exportJSON() {
-  store = loadStore();
-  if (!store.sessions.length) { toast("No completed sessions yet."); return; }
-  downloadText(JSON.stringify(sessionsFile(store.sessions), null, 2), "application/json", `dhirise-sessions-${isoDate()}.json`);
-  toast(`Exported ${store.sessions.length} session${store.sessions.length === 1 ? "" : "s"}.`);
-}
-const validSession = s => s && typeof s.name === "string" && s.name.trim() && Array.isArray(s.ans) && s.ans.length === Q.length &&
-  s.ans.every((a, i) => Number.isInteger(a) && a >= 0 && a < Q[i][2].length);
-function importSessions(obj) {
-  const list = Array.isArray(obj) ? obj : obj && Array.isArray(obj.sessions) ? obj.sessions : obj && obj.session ? [obj.session] : [obj];
-  store = loadStore();
-  let added = 0, skipped = 0, invalid = 0;
-  list.forEach(s => {
-    if (!validSession(s)) { invalid++; return; }
-    const same = x => x.id === s.id || (x.name === s.name && x.date === s.date && x.ans.join() === s.ans.join());
-    if (store.sessions.some(same)) { skipped++; return; }
-    const rep = build(s.ans, { name: s.name, cls: s.cls, stream: s.stream, date: s.date }, null);
-    const rec = Object.assign({ cls: "", stream: "", extra: {} }, s,   /* a missing pronoun stays missing; reports default to "they" */
-      { id: s.id || "s" + Date.now().toString(36) + added, date: s.date || new Date().toISOString(), ans: s.ans.slice(), results: s.results || resultsOf(rep) });
-    store.sessions.push(rec);
-    rec.ans.forEach((a, qi) => { store.counts[qi][a] = (store.counts[qi][a] || 0) + 1; });
-    added++;
-  });
-  saveStore(store);
-  return { added, skipped, invalid };
-}
-function importFromFile() {
-  closeMenu();
-  const inp = $("#importFile");
-  inp.value = "";
-  inp.onchange = async () => {
-    const f = inp.files && inp.files[0]; if (!f) return;
-    try {
-      const r = importSessions(JSON.parse(await f.text()));
-      toast(`Imported ${r.added} session${r.added === 1 ? "" : "s"}` + (r.skipped ? `, ${r.skipped} already saved` : "") + (r.invalid ? `, ${r.invalid} not valid` : "") + ".");
-    } catch (e) { toast("That file isn't a valid sessions JSON."); }
-  };
-  inp.click();
+  S = fresh(); go(1);
 }
 function downloadCSV() {
   store = loadStore();
@@ -704,42 +577,7 @@ function downloadCSV() {
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
   toast(`Exported ${store.sessions.length} session${store.sessions.length === 1 ? "" : "s"}.`);
 }
-/* ---------- the one downloadable report: the Parent Report (report.html) ---------- */
-const safeName = s => String(s || "Student").trim().replace(/\s+/g, "_").replace(/[^\p{L}\p{N}_-]/gu, "");
-const isoDate = d => { const t = new Date(d || Date.now()); return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`; };
-function sessionById(id) { return loadStore().sessions.find(s => s.id === id) || null; }
-function currentSession() {
-  return sessionById(S.sid) || { id: S.sid, name: capName(S.name), pronoun: S.pronoun, cls: S.cls, stream: S.stream, date: S.date, ans: S.ans.slice() };
-}
-function openParentReport(sess) {
-  if (!sess || !sess.ans || sess.ans.some(a => a == null)) { toast("This session isn't complete yet."); return; }
-  const d = { id: sess.id, name: sess.name, pronoun: sess.pronoun || "they", cls: sess.cls, stream: sess.stream, date: sess.date, ans: sess.ans };
-  const url = `report.html?sid=${encodeURIComponent(sess.id || "")}#d=${encodeURIComponent(JSON.stringify(d))}`;
-  if (!window.open(url, "_blank")) toast("Pop-up blocked. Allow pop-ups for this page and try again.");
-}
-
-/* ---------- Reports list (host menu) ---------- */
-const reportsDlg = $("#reportsDlg");
-function openReports() {
-  closeMenu();
-  const list = loadStore().sessions.slice().reverse();
-  $("#reportsList").innerHTML = list.length ? list.map(s => `<div class="rrow">
-      <div><b>${esc(s.name)}</b><span>${[fmtDate(s.date), s.cls, s.stream, s.results && s.results.typeName].filter(Boolean).map(esc).join(" · ")}</span></div>
-      <div class="racts"><button type="button" class="item" data-sess="${esc(s.id)}">Open report</button></div></div>`).join("")
-    : `<p class="keys">No completed sessions yet.</p>`;
-  reportsDlg.hidden = false;
-  (reportsDlg.querySelector("button.item") || reportsDlg.querySelector("button")).focus();
-}
-function closeReports() { reportsDlg.hidden = true; }
-reportsDlg.addEventListener("click", e => {
-  if (e.target === reportsDlg || e.target.closest("[data-close]")) { closeReports(); return; }
-  const b = e.target.closest("button[data-sess]"); if (!b) return;
-  openParentReport(sessionById(b.dataset.sess));
-});
-$("#prepParent").onclick = () => openParentReport(currentSession());
-
 function resetCounts() {
-  store = loadStore();
   if (!confirm("Reset the answer counts used for the “% of students” figures? The figures go back to the indicative starting values.")) return;
   store.counts = blankCounts();
   S.savedAns = null;
@@ -754,8 +592,7 @@ menu.addEventListener("click", e => {
   if (e.target === menu) { closeMenu(); return; }
   const b = e.target.closest("button[data-act]"); if (!b) return;
   ({ panel: openPanel, fullscreen: () => { closeMenu(); toggleFS(); }, new: () => { closeMenu(); newStudent(); },
-     reports: openReports, csv: downloadCSV, exportjson: exportJSON, importjson: importFromFile,
-     reset: resetCounts, close: closeMenu })[b.dataset.act]();
+     csv: downloadCSV, reset: resetCounts, close: closeMenu })[b.dataset.act]();
 });
 $("#gear").onclick = () => menu.hidden ? openMenu() : closeMenu();
 
@@ -769,7 +606,6 @@ function toast(msg) {
 document.addEventListener("keydown", e => {
   if (e.ctrlKey || e.metaKey || e.altKey) return;
   const key = e.key, k = key.length === 1 ? key.toLowerCase() : key;
-  if (!reportsDlg.hidden) { if (key === "Escape") { e.preventDefault(); closeReports(); } return; }
   if (!menu.hidden) {
     if (key === "Escape" || k === "h") { e.preventDefault(); closeMenu(); }
     else if (k === "i") { e.preventDefault(); openPanel(); }
@@ -794,7 +630,5 @@ document.addEventListener("keydown", e => {
   } else if (S.phase === "welcome" && key === "Enter") begin();
 });
 
-pendingResume = readResume();
-window.DHIapp = { importSessions };   /* used by scripted recovery/import */
 go(1);
 })();
