@@ -1,2 +1,16 @@
 # student data recovered from the browser: keep it out of the public repo
 recovery/
+
+# test outputs and downloads: student sessions and reports
+/*.pdf
+Dhirise_Session_*.json
+Dhirise_Report_*.pdf
+
+# local settings and secrets
+*.local.js
+.env*
+
+# tooling and OS clutter
+node_modules/
+.DS_Store
+Thumbs.db

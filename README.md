@@ -1,61 +1,71 @@
-# Dhirise · Manas Darpan (Mind Mirror)
+# Dhirise · student interview funnel
 
-An 18-question student entry assessment by Dhirise. It reads Prakriti (Vata / Pitta / Kapha), Manas (Sattva / Rajas / Tamas) and chakra balance through everyday questions, then walks the student through a 10-slide reflection and a one-page summary.
+A short self-check for students, and the marketing funnel for **Dhi**, our upcoming student app.
+A student signs in, answers 18 everyday questions, sees a teaser, can join the Dhi early-access WhatsApp group, reads a short
+"Who you are" story and gets a full Mind & Study Profile. Every insight comes from their own answers. Nothing is diagnosed or ranked.
 
-## Run it
+Plain HTML, CSS and JavaScript. There is no build step and no framework, and no backend yet (see [INTEGRATION.md](INTEGRATION.md)).
 
-**Easiest:** double-click `index.html` (Chrome or Edge). Fonts load from Google Fonts when online; everything else is local.
+## Student flow
 
-**On localhost:** double-click `start-dhirise.bat`, or from this folder run:
+| # | Page | What the student sees |
+|---|---|---|
+| 1 | `landing.html` | Name, age, class and consent ("Continue with Gmail" is a stub for now). |
+| 2 | `meet.html` | One screen about what Dhi is. |
+| 3 | `question.html`, `question2.html`, `questions.html?q=3…18` | 18 questions; each answer shows a tip card about the Dhi room that fits. |
+| 4 | `done.html` | A short wait, a teaser (style, Dhi starting score, locked cards), then mobile number + WhatsApp early-access tick, or Skip. |
+| 5 | `who.html` | "Who you are": 6 swipeable cards built from their answers. |
+| 6 | `report-student.html` | The full report: score ring, KPIs, radar, style, strengths, next steps, 21-day path, Dhi rooms, food, hobbies, careers, feedback. |
+
+A returning student who taps "Continue as …" on the landing page resumes where they left off.
+
+## Run it locally
 
 ```bash
 python -m http.server 8081
 ```
 
-Then open http://localhost:8081. **Always use port 8081** (8080 belongs to the Sera project). The browser keeps saved sessions per address, so a different port or `file://` starts with an empty list. Use Export/Import (JSON) to move sessions between them.
+Then open **http://localhost:8081/landing.html**. Use port 8081 (8080 is taken on the main dev machine).
+Answers live in the browser's localStorage, so to start fresh use a private window or clear the `dhirise.*` keys.
 
-## Files
+## Folder map
 
-| File | What it holds |
-| --- | --- |
-| `index.html` | Student screen markup |
-| `panel.html` | Private interviewer panel markup |
-| `css/styles.css` | All styles, including the A4 print sheet |
-| `js/data.js` | All text: questions, chakras, doshas, mixed types, gunas, flags, talking points |
-| `js/app.js` | Scoring, report builder and the student screen |
-| `js/panel.js` | Interviewer panel |
-| `report.html`, `css/report.css`, `js/report.js` | Parent Report (light, printable A4) |
-| `js/reportContent.js` | All Parent Report text: plain language, no internal terms |
-| `js/config.js` | **Your details for the Parent Report**: phone, email, website, address, default interviewer |
-| `js/vendor/html2pdf.bundle.min.js` | html2pdf.js 0.14.0 (MIT), stored locally: no CDN at runtime |
-| `assets/dhirise-logo.png` | Logo with transparent background (made from `dhirise-logo.jpeg`, which is the fallback) |
-| `assets/dhirise-logo-data.js` | Same logo embedded, so PDFs include it even when opened from `file://` |
+**Student funnel (current)**
 
-## During the interview
+| Path | What |
+|---|---|
+| `landing.html`, `js/gate.js`, `css/landing.css` | Sign-in and consent |
+| `meet.html`, `js/meet.js` | Meet Dhi |
+| `question.html`, `question2.html`, `questions.html`, `js/q1.js`, `js/q2.js`, `js/questions.js`, `js/question.js`, `js/leaves.js`, `css/question.css` | Question screens, tip card, falling leaves |
+| `done.html`, `js/done.js`, `css/done.css` | Wait, teaser, join (lead capture) |
+| `who.html`, `js/who.js`, `css/who.css` | "Who you are" story |
+| `report-student.html`, `js/report-student.js`, `css/report-student.css` | Full report |
+| `js/engine/questions.js` | The 18 questions, 72 options, their scoring and tip-card text (single source of truth) |
+| `js/engine/score.js` | Pure scoring: `DhiScore.score(answers, { seed })`. No DOM, so it also runs in Node |
+| `js/engine/store.js` | The one answer store (`localStorage "dhirise.check.v1"`) |
+| `js/engine/screen.js` | Fills a question screen from the engine |
+| `js/engine/reportText.js`, `js/engine/storyText.js` | Every word on the report and the story |
+| `js/funnel-config.js` | WhatsApp link and backend endpoints (empty in the repo); see `js/funnel-config.example.js` |
+| `tools/lead-sheet.gs`, `tools/LEAD-SHEET-SETUP.md` | Google Sheet receiver for leads and feedback |
+| `assets/` | Logo, landing hero, `interview bg/Q1–Q18.png` |
+| `INTEGRATION.md` | Everything needed to connect a backend |
+| `CHANGELOG.md` | What changed |
+| `README-FUNNEL.md` | Short funnel notes (older companion to this file) |
 
-Nothing host-side is shown to the student. Press **H** (or click the faint gear in the bottom-right corner) for the host menu:
+**Legacy: the old interviewer tool (kept, not used by the funnel)**
 
-- **I**: open the interviewer panel in a new window. Share only the main window; the panel stays private and updates live.
-- **F**: full screen.
-- **New student**, **Export sessions (CSV)**, **Reset counts**.
+| Path | What |
+|---|---|
+| `index.html`, `panel.html`, `css/styles.css`, `js/app.js`, `js/data.js`, `js/panel.js` | Presenter-led interview with a private interviewer panel |
+| `report.html`, `css/report.css`, `js/report.js`, `js/reportContent.js`, `js/config.js`, `js/vendor/html2pdf.*` | Printable parent report |
+| `result.html`, `js/result.js`, `css/result.css` | First version of the student result (replaced by `report-student.html`) |
+| `backup-before-parent-report/` | Snapshot of the old tool |
+| `start-dhirise.bat` | Starts the server on 8081 and opens the legacy tool's start page |
+| `recovery/` | Local only, git-ignored: student data recovered from a browser |
 
-Student keys (work but aren't shown): `1`–`4` choose, `→` / `Enter` next, `←` back. On the report, `←` / `→` move between slides.
+Nothing in the funnel loads a legacy file.
 
-The interviewer panel shows the current question and answer live, all 18 answers with the dosha and guna each points to, flags with suggested gentle lines, follow-up questions per chakra and talking points for each report slide. **Copy summary** copies a clean text summary; **Save report as PDF** prints the A4 summary.
+## Privacy
 
-## PDF reports
-
-- **On the report screen**, two small buttons sit at the bottom-right, next to the gear: **Download Session Report** (the dark on-screen report as a PDF, `Dhirise_Session_<Name>_<date>.pdf`) and **Prepare Parent Report** (opens `report.html` for that student).
-- **Parent Report** (`report.html`): fill in interviewer name, note, parent name, class, stream and pronoun in the left toolbar, then **Download PDF** (`Dhirise_Report_<Name>_<date>.pdf`) or **Print**. The toolbar never appears in the PDF.
-- **Host menu → Reports** lists every saved student, so you can download either PDF again later.
-
-## Keeping session data safe
-
-- **Autosave:** the session is saved after every answer. After a refresh or crash, the welcome screen offers “Resume <Name>’s session?”.
-- **Automatic backup:** when a session completes, `Dhirise_Session_<Name>_<date>.json` downloads automatically.
-- **Host menu → Export all sessions (JSON)** saves everything; **Import sessions (JSON)** merges a file back in. It accepts the export, the per-session backups and `recovery/` files. Sessions already saved are skipped, never overwritten.
-- `recovery/` holds student data recovered from the browser and is git-ignored, so it never reaches GitHub.
-
-## About the percentages and data
-
-The "% of students" figures start from indicative estimates and blend in every completed session saved in this browser. Each completed session (name, class, stream, date, answers, results) is also stored locally and can be exported as CSV from the host menu. Present from the same computer and browser so the numbers build up.
+Real student data never goes in the repo: `recovery/`, session JSON and report PDFs are git-ignored (see `.gitignore`).
+`js/funnel-config.js` stays empty in the repo. The landing consent text says students under 18 need a parent or guardian with them.
