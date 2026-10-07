@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="Gift hamper">
+  <!-- placeholder until assets/challenge/prize.png is added: a gold gift box on a soft glow -->
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="55%" r="50%">
+      <stop offset="0" stop-color="#e9b95c" stop-opacity=".35"/>
+      <stop offset="1" stop-color="#e9b95c" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="box" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f6d58e"/>
+      <stop offset=".55" stop-color="#e9b95c"/>
+      <stop offset="1" stop-color="#b8862f"/>
+    </linearGradient>
+    <linearGradient id="lid" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fbe3a8"/>
+      <stop offset="1" stop-color="#d9a441"/>
+    </linearGradient>
+    <linearGradient id="ribbon" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1b1e3d"/>
+      <stop offset="1" stop-color="#0b0c18"/>
+    </linearGradient>
+  </defs>
+  <circle cx="120" cy="132" r="112" fill="url(#glow)"/>
+  <!-- bow -->
+  <path d="M120 78c-10-22-42-30-48-14-5 14 22 20 48 14z" fill="url(#lid)" stroke="#b8862f" stroke-width="2"/>
+  <path d="M120 78c10-22 42-30 48-14 5 14-22 20-48 14z" fill="url(#lid)" stroke="#b8862f" stroke-width="2"/>
+  <!-- box -->
+  <rect x="58" y="112" width="124" height="88" rx="8" fill="url(#box)"/>
+  <rect x="50" y="84" width="140" height="32" rx="8" fill="url(#lid)"/>
+  <!-- ribbon -->
+  <rect x="110" y="84" width="20" height="116" fill="url(#ribbon)"/>
+  <rect x="50" y="96" width="140" height="8" fill="url(#ribbon)" opacity=".9"/>
+  <circle cx="120" cy="82" r="8" fill="url(#ribbon)" stroke="#e9b95c" stroke-width="2"/>
+  <!-- shine -->
+  <path d="M66 122h6v66h-6z" fill="#fff" opacity=".25"/>
+</svg>
