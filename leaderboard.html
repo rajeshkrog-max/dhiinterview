@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0c18">
+<title>DhiRise · Leaderboard</title>
+<link rel="icon" href="assets/dhirise-logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Mukta:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/card.css">
+<link rel="stylesheet" href="css/leaderboard.css">
+</head>
+<body>
+<!-- Founding Circle leaderboard: filled by js/leaderboard.js; data only via js/api.js -->
+<header class="lb-top">
+  <a class="lb-back" href="challenge.html" aria-label="Back to the challenge">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+  </a>
+  <h1>Leaderboard</h1>
+  <span class="lb-chip" id="lbChip" role="timer" aria-live="off"></span>
+</header>
+
+<main class="lb" id="lb">
+  <p class="lb-closed" id="lbClosed" hidden>Challenge closed · Winner will be announced soon</p>
+
+  <section class="lb-prize" aria-label="Prize">
+    <img id="lbPrize" alt="" width="48" height="48">
+    <p>Top referrer wins a gift hamper worth ₹2,999</p>
+  </section>
+
+  <section class="lb-podium" id="lbPodium" aria-label="Top 3"></section>
+
+  <ol class="lb-list" id="lbList" start="4" aria-label="Ranks 4 to 50"></ol>
+
+  <p class="lb-foot">Updated every 5 minutes · Only completed checks with feedback count.</p>
+</main>
+
+<!-- sticky: your card, or "Join the challenge →" -->
+<aside class="lb-you" id="lbYou" hidden aria-label="Your place"></aside>
+
+<script src="js/funnel-config.js"></script>
+<script src="js/challenge-config.js"></script>
+<script src="js/engine/questions.js"></script>
+<script src="js/engine/score.js"></script>
+<script src="js/api.js"></script>
+<script src="js/share-icons.js"></script>
+<script src="js/leaderboard.js"></script>
+</body>
+</html>
