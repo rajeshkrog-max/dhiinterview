@@ -194,6 +194,9 @@ form{display:flex;flex-direction:column;gap:10px;margin:0}
 .sheet-body p:last-child{margin-bottom:0}
 .sheet-foot{flex:none;padding-top:14px}
 .sheet-hint{margin:0 0 8px;font-size:12px;color:var(--muted);text-align:center}
+/* the last line of the notice ("By tapping I agree, …"): highlighted in gold */
+#consentLines .consent-final{padding:10px 12px;border-left:3px solid var(--gold);border-radius:8px;
+  background:rgba(233,185,92,.12);color:var(--gold-2);font-weight:600}
 /* "I agree": muted until the notice is read, then clearly lit */
 #agree[aria-disabled="true"]{opacity:.45;box-shadow:none;cursor:not-allowed}
 #agree[aria-disabled="false"]{opacity:1;font-weight:700;font-size:18px;color:#1c140c;
