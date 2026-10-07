@@ -213,6 +213,9 @@
   }
   function areaScores() { var o = {}; DhiQuestions.AREAS.forEach(function (a) { o[a] = r.areas[a].score; }); return o; }
   function keep(v) { try { localStorage.setItem(LEAD, JSON.stringify(v)); } catch (e) {} }
+  /* challenge status for the sheet (js/api.js); read early so the submit stays instant */
+  var challenge = { challengeJoined: false, joinedAt: null };
+  if (window.DhiApi) DhiApi.getMe().then(function (m) { challenge = { challengeJoined: !!(m && m.joined), joinedAt: (m && m.joinedAt) || null }; }, function () {});
 
   $("join").addEventListener("submit", function (e) {
     e.preventDefault();
@@ -221,7 +224,8 @@
       name: profile.name || "", age: profile.age || "", class: profile.class || "",
       phone: digits(), wantsCommunity: $("community").checked, foundingId: DhiIdentity.foundingId(profile),
       styleKey: r.styleKey, areas: areaScores(), indices: r.indices, dhiStart: r.dhiStart, flags: r.flags,
-      completedAt: check.completedAt
+      completedAt: check.completedAt,
+      challengeJoined: challenge.challengeJoined, joinedAt: challenge.joinedAt
     };
     var cfg = window.DHI_FUNNEL || {};
     keep({ lead: lead, completedAt: check.completedAt, sent: !!cfg.leadEndpoint, at: new Date().toISOString() });

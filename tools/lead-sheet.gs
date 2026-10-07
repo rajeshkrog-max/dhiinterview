@@ -8,8 +8,8 @@
 var AREAS = ["routine", "emotions", "drive", "connection", "expression", "clarity", "purpose"];
 var INDICES = ["studyReadiness", "emotionalBalance", "focusEnergy", "direction"];
 var LEAD_HEADER = ["receivedAt", "name", "age", "class", "phone", "wantsCommunity", "styleKey", "dhiStart"]
-  .concat(INDICES).concat(AREAS).concat(["flags", "completedAt", "foundingId"]);   /* foundingId last, so older sheets keep their columns */
-var FEEDBACK_HEADER = ["receivedAt", "rating", "text", "canShare", "styleKey", "completedAt", "phone"];
+  .concat(INDICES).concat(AREAS).concat(["flags", "completedAt", "foundingId", "challengeJoined", "joinedAt"]);   /* new columns go last, so older sheets keep theirs */
+var FEEDBACK_HEADER = ["receivedAt", "rating", "text", "canShare", "styleKey", "completedAt", "phone", "challengeJoined", "joinedAt"];
 
 function doPost(e) {
   var lock = LockService.getScriptLock();
@@ -33,7 +33,8 @@ function appendLead_(d) {
   ]
     .concat(INDICES.map(function (k) { return indices[k] != null ? indices[k] : ""; }))
     .concat(AREAS.map(function (k) { return areas[k] != null ? areas[k] : ""; }))
-    .concat([Object.keys(flags).filter(function (k) { return flags[k] === true; }).join(", "), d.completedAt || "", safe_(d.foundingId)]);
+    .concat([Object.keys(flags).filter(function (k) { return flags[k] === true; }).join(", "), d.completedAt || "", safe_(d.foundingId),
+      d.challengeJoined === true ? "yes" : "no", d.joinedAt || ""]);
   getSheet_("Leads", LEAD_HEADER).appendRow(row);
 }
 
@@ -41,7 +42,8 @@ function appendFeedback_(d) {
   var rating = Math.max(0, Math.min(5, Number(d.rating) || 0));
   getSheet_("Feedback", FEEDBACK_HEADER).appendRow([
     new Date(), rating, safe_(String(d.text || "").slice(0, 1000)), d.canShare === true ? "yes" : "no",
-    safe_(d.styleKey), d.completedAt || "", d.phone ? "'" + String(d.phone) : ""
+    safe_(d.styleKey), d.completedAt || "", d.phone ? "'" + String(d.phone) : "",
+    d.challengeJoined === true ? "yes" : "no", d.joinedAt || ""
   ]);
 }
 
@@ -56,6 +58,10 @@ function getSheet_(name, header) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName(name) || ss.insertSheet(name);
   if (sheet.getLastRow() === 0) { sheet.appendRow(header); sheet.setFrozenRows(1); }
+  else if (sheet.getLastColumn() < header.length) {        /* an older sheet: add the new column names at the end */
+    var from = sheet.getLastColumn() + 1;
+    sheet.getRange(1, from, 1, header.length - from + 1).setValues([header.slice(from - 1)]);
+  }
   return sheet;
 }
 

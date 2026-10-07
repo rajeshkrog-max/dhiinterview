@@ -62,7 +62,8 @@
     if (t.length < (CFG.minFeedbackChars || 30)) return false;
     var letters = t.toLowerCase().replace(/[^a-zऀ-ॿ]/g, "");
     var distinct = {}; for (var i = 0; i < letters.length; i++) distinct[letters[i]] = 1;
-    return Object.keys(distinct).length >= 8 && !/(.)\1{5,}/.test(t);       /* not "aaaaaa…" or a few keys mashed */
+    /* junk: fewer than 5 distinct letters, or one character repeated (a run of 5+ of the same character) */
+    return Object.keys(distinct).length >= 5 && !/(.)\1{4,}/.test(t);
   }
   function shareBase() {
     var u = String((root.DHI_FUNNEL && root.DHI_FUNNEL.shareUrl) || "").replace(/\/+$/, "");
@@ -110,11 +111,11 @@
   var api = {
     /* who is signed in, and where they are in the challenge */
     getMe: function () {
-      // BACKEND: replace with fetch("/api/me") → { name, firstName, email, age, class, style, code, joined, usedCode, reportComplete }
+      // BACKEND: replace with fetch("/api/me") → { name, firstName, email, age, class, style, code, joined, joinedAt, usedCode, reportComplete }
       var g = gate(), m = me(), c = check();
       return Promise.resolve({
         name: g.name || "", firstName: firstName(g.name), email: g.email || null, age: g.age || null, "class": g["class"] || "",
-        style: styleOf(), code: m.code, joined: m.joined, parentConsent: m.parentConsent,
+        style: styleOf(), code: m.code, joined: m.joined, joinedAt: m.joinedAt, parentConsent: m.parentConsent,
         usedCode: m.usedCode ? m.usedCode.code : null, finished: !!c.completedAt, reportComplete: m.reportComplete,
         feedbackGiven: !!(m.feedback && m.feedback.genuine)
       });
@@ -214,6 +215,9 @@
         nextRank: target ? target.rank : null
       });
     },
+
+    /* the feedback rule, for live hints on the page (no data access; the server re-checks) */
+    isGenuine: function (text) { return genuine(text); },
 
     /* has the challenge ended? (local clock; the server decides for real) */
     isOver: function () { return Date.now() > Date.parse(CFG.endsAt || "2026-10-30T23:59:00+05:30"); }

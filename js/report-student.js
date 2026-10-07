@@ -454,6 +454,21 @@
     var text = el("textarea", "fb-text");
     text.rows = 4; text.maxLength = 1000; text.placeholder = T.feedbackPlaceholder;
     text.setAttribute("aria-label", T.feedbackPlaceholder);
+    /* live counter "12 / 30" until the minimum is reached */
+    var MIN = (window.DHI_CHALLENGE && window.DHI_CHALLENGE.minFeedbackChars) || 30;
+    var counter = el("p", "fb-count");
+    counter.setAttribute("aria-live", "off");
+    function count() {
+      var n = text.value.trim().length;
+      counter.textContent = Math.min(n, MIN) + " / " + MIN;
+      counter.classList.toggle("ok", n >= MIN);
+    }
+    text.addEventListener("input", function () { count(); if (hint.textContent) hint.textContent = ""; });
+    count();
+    function genuine(s) {
+      if (window.DhiApi && DhiApi.isGenuine) return DhiApi.isGenuine(s);
+      return String(s || "").trim().length >= MIN;
+    }
     var share = el("input"); share.type = "checkbox"; share.id = "fbShare";
     var shareLabel = el("label", null, T.feedbackShare); shareLabel.htmlFor = "fbShare";
     var hint = el("p", "fb-hint"); hint.setAttribute("aria-live", "polite");
@@ -461,24 +476,41 @@
 
     submit.addEventListener("click", function () {
       if (!rating) { hint.textContent = T.feedbackNeedStars; starBtns[0].focus(); return; }
-      var lead = null;
-      try { lead = JSON.parse(localStorage.getItem("dhirise.lead.v1")); } catch (e) {}
-      var l = lead && lead.completedAt === check.completedAt ? lead.lead : null;
-      var payload = { type: "feedback", rating: rating, text: text.value.trim(), canShare: share.checked,
-        styleKey: r.styleKey, completedAt: check.completedAt };
-      if (l && l.phone) payload.phone = l.phone;
-      try { localStorage.setItem(KEY, JSON.stringify({ feedback: payload, completedAt: check.completedAt, sent: !!cfg.feedbackEndpoint, at: new Date().toISOString() })); } catch (e) {}
-      if (cfg.feedbackEndpoint) {
-        try {
-          fetch(cfg.feedbackEndpoint, { method: "POST", mode: "no-cors", keepalive: true,
-            headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) }).catch(function () {});
-        } catch (e) {}
-      }
-      c.textContent = "";
-      add(c, el("h2", "eyebrow", T.feedbackTitle), thanks);
+      var said = text.value.trim();
+      if (said.length < MIN) { hint.textContent = fill(T.feedbackTooShort, { n: MIN }); text.focus(); return; }
+      if (!genuine(said)) { hint.textContent = T.feedbackJunk; text.focus(); return; }
+      if (submit.getAttribute("aria-busy")) return;
+      submit.setAttribute("aria-busy", "true");
+
+      var api = window.DhiApi;
+      var steps = api
+        ? api.submitFeedback({ rating: rating, text: said }).then(function () { return api.markReportComplete(); })
+            .then(function () { return api.getMe(); })
+        : Promise.resolve({});
+      steps.catch(function () { return {}; }).then(function (me) {
+        me = me || {};
+        var lead = null;
+        try { lead = JSON.parse(localStorage.getItem("dhirise.lead.v1")); } catch (e) {}
+        var l = lead && lead.completedAt === check.completedAt ? lead.lead : null;
+        var payload = { type: "feedback", rating: rating, text: said, canShare: share.checked,
+          styleKey: r.styleKey, completedAt: check.completedAt,
+          challengeJoined: !!me.joined, joinedAt: me.joinedAt || null };
+        if (l && l.phone) payload.phone = l.phone;
+        try { localStorage.setItem(KEY, JSON.stringify({ feedback: payload, completedAt: check.completedAt, sent: !!cfg.feedbackEndpoint, at: new Date().toISOString() })); } catch (e) {}
+        if (cfg.feedbackEndpoint) {
+          try {
+            fetch(cfg.feedbackEndpoint, { method: "POST", mode: "no-cors", keepalive: true,
+              headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) }).catch(function () {});
+          } catch (e) {}
+        }
+        c.textContent = "";
+        add(c, el("h2", "eyebrow", T.feedbackTitle), thanks);
+        /* a valid feedback opens the challenge invite (js/challenge-ui.js) */
+        document.dispatchEvent(new CustomEvent("dhirise:feedback", { detail: { genuine: true } }));
+      });
     });
 
-    add(c, el("p", "fb-ask", T.feedbackAsk), stars, text,
+    add(c, el("p", "fb-ask", T.feedbackAsk), stars, text, counter,
       add(el("div", "fb-share"), share, shareLabel), hint, submit);
     add(root, c);
   })();

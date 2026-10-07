@@ -372,7 +372,9 @@ window.DhiReportText = {
   feedbackShare: "You may share my feedback anonymously",
   feedbackSubmit: "Submit",
   feedbackNeedStars: "Tap a star first.",
-  feedbackThanks: "Thank you. This helps us build Dhi for you.",
+  feedbackTooShort: "A little more, please: at least {n} characters.",
+  feedbackJunk: "Tell us in real words what fit and what didn't.",
+  feedbackThanks: "Thank you.",
 
   /* join */
   joinTitle: "Dhi early access",
