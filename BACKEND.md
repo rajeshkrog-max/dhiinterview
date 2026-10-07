@@ -122,7 +122,7 @@ All keys are per browser and per origin. Nothing here is shared between devices.
 {
   "feedback": { "type": "feedback", "rating": 4, "text": "The study blueprint really fits how I revise.", "canShare": false,
                 "styleKey": "p", "completedAt": "2026-10-07T09:18:44.512Z", "challengeJoined": false, "joinedAt": null,
-                "phone": "9876543210" },
+                "phone": "9000000000" },
   "completedAt": "2026-10-07T09:18:44.512Z",
   "sent": false,
   "at": "2026-10-07T09:25:10.000Z"
@@ -386,7 +386,7 @@ Only the provider's public client id / anon key may be in front-end code (sectio
 ```json
 {
   "name": "Asha Kumar", "age": 15, "class": "Class 10",
-  "phone": "9876543210", "wantsCommunity": true, "foundingId": "DR-7KQ2",
+  "phone": "9000000000", "wantsCommunity": true, "foundingId": "DR-7KQ2",
   "styleKey": "p",
   "areas": { "routine": 58, "emotions": 25, "drive": 83, "connection": 25, "expression": 60, "clarity": 88, "purpose": 60 },
   "indices": { "studyReadiness": 67, "emotionalBalance": 37, "focusEnergy": 71, "direction": 74 },
@@ -430,7 +430,7 @@ Until then, an admin view or CSV export of `leads where wants_community and what
 | `name` | "DhiRise Founding Circle Challenge" | |
 | `endsAt` | `2026-10-30T23:59:00+05:30` | the server must enforce the same date |
 | `prize.title` / `items` | "Gift hamper worth ₹2,999" / Shoes, Headphones, Apparel | |
-| `prize.image` / `imageFallback` | `assets/challenge/prize.png` / `prize.svg` | `prize.png` is on disk but not committed yet |
+| `prize.image` / `imageFallback` | `assets/challenge/prize.webp` / `prize.svg` | `prize.webp` is an 800 px copy of the original `prize.png` |
 | `minFeedbackChars` | 30 | the server must use the same value |
 | `leaderboardSize` | 50 | |
 | `milestones` | [1, 5, 10, 25] | |

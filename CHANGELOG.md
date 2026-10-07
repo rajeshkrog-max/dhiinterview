@@ -25,6 +25,11 @@
 - Navigation: Report → Challenge → Leaderboard → back to Report; trophy in the report header opens the leaderboard.
 - `INTEGRATION.md`: new "Referral challenge" section (api functions, tables, validation rules, ranking). Needs real Google sign-in and a backend before going live.
 
+**Story slides and handover**
+- `who.html`: each of the 6 slides has its own photo (`assets/report/slide1–6.png`, served as WebP + JPG from `assets/report/web/`), with a dark gradient for readability, a crossfade and a slow 8 s zoom; the next photo is preloaded. Static with reduced motion.
+- Challenge pages load `assets/challenge/prize.webp` (800 px copy of `prize.png`).
+- `BACKEND.md`: full handover for the backend developer (flow, storage keys, scoring, API contract, database, auth, challenge rules, TODO, test cases). README points to it.
+
 **Also today**
 - Consent sheet: dropped the advertising sentence; "I agree" muted until read, then lit gold with one pulse; the last line highlighted.
 - `meet.html`: dark navy background with a soft gold glow. Tip cards stay visible until Next / Back. The card's share row is now three round WhatsApp / Instagram / Facebook buttons.

@@ -1,5 +1,7 @@
 # Integration guide
 
+> For the full backend handover (database, API contract, auth, challenge rules, test cases), see **[BACKEND.md](BACKEND.md)**.
+
 Everything needed to connect a backend to the student funnel. Today the funnel is fully static: it runs in the browser,
 keeps everything in `localStorage`, and can POST leads and feedback to an endpoint you configure. Nothing else leaves the browser.
 
@@ -26,7 +28,7 @@ window.DHI_FUNNEL = {
 | `whatsappInvite` | `js/report-student.js` → `join()` | The "Join Dhi early access on WhatsApp" button, and "Open the WhatsApp group" for students who already joined | The card says "WhatsApp early access opens soon" |
 | `leadEndpoint` | `js/done.js` → the `#join` form `submit` handler | Receives the lead POST when a student submits their mobile number | The lead is saved only in localStorage; no error |
 | `feedbackEndpoint` | `js/report-student.js` → `feedback()` | Receives the feedback POST from the report | Feedback is saved only in localStorage; no error |
-| `shareUrl` | `js/card.js`, `js/card-export.js` | The public site address printed on the Instagram story image and sent as the share text | The story has no link line, and the share text falls back to this page's own `landing.html` address |
+| `shareUrl` | `js/card.js`, `js/card-export.js`, `js/api.js` | The public site address printed on the story image, sent in the share text, and the base of every **referral link** (`shareUrl + "/landing.html?ref=CODE"`) | The story has no link line, and the share text falls back to this page's own `landing.html` address |
 
 **`shareUrl` must be set to the live site address** (e.g. `https://dhirise.com`) when you deploy. Left empty, shared stories carry no link,
 and the share text points at whatever host the page runs on.
@@ -224,7 +226,7 @@ window.DHI_CHALLENGE = {
   name: "DhiRise Founding Circle Challenge",
   endsAt: "2026-10-30T23:59:00+05:30",
   prize: { title: "Gift hamper worth ₹2,999", items: ["Shoes", "Headphones", "Apparel"],
-           image: "assets/challenge/prize.png", imageFallback: "assets/challenge/prize.svg" },
+           image: "assets/challenge/prize.webp", imageFallback: "assets/challenge/prize.svg" },
   minFeedbackChars: 30, leaderboardSize: 50, milestones: [1, 5, 10, 25], maxInviteShows: 2
 };
 ```

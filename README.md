@@ -1,23 +1,31 @@
 # DhiRise · student interview funnel
 
+> **Backend developer: start with [BACKEND.md](BACKEND.md).**
+
 A short self-check for students, and the marketing funnel for **Dhi**, our upcoming student app.
 A student signs in, answers 18 everyday questions, sees a teaser, can join the Dhi early-access WhatsApp group, reads a short
-"Who you are" story and gets a full Mind & Study Profile. Every insight comes from their own answers. Nothing is diagnosed or ranked.
+"Who you are" story and gets a full Mind & Study Profile with a shareable Founding Card. Then they can join the
+**Founding Circle Challenge** (referrals, leaderboard, prize). Every insight comes from their own answers. Nothing is diagnosed or ranked.
 
-Plain HTML, CSS and JavaScript. There is no build step and no framework, and no backend yet (see [INTEGRATION.md](INTEGRATION.md)).
+Plain HTML, CSS and JavaScript. There is no build step and no framework, and no backend yet: everything is stored in the browser
+(see [BACKEND.md](BACKEND.md) for the full handover and [INTEGRATION.md](INTEGRATION.md) for the short guide).
 
 ## Student flow
 
 | # | Page | What the student sees |
 |---|---|---|
-| 1 | `landing.html` | Name, age, class and consent ("Continue with Gmail" is a stub for now). |
-| 2 | `meet.html` | One screen about DhiRise: founding batch, productivity app, mentorship, community. |
-| 3 | `question.html`, `question2.html`, `questions.html?q=3…18` | 18 questions; each answer shows a tip card about the Dhi room that fits. |
+| 1 | `landing.html` | Name, age, class, optional referral code (`?ref=CODE` pre-fills it) and consent (must scroll to the end; "I agree" lights up gold). "Continue with Gmail" is a stub for now. Music starts here. |
+| 2 | `meet.html` | One screen about DhiRise on a dark navy background: founding batch, productivity app, mentorship, community. |
+| 3 | `question.html`, `question2.html`, `questions.html?q=3…18` | 18 questions (options shuffled per student). Each answer shows a tip card that stays until Next; Next unlocks after 10 s. |
 | 4 | `done.html` | A constellation reveal ("You are …"), a teaser (style, Dhi starting score, locked cards), then +91 mobile number + WhatsApp early-access tick and a thank-you. |
-| 5 | `who.html` | "Who you are": 6 swipeable cards built from their answers. |
-| 6 | `report-student.html` | The Founding Card (save / share to Instagram), then the full report: score ring, KPIs, radar, style, strengths, next steps, 21-day path, Dhi rooms, food, hobbies, careers, feedback. |
+| 5 | `who.html` | "Who you are": 6 swipeable cards built from their answers, over photo backgrounds (`assets/report/web/`) with a crossfade and slow zoom. |
+| 6 | `report-student.html` | The Founding Card (save, share to WhatsApp / Instagram / Facebook), then the full report: score ring, KPIs, radar, style, strengths, next steps, 21-day path, Dhi rooms, food, hobbies, careers, feedback. Valid feedback opens the challenge invite. |
+| 7 | `challenge.html` | Founding Circle Challenge: prize, rules, join (parent consent under 18), scratch card that reveals the referral code, share. |
+| 8 | `leaderboard.html` | Podium, ranks 4–50, your rank, progress and milestone badges. |
+| 9 | `terms.html` | Full challenge terms. |
 
 A returning student who taps "Continue as …" on the landing page resumes where they left off.
+Navigation after the report: Report → Challenge → Leaderboard → back to Report (the trophy in the report header also opens the leaderboard).
 
 ## Run it locally
 
@@ -41,7 +49,16 @@ Answers live in the browser's localStorage, so to start fresh use a private wind
 | `done.html`, `js/done.js`, `css/done.css` | Constellation reveal, teaser, join (lead capture) |
 | `js/music.js`, `assets/music/hero.mp3` | Background music from the landing page to question 18, with the mute button |
 | `js/card.js`, `css/card.css` | The Founding Card at the top of the report (flip, shine, tilt) |
-| `js/card-export.js` | Draws the card and the Instagram story on a canvas for "Save card" / "Share to Instagram" |
+| `js/card-export.js` | Draws the card and the 1080×1920 story image on a canvas for "Save card" and the share buttons |
+| `js/share-icons.js` | WhatsApp / Instagram / Facebook share-button glyphs (used by the challenge pages; the card has its own copy) |
+| `challenge.html`, `js/challenge.js`, `css/challenge-page.css` | Founding Circle Challenge page with the scratch-to-join card |
+| `js/challenge-ui.js`, `css/challenge.css` | The challenge on the report: invite overlay, sticky bar, pill |
+| `leaderboard.html`, `js/leaderboard.js`, `css/leaderboard.css` | Leaderboard |
+| `terms.html`, `css/terms.css` | Challenge terms |
+| `js/challenge-config.js` | Challenge name, end date, prize, rules numbers |
+| `js/api.js` | The challenge data layer: the only place challenge data is read/written. **Mocked with localStorage + demo rows today** |
+| `assets/challenge/` | `prize.png` (original), `prize.webp` (used), `prize.svg` (fallback) |
+| `assets/report/` | `slide1–6.png` (originals) and `web/` (the WebP + JPG copies `who.html` uses); `tools/prepare_report_slides.py` rebuilds them |
 | `js/engine/identity.js` | Style theme and name, the Founding ID (`dhirise.founding.v1`), sound effects |
 | `assets/cards/` | `owl-builder/achiever/explorer`, `seal-founding-cut` (PNG for the canvas, WebP for the page), `card-back`, `story-bg`, `flip.mp3`, `reveal.mp3`, `card-mockup (1).html` (the design reference) |
 | `assets/cards/_unused/` | Local only, git-ignored: retired frame/hero card art |
@@ -56,7 +73,8 @@ Answers live in the browser's localStorage, so to start fresh use a private wind
 | `js/funnel-config.js` | WhatsApp link and backend endpoints (empty in the repo); see `js/funnel-config.example.js` |
 | `tools/lead-sheet.gs`, `tools/LEAD-SHEET-SETUP.md` | Google Sheet receiver for leads and feedback |
 | `assets/` | Logo, landing hero, `interview bg/Q1–Q18.png` |
-| `INTEGRATION.md` | Everything needed to connect a backend |
+| `BACKEND.md` | Full backend handover: flow, storage, scoring, API contract, database, auth, challenge rules, TODO, tests |
+| `INTEGRATION.md` | Shorter integration guide |
 | `CHANGELOG.md` | What changed |
 | `README-FUNNEL.md` | Short funnel notes (older companion to this file) |
 
