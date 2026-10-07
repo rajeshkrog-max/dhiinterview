@@ -1,7 +1,8 @@
 /* Dhirise · shared question screen. One engine for every question; each screen passes its own config:
    dhiriseQuestion({ n, tips: {1..4}, load(): choice|null, save(choice), back: url, next: url })
-   Choosing an option shows the tip card for 10 seconds (a gold line drains under it); then it drifts away
-   and Next unlocks. No auto-advance. Coming back to a screen shows the saved answer still marked. */
+   Choosing an option shows the tip card; a gold line drains under it for 10 seconds, then Next unlocks.
+   The card stays until the student taps Next or Back (it drifts away first) or picks another option (new tip).
+   No auto-advance. Coming back to a screen shows the saved answer still marked. */
 (function () {
   "use strict";
   window.dhiriseQuestion = function (cfg) {
@@ -37,14 +38,17 @@
       void tip.offsetWidth;                                   /* restart the animations */
       tip.style.setProperty("--read", READ_MS + "ms");
       tip.classList.add("enter", "reading");
-      readTimer = setTimeout(hideTip, READ_MS);               /* 10 seconds to read, motion or not */
+      readTimer = setTimeout(unlock, READ_MS);                /* 10 seconds to read, motion or not */
     }
-    function hideTip() {
-      readTimer = 0;
+    /* the drain line ending only opens Next; the card stays until the student moves on */
+    function unlock() { readTimer = 0; next.disabled = false; }
+    /* Next / Back: the card drifts away first (if it is showing), then we leave */
+    function leaveThen(fn) {
+      clearTimers();
+      if (tip.hidden || reduced) { tip.hidden = true; fn(); return; }
       tip.classList.remove("enter");
-      if (reduced) { tip.hidden = true; next.disabled = false; return; }
       tip.classList.add("leave");
-      outTimer = setTimeout(function () { outTimer = 0; tip.hidden = true; tip.classList.remove("leave", "reading"); next.disabled = false; }, OUT_MS);
+      outTimer = setTimeout(function () { outTimer = 0; tip.hidden = true; tip.classList.remove("leave", "reading"); fn(); }, OUT_MS);
     }
     function mark(choice) {
       buttons.forEach(function (b) { b.setAttribute("aria-checked", Number(b.dataset.choice) === choice ? "true" : "false"); });
@@ -72,12 +76,21 @@
     if (saved >= 1 && saved <= 4) { mark(saved); next.disabled = false; }
 
     window.addEventListener("resize", function () { if (!tip.hidden) placeTip(); });
-    $("back").addEventListener("click", function () { location.href = cfg.back; });
+    $("back").addEventListener("click", function () { leaveThen(function () { location.href = cfg.back; }); });
     next.addEventListener("click", function () {
       if (next.disabled) return;
-      if (typeof cfg.next === "function") cfg.next(next); else location.href = cfg.next;
+      next.disabled = true;                                   /* one tap only while the card drifts away */
+      leaveThen(function () {
+        if (typeof cfg.next === "function") cfg.next(next); else location.href = cfg.next;
+      });
     });
     window.addEventListener("pagehide", clearTimers);
+    /* back from the next page via the browser's cache: the card has gone, Next is open again */
+    window.addEventListener("pageshow", function (e) {
+      if (!e.persisted) return;
+      tip.hidden = true; tip.classList.remove("enter", "leave", "reading");
+      if (options.classList.contains("chosen")) next.disabled = false;
+    });
 
     if (window.dhiriseLeaves) window.dhiriseLeaves();        /* the shared leaf layer (js/leaves.js) */
   };

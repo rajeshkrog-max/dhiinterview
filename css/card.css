@@ -54,10 +54,33 @@
   background-size:300% 100%;background-position:150% 0;animation:fcSweep 5s ease-in-out 1.6s infinite}
 @keyframes fcSweep{0%{background-position:150% 0}45%,100%{background-position:-50% 0}}
 
-.fc-actions{display:flex;flex-direction:column;gap:10px;width:min(86vw,360px)}
-.fc-actions .btn-ghost{margin-top:0}
-.fc-actions button[aria-busy="true"]{opacity:.7;cursor:progress}
-@media (min-width:480px){.fc-actions{flex-direction:row}.fc-actions > *{flex:1}}
+.fc-actions{display:flex;flex-direction:column;gap:16px;width:min(86vw,360px)}
+.fc-actions [aria-busy="true"]{opacity:.7;cursor:progress}
+
+/* share row: three round brand buttons (52px), label underneath. White at rest; brand colour + glow on hover / focus / tap */
+.fc-share{display:flex;justify-content:center;gap:22px}
+.fs{display:flex;flex-direction:column;align-items:center;gap:6px;padding:0;border:0;background:none;cursor:pointer;text-decoration:none;
+  font:600 13px var(--f-body);color:rgba(255,255,255,.7);-webkit-tap-highlight-color:transparent}
+.fs-ico{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;
+  background:rgba(20,17,14,.6);border:1px solid rgba(233,185,92,.55);
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+.fs svg{width:24px;height:24px;overflow:visible}
+.fs .fs-fill{fill:rgba(255,255,255,.7);transition:fill .2s ease}
+.fs .fs-stroke{fill:none;stroke:rgba(255,255,255,.7);stroke-width:2;transition:stroke .2s ease}
+.fs-label{transition:color .2s ease}
+.fs:focus{outline:none}
+.fs:focus-visible .fs-ico{outline:2px solid #fff;outline-offset:3px}
+.fs:hover .fs-ico,.fs:focus-visible .fs-ico,.fs:active .fs-ico{transform:scale(1.06)}
+.fs:hover .fs-label,.fs:focus-visible .fs-label,.fs:active .fs-label{color:#fff}
+.fs-wa:hover .fs-fill,.fs-wa:focus-visible .fs-fill,.fs-wa:active .fs-fill{fill:#25D366}
+.fs-wa:hover .fs-ico,.fs-wa:focus-visible .fs-ico,.fs-wa:active .fs-ico{border-color:#25D366;box-shadow:0 0 18px rgba(37,211,102,.45)}
+.fs-ig:hover .fs-fill,.fs-ig:focus-visible .fs-fill,.fs-ig:active .fs-fill{fill:url(#fsIgGrad)}
+.fs-ig:hover .fs-stroke,.fs-ig:focus-visible .fs-stroke,.fs-ig:active .fs-stroke{stroke:url(#fsIgGrad)}
+.fs-ig:hover .fs-ico,.fs-ig:focus-visible .fs-ico,.fs-ig:active .fs-ico{border-color:#DD2A7B;box-shadow:0 0 18px rgba(221,42,123,.45)}
+.fs-fb:hover .fs-fill,.fs-fb:focus-visible .fs-fill,.fs-fb:active .fs-fill{fill:#1877F2}
+.fs-fb:hover .fs-ico,.fs-fb:focus-visible .fs-ico,.fs-fb:active .fs-ico{border-color:#1877F2;box-shadow:0 0 18px rgba(24,119,242,.45)}
+@media (prefers-reduced-motion:reduce){.fs-ico,.fs .fs-fill,.fs .fs-stroke{transition:none}.fs:hover .fs-ico,.fs:focus-visible .fs-ico,.fs:active .fs-ico{transform:none}}
 
 /* the hint after a story is saved */
 .fc-toast{position:fixed;z-index:50;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));width:max-content;max-width:calc(100% - 32px);

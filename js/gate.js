@@ -78,9 +78,12 @@
 
   function atEnd() { return sheetBody.scrollTop + sheetBody.clientHeight >= sheetBody.scrollHeight - 4; }
   function syncAgree() {
-    var ok = atEnd();
+    var ok = atEnd(), was = agree.getAttribute("aria-disabled") === "false";
     agree.setAttribute("aria-disabled", ok ? "false" : "true");
     hint.hidden = ok;
+    if (ok && !was) {                              /* just became active: one gentle pulse (css/landing.css) */
+      agree.classList.remove("pulse"); void agree.offsetWidth; agree.classList.add("pulse");
+    }
   }
   function openSheet() {
     lastFocus = document.activeElement;
