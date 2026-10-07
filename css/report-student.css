@@ -28,6 +28,10 @@ p{margin:0}
 
 /* ---------- 1. header ---------- */
 .head{display:flex;gap:14px;align-items:flex-start;background:linear-gradient(160deg,rgba(233,185,92,.14),rgba(28,24,19,.82) 55%);border-color:rgba(233,185,92,.35)}
+.head-trophy{flex:none;margin-left:auto;display:grid;place-items:center;width:40px;height:40px;border-radius:12px;
+  border:1px solid rgba(233,185,92,.45);background:rgba(233,185,92,.08)}
+.head-trophy svg{width:20px;height:20px;fill:none;stroke:var(--gold);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.head-trophy:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .logo{width:40px;height:40px;flex:none;object-fit:contain}
 .head-text{min-width:0}
 .title{margin:0 0 4px;font-family:var(--f-head);font-weight:700;font-size:24px;line-height:1.2}

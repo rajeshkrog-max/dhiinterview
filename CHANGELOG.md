@@ -1,5 +1,34 @@
 # Changelog
 
+## 2026-10-07 · Founding Circle Challenge (referrals)
+
+**Step 1: Config and data layer**
+- `js/challenge-config.js`: name, end date (30 Oct 2026, 11:59 pm IST), prize, minimum feedback length, leaderboard size, milestones, how often the invite shows.
+- `js/api.js`: the only challenge data layer. 9 async functions (+ `isGenuine`, `isOver`), each with a `// BACKEND:` note; a localStorage mock with 30 demo rows.
+- `assets/challenge/prize.svg`: gold gift-box placeholder until `prize.png` is added.
+
+**Step 2: Referral code at sign-in**
+- `landing.html`: optional "Referral code" field (Age and Class now share a row). `?ref=CODE` pre-fills it; checked on blur ("Invited by …" or a muted note); recorded on sign-in only if valid and not your own. Never blocks sign-in.
+
+**Step 3: Challenge on the report**
+- Feedback needs 30+ real characters (live counter, junk check). A valid submit records feedback and report completion, then opens a full-screen invite (countdown, Join, Maybe later; Esc closes; max 2 shows), then a slim sticky bar.
+- A pill under the card's share buttons; joined and closed states. `challengeJoined` / `joinedAt` added to lead and feedback rows (sheet script updated).
+
+**Step 4: `challenge.html`**
+- Hero (floating prize, countdown), why, how it works, rules, join (rules + parent consent under 18) → scratch-to-join gold foil card revealing the code; copy code/link, WhatsApp / Instagram / Facebook, leaderboard link. Reduced motion: tap to reveal.
+
+**Step 5: `leaderboard.html`**
+- Countdown chip, prize strip, podium with crown and owl avatars, ranks 4–50, your row in gold, sticky "you" card (rank, valid · pending, progress to the next rank, milestone badges, Share), join link if not joined, 5-minute refresh, frozen after the end.
+
+**Step 6: Finish**
+- `terms.html`: plain-language rules, prize, eligibility, valid referrals, review, winner contact, data use, contact.
+- Navigation: Report → Challenge → Leaderboard → back to Report; trophy in the report header opens the leaderboard.
+- `INTEGRATION.md`: new "Referral challenge" section (api functions, tables, validation rules, ranking). Needs real Google sign-in and a backend before going live.
+
+**Also today**
+- Consent sheet: dropped the advertising sentence; "I agree" muted until read, then lit gold with one pulse; the last line highlighted.
+- `meet.html`: dark navy background with a soft gold glow. Tip cards stay visible until Next / Back. The card's share row is now three round WhatsApp / Instagram / Facebook buttons.
+
 ## 2026-10-07 · Founding Card, reveal, music, join and DhiRise naming
 
 **Meet screen** (`meet.html`)

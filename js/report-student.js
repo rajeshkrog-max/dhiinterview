@@ -108,6 +108,12 @@
     add(h, logo, add(el("div", "head-text"), title,
       el("p", "meta", [profile.class, date].filter(Boolean).join(" · ")),
       el("span", "pill", styleName)));
+    /* a small trophy: the Founding Circle leaderboard */
+    var trophy = el("a", "head-trophy");
+    trophy.href = "leaderboard.html";
+    trophy.setAttribute("aria-label", "Founding Circle leaderboard");
+    trophy.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7M10 17h4"/></svg>';
+    add(h, trophy);
     add(root, h);
   })();
 

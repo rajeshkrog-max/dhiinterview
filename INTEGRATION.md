@@ -205,3 +205,100 @@ Setup in 5 steps: `tools/LEAD-SHEET-SETUP.md`. Put the web app URL into both `le
 - Don't commit real student data: `recovery/`, session JSON and report PDFs are git-ignored. Keep it that way.
 - Don't show internal style keys (`v`/`p`/`k`) or scoring internals to students, and never label a student by ability.
 - Don't load legacy files (`index.html`, `js/app.js`, `js/data.js`, `js/result.js`, …) from the funnel.
+
+---
+
+## h) Referral challenge (Founding Circle Challenge)
+
+> **Not live-ready.** The challenge needs **real Google sign-in** (see c) and **a backend** before it goes public.
+> Today every function in `js/api.js` is a localStorage mock, so referrals only "work" between students on the same browser.
+
+Pages: `report-student.html` (invite overlay, sticky bar, pill: `js/challenge-ui.js`), `challenge.html` (`js/challenge.js`),
+`leaderboard.html` (`js/leaderboard.js`), `terms.html`. Settings: `js/challenge-config.js` (`window.DHI_CHALLENGE`).
+Navigation: Report → Challenge → Leaderboard → back to Report (the trophy in the report header also opens the leaderboard).
+
+### Settings: `js/challenge-config.js`
+
+```js
+window.DHI_CHALLENGE = {
+  name: "DhiRise Founding Circle Challenge",
+  endsAt: "2026-10-30T23:59:00+05:30",
+  prize: { title: "Gift hamper worth ₹2,999", items: ["Shoes", "Headphones", "Apparel"],
+           image: "assets/challenge/prize.png", imageFallback: "assets/challenge/prize.svg" },
+  minFeedbackChars: 30, leaderboardSize: 50, milestones: [1, 5, 10, 25], maxInviteShows: 2
+};
+```
+
+### `js/api.js`: the only data layer
+
+Every function returns a Promise. Each has a `// BACKEND: replace with fetch to …` comment with the suggested route.
+Swap the bodies for `fetch` calls and the pages keep working unchanged.
+
+| Function | Input | Output | Suggested route |
+|---|---|---|---|
+| `getMe()` | none | `{ name, firstName, email, age, class, style, code, joined, joinedAt, parentConsent, usedCode, finished, reportComplete, feedbackGiven }` | `GET /api/me` |
+| `validateCode(code)` | `"RAJ7K2Q"` | `{ ok: true, referrerFirstName }` or `{ ok: false, reason: "format" \| "unknown" \| "self" \| "ended" }` | `GET /api/referral/validate?code=` |
+| `recordReferralUse(code)` | code typed or from `?ref=` | `{ ok, referrerFirstName }` or `{ ok: false, reason }` (`"already"` if a different code was used before; the first code wins) | `POST /api/referral/use` |
+| `markReportComplete()` | none | `{ ok }` | `POST /api/report/complete` |
+| `submitFeedback({ rating, text })` | rating 1–5, text | `{ ok, genuine, minChars }` | `POST /api/feedback` |
+| `joinChallenge({ parentConsent })` | `parentConsent: boolean` (required when age < 18) | `{ ok: true, code }` or `{ ok: false, reason: "parentConsent" \| "ended" }` | `POST /api/challenge/join` |
+| `getMyReferral()` | none | `{ code, link, valid, pending }`; `link = shareUrl + "/landing.html?ref=" + code` | `GET /api/referral/me` |
+| `getLeaderboard()` | none | `[{ rank, displayName, cls, style, valid, me? }]`, top `leaderboardSize` | `GET /api/challenge/leaderboard` |
+| `getMyRank()` | none | `{ rank, valid, pending, toNext, nextRank }` (`rank: null` until joined; `toNext` = referrals needed to pass `nextRank`) | `GET /api/challenge/rank` |
+| `isGenuine(text)` | text | boolean (page-side hint only; the server decides) | none |
+| `isOver()` | none | boolean, from the local clock (the server decides for real) | none |
+
+Where the pages call them
+- `landing.html` / `js/gate.js`: `validateCode` on blur of the referral field; `recordReferralUse` on sign-in (valid, not own code). A wrong code never blocks sign-in. `?ref=CODE` pre-fills the field (sessionStorage `dhirise.ref` until sign-in).
+- `report-student.html`: `markReportComplete` on open; on feedback submit `submitFeedback`, then `markReportComplete`, then `getMe` (for `challengeJoined` / `joinedAt` in the sheet row). `js/challenge-ui.js` uses `getMe` and `getMyRank`.
+- `challenge.html`: `getMe`, `getMyRank`, `joinChallenge`, `getMyReferral`.
+- `leaderboard.html`: `getLeaderboard`, `getMe`, `getMyRank`, `getMyReferral` (refreshes every 5 minutes until `endsAt`).
+
+Referral codes: the first 3 letters of the first name in caps (padded with `X`), plus 4 characters from A–Z / 2–9 without O, 0, I or 1 (e.g. `RAJ7K2Q`). They must be unique.
+
+### Validation rules (enforce on the server)
+
+A referral is **valid** only when the friend:
+1. signs in with a **new email** (no earlier DhiRise account),
+2. **used the code at sign-in** (`recordReferralUse`, first code wins),
+3. **finished all 18 questions** (`checks.completed_at` set),
+4. **reached the report** (`markReportComplete`),
+5. submitted **genuine feedback**: at least `minFeedbackChars` (30) characters, at least 5 distinct letters, and no single character repeated 5+ times in a row. Add your own spam checks too.
+
+Also: **no self-referrals** (the referrer's account, email or device must not be the friend's), and nothing counts after `endsAt`.
+A use that has started but doesn't meet every step is **pending**. Joining under 18 needs `parentConsent: true`; store it with a timestamp.
+The **top 10 are reviewed by hand** before the winner is announced (see `terms.html`).
+
+### Leaderboard ranking
+
+- Sort by **valid referrals, highest first**.
+- **Ties: whoever reached that count earliest ranks higher** (store `reached_at` for each referral that becomes valid, and compare the time each person's latest valid referral was made).
+- Show only first name + initial of the surname, class and style (`Builder` / `Achiever` / `Explorer`). Never show email or phone.
+- Freeze the board at `endsAt`. The page says "Updated every 5 minutes", so caching for up to 5 minutes is fine.
+- Mock note: the mock breaks ties by list order (demo rows first). Remove the 30 `demo: true` rows in `api.js` when the backend serves real data.
+
+### Data tables (add to d)
+
+| Table | Columns |
+|---|---|
+| `students` | as in d, plus `referral_code` (unique), `challenge_joined_at`, `challenge_parent_consent`, `challenge_parent_consent_at` |
+| `checks` | as in d |
+| `feedback` | as in d, plus `genuine` (bool, decided on the server), `chars` |
+| `referrals` | `id`, `code`, `referrer_id` → students, `friend_id` → students (unique: one referral per friend), `used_at`, `finished_at`, `report_at`, `feedback_at`, `valid` (bool), `reached_valid_at`, `status` (`pending` / `valid` / `rejected`), `review_note` |
+
+Order of events: friend signs in with a code → `referrals` row (`used_at`) → Q18 → `finished_at` → report opened → `report_at` →
+genuine feedback → `feedback_at`, `valid = true`, `reached_valid_at = now`. The leaderboard counts `valid` rows per `referrer_id`.
+
+### Sheet columns
+
+Leads and Feedback rows now also carry `challengeJoined` (yes/no) and `joinedAt` (in `tools/lead-sheet.gs`; it adds the new column names to older sheets).
+Redeploy the script as a new version after updating it.
+
+### Local storage used by the mock
+
+| Key | What |
+|---|---|
+| `dhirise.challenge.v1` | this student: `{ id, owner, code, joined, parentConsent, joinedAt, usedCode, reportComplete, feedback }` |
+| `dhirise.challenge.mock.v1` | the mock "server": `{ codes: { CODE: { owner, firstName, at } }, uses: [ { code, by, at, finished, report, feedback } ] }` |
+| `dhirise.challenge.invite.v1` | how many times the invite overlay has been shown (max `maxInviteShows`) |
+| `dhirise.ref` (sessionStorage) | the referral code from `?ref=` until sign-in |
