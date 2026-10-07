@@ -127,8 +127,54 @@
     if (!check()) { var bad = form.querySelector('[aria-invalid="true"]'); if (bad) bad.focus(); return; }
     var now = new Date().toISOString();
     write({ name: cleanName(), age: Number(age.value), class: cls.value, provider: "google", at: now, consent: true, consentAt: now, consentText: CONSENT_TEXT });
-    go();
+    /* a valid referral code that isn't their own is recorded once (js/api.js checks both); a wrong code never blocks */
+    var code = refCode();
+    if (!code || !window.DhiApi) { go(); return; }
+    btn.setAttribute("aria-busy", "true");
+    var done = function () { try { sessionStorage.removeItem(REF_KEY); } catch (err) {} go(); };
+    DhiApi.recordReferralUse(code).then(done, done);
   });
+
+  /* ---------- referral code (optional) ----------
+     ?ref=CODE pre-fills the field and is kept in sessionStorage until sign-in. Checked on blur: a green tick and
+     "Invited by <name>", or a muted note. Uppercase, letters and digits only, max 8. */
+  var REF_KEY = "dhirise.ref", ref = $("ref"), refStatus = $("refStatus");
+  var TICK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  function refCode() { return ref.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8); }
+  function keepRef() { try { if (refCode()) sessionStorage.setItem(REF_KEY, refCode()); else sessionStorage.removeItem(REF_KEY); } catch (e) {} }
+  function showRef(ok, text) {
+    refStatus.className = "ref-status" + (ok ? " ok" : "");
+    refStatus.innerHTML = ok ? TICK : "";
+    refStatus.appendChild(document.createTextNode(text));
+  }
+  var checking = 0;
+  function validateRef() {
+    var code = refCode(), mine = ++checking;
+    if (!code) { refStatus.textContent = ""; return; }
+    if (!window.DhiApi) return;
+    DhiApi.validateCode(code).then(function (v) {
+      if (mine !== checking) return;                         /* an older answer arrived late */
+      if (v.ok) showRef(true, "Invited by " + v.referrerFirstName);
+      else if (v.reason === "self") showRef(false, "That's your own code. You can still continue.");
+      else if (v.reason === "ended") showRef(false, "The challenge has ended. You can still continue.");
+      else showRef(false, "Code not found. You can still continue.");
+    }, function () { if (mine === checking) refStatus.textContent = ""; });
+  }
+  (function prefill() {
+    var fromUrl = "";
+    try { fromUrl = (new URLSearchParams(location.search).get("ref") || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8); } catch (e) {}
+    var saved = ""; try { saved = sessionStorage.getItem(REF_KEY) || ""; } catch (e) {}
+    ref.value = fromUrl || saved;
+    keepRef();
+    if (ref.value) validateRef();
+  })();
+  ref.addEventListener("input", function () {
+    var at = ref.selectionStart, clean = refCode();
+    if (ref.value !== clean) { ref.value = clean; try { ref.setSelectionRange(at, at); } catch (e) {} }
+    refStatus.textContent = ""; checking++;
+    keepRef();
+  });
+  ref.addEventListener("blur", validateRef);
 
   /* keyboard open on phones: size the stage to the visible area and keep the focused field in view */
   var vv = window.visualViewport;

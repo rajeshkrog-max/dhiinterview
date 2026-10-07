@@ -41,19 +41,28 @@
         <input id="name" name="name" type="text" autocomplete="given-name" autocapitalize="words" enterkeyhint="next" aria-describedby="nameErr">
         <p class="err" id="nameErr" aria-live="polite"></p>
       </div>
-      <div class="field">
-        <label for="age">Age</label>
-        <input id="age" name="age" type="number" inputmode="numeric" min="10" max="25" step="1" enterkeyhint="next" aria-describedby="ageErr">
-        <p class="err" id="ageErr" aria-live="polite"></p>
+      <!-- age and class share a row, so the referral field adds no height -->
+      <div class="row2">
+        <div class="field">
+          <label for="age">Age</label>
+          <input id="age" name="age" type="number" inputmode="numeric" min="10" max="25" step="1" enterkeyhint="next" aria-describedby="ageErr">
+          <p class="err" id="ageErr" aria-live="polite"></p>
+        </div>
+        <div class="field">
+          <label for="cls">Class</label>
+          <select id="cls" name="class" aria-describedby="clsErr">
+            <option value="">Select</option>
+            <option>Class 8</option><option>Class 9</option><option>Class 10</option>
+            <option>Class 11</option><option>Class 12</option><option>College</option>
+          </select>
+          <p class="err" id="clsErr" aria-live="polite"></p>
+        </div>
       </div>
       <div class="field">
-        <label for="cls">Class</label>
-        <select id="cls" name="class" aria-describedby="clsErr">
-          <option value="">Select your class</option>
-          <option>Class 8</option><option>Class 9</option><option>Class 10</option>
-          <option>Class 11</option><option>Class 12</option><option>College</option>
-        </select>
-        <p class="err" id="clsErr" aria-live="polite"></p>
+        <label for="ref">Referral code (optional)</label>
+        <input id="ref" name="ref" type="text" maxlength="8" placeholder="e.g. RAJ7K2Q" autocomplete="off" autocapitalize="characters"
+               autocorrect="off" spellcheck="false" enterkeyhint="done" aria-describedby="refStatus">
+        <p class="ref-status" id="refStatus" aria-live="polite"></p>
       </div>
 
       <div class="or" aria-hidden="true"><span>or</span></div>
@@ -97,6 +106,9 @@
   </div>
 </div>
 
+<script src="js/challenge-config.js"></script>
+<script src="js/funnel-config.js"></script>
+<script src="js/api.js"></script>
 <script src="js/gate.js"></script>
 <script src="js/music.js"></script>
 </body>
