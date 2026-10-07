@@ -46,6 +46,38 @@
         T.closing.last], note: T.closing.note }
   ];
 
+  /* backgrounds: assets/report/web/slideN.webp (jpg fallback), one per slide by position, in a fixed stack under the track,
+     so the cards swipe while the photos crossfade. Each loads only when its slide (or the one before it) is shown. */
+  var bgs = document.createElement("div");
+  bgs.className = "bgs"; bgs.setAttribute("aria-hidden", "true");
+  var layers = cards.map(function (c, i) {
+    var layer = document.createElement("div"); layer.className = "bg";
+    var pic = document.createElement("picture");
+    var src = document.createElement("source"); src.type = "image/webp";
+    var img = document.createElement("img"); img.alt = ""; img.decoding = "async";
+    pic.appendChild(src); pic.appendChild(img); layer.appendChild(pic); bgs.appendChild(layer);
+    return { el: layer, src: src, img: img, n: i + 1, loaded: false };
+  });
+  document.body.insertBefore(bgs, document.body.firstChild);
+  function load(i) {
+    var l = layers[i];
+    if (!l || l.loaded) return;
+    l.loaded = true;
+    l.src.srcset = "assets/report/web/slide" + l.n + ".webp";
+    l.img.src = "assets/report/web/slide" + l.n + ".jpg";
+  }
+  function activate(i) {
+    load(i); load(i + 1);                                   /* the next one is ready before the swipe */
+    layers.forEach(function (l, j) {
+      var on = j === i;
+      if (on && !l.el.classList.contains("on")) {
+        l.el.classList.remove("kb"); void l.el.offsetWidth; l.el.classList.add("kb");   /* restart the slow zoom */
+      }
+      l.el.classList.toggle("on", on);
+      if (!on) l.el.classList.remove("kb");
+    });
+  }
+
   /* build */
   var track = $("track"), dots = $("dots"), slides = [];
   cards.forEach(function (c, i) {
@@ -53,7 +85,6 @@
     s.className = "slide";
     s.setAttribute("aria-roledescription", "slide");
     s.setAttribute("aria-label", (i + 1) + " of " + cards.length);
-    s.style.backgroundImage = 'url("assets/interview%20bg/' + c.img + '.png")';
     var panel = document.createElement("div");
     panel.className = "panel";
     var h = document.createElement("h1"); h.textContent = c.title || ""; panel.appendChild(h);
@@ -75,6 +106,7 @@
     $("next").textContent = index === cards.length - 1 ? T.finish : T.next;
     $("next").classList.toggle("wide", index === cards.length - 1);
     slides.forEach(function (s, j) { s.setAttribute("aria-hidden", j === index ? "false" : "true"); });
+    activate(index);
   }
   function go(i) {
     i = Math.max(0, Math.min(cards.length - 1, i));

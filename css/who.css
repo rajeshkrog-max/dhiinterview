@@ -33,6 +33,22 @@ body{font-family:var(--f-body);color:var(--white);-webkit-font-smoothing:antiali
           calc(var(--nav-h) + var(--nav-gap) * 2 + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
   background:var(--ink) no-repeat center 14% / cover}
 
+/* backgrounds (js/who.js): a fixed stack behind the track; the active photo fades in and zooms very slowly.
+   The track and slides are transparent so the cards swipe over the crossfading photos. */
+.track,.slide{background:transparent!important}
+.bgs{position:fixed;inset:0;z-index:-1;overflow:hidden;background:var(--ink)}
+.bg{position:absolute;inset:0;opacity:0;transition:opacity .9s ease}
+.bg.on{opacity:1}
+.bg picture,.bg img{display:block;width:100%;height:100%}
+.bg img{object-fit:cover;object-position:center 25%;transform-origin:50% 30%}
+.bgs::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(to bottom,rgba(8,9,20,0) 40%,rgba(8,9,20,.88) 100%)}
+@media (prefers-reduced-motion:no-preference){
+  .bg.kb img{animation:kenburns 8s ease-out forwards}
+  @keyframes kenburns{from{transform:scale(1)}to{transform:scale(1.06)}}
+}
+@media (prefers-reduced-motion:reduce){.bg{transition:none}}
+
 /* the card */
 .panel{position:relative;z-index:2;align-self:center;width:100%;max-width:520px;padding:20px 18px 18px;border-radius:22px;
   background:rgba(20,17,14,.8);border:1px solid rgba(233,185,92,.45);
