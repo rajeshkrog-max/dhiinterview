@@ -1,5 +1,49 @@
 # Changelog
 
+## 2026-10-07 · Founding Card, reveal, music, join and DhiRise naming
+
+**Meet screen** (`meet.html`)
+- New copy: the DhiRise logo, a "Founding batch · Student trial" card ("Grow in marks. Grow in mind."), three rows (Productivity app,
+  Mentorship, Community), the trial-batch line and "18 questions · about 5 minutes". The old tracker / short film / AI desk text is gone.
+  The button reads "Start the check".
+
+**Join screen** (`done.html`)
+- Mobile number with a fixed "+91" prefix, grouped 3-3-4 while typing (works with backspace and paste). Valid = 10 digits starting 6–9.
+  Only the digits are saved, as before.
+- Submit swaps the form for a gold tick and "Thank you! Our team will message you soon.", then opens the story after 2.5 s.
+- "Skip" removed. The WhatsApp early-access tick is unchanged.
+- Wherever a number is shown later it is masked: `+91 ••• ••• 3210`.
+
+**Background music** (`js/music.js`, `assets/music/hero.mp3`)
+- Plays from the landing page through question 18: soft loop (0.35), fades in, starts on the first tap if autoplay is blocked,
+  carries its position across pages (sessionStorage), fades out on Finish. No music on done.html or the report.
+- Round mute button top-right, remembered in localStorage (`dhirise.music.muted`). Hidden if the file fails to load.
+
+**Constellation reveal** (`done.html`)
+- Replaces the loading bar: the 18 answers appear as points on the 7-area shape, join up, glow in the style colour, then
+  "You are <style>" with `reveal.mp3` (silent when muted). Reduced motion shows the finished shape with a fade.
+
+**Founding ID**
+- `DR-` + 4 characters (A–Z, 2–9, no O/0/I/1), made once per student (`localStorage "dhirise.founding.v1"`) and added to the lead as `foundingId`.
+  Not printed on the card. The Google Sheet script stores it as a new last column.
+
+**Founding Card** (`js/card.js`, `css/card.css`, top of `report-student.html`)
+- Built from `assets/cards/card-mockup (1).html`: ivory card with gold rims, a colour window with the style's owl breaking out of it,
+  the style tag, the first name in caps (Cinzel, shrinks to fit), a gold rule, the community line (first name in Title Case) and the Founding Batch seal.
+- Builder = red owl, Achiever = green, Explorer = blue; blends use the main style.
+- Enters as the card back and flips (`flip.mp3`), with a subtle shine and a 6° tilt; none of these with reduced motion.
+
+**Save and share** (`js/card-export.js`)
+- The card is drawn on a canvas from the PNGs (not a screenshot): "Save card" downloads `DhiRise_<FirstName>.png` (1080×1620).
+- "Share to Instagram" shares a 1080×1920 story image (story background, the card, "Take your DhiRise check" and `shareUrl`)
+  through the share sheet, or downloads it with a hint where file sharing isn't supported.
+
+**DhiRise naming**
+- Every student-visible "Dhirise" is now "DhiRise" (titles, page text, tip cards, report). File names, classes and storage keys are unchanged.
+
+**Housekeeping**
+- Retired card art (frames, heroes, the first seal) moved to `assets/cards/_unused/`, which is git-ignored. `tools/prepare_cards.py` built it.
+
 ## 2026-10-06 · Funnel revamp
 
 **Part 1: Scoring engine**

@@ -14,3 +14,6 @@ Dhirise_Report_*.pdf
 node_modules/
 .DS_Store
 Thumbs.db
+
+# retired card art (kept on disk, not in the repo)
+assets/cards/_unused/

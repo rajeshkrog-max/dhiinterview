@@ -16,7 +16,8 @@ The only settings file. The pages load it as a plain script that sets `window.DH
 window.DHI_FUNNEL = {
   whatsappInvite:   "https://chat.whatsapp.com/XXXXXXXXXXXXXXXXXXXXXX",
   leadEndpoint:     "https://script.google.com/macros/s/XXXXXXXXXXXXXXXXXXXXXXXX/exec",
-  feedbackEndpoint: "https://script.google.com/macros/s/XXXXXXXXXXXXXXXXXXXXXXXX/exec"
+  feedbackEndpoint: "https://script.google.com/macros/s/XXXXXXXXXXXXXXXXXXXXXXXX/exec",
+  shareUrl:         "https://dhirise.com"
 };
 ```
 
@@ -25,6 +26,10 @@ window.DHI_FUNNEL = {
 | `whatsappInvite` | `js/report-student.js` → `join()` | The "Join Dhi early access on WhatsApp" button, and "Open the WhatsApp group" for students who already joined | The card says "WhatsApp early access opens soon" |
 | `leadEndpoint` | `js/done.js` → the `#join` form `submit` handler | Receives the lead POST when a student submits their mobile number | The lead is saved only in localStorage; no error |
 | `feedbackEndpoint` | `js/report-student.js` → `feedback()` | Receives the feedback POST from the report | Feedback is saved only in localStorage; no error |
+| `shareUrl` | `js/card.js`, `js/card-export.js` | The public site address printed on the Instagram story image and sent as the share text | The story has no link line, and the share text falls back to this page's own `landing.html` address |
+
+**`shareUrl` must be set to the live site address** (e.g. `https://dhirise.com`) when you deploy. Left empty, shared stories carry no link,
+and the share text points at whatever host the page runs on.
 
 There are no other keys. Endpoints are public URLs, never secrets: anyone can read front-end code (see the do-not list).
 
@@ -36,7 +41,7 @@ There are no other keys. Endpoints are public URLs, never secrets: anyone can re
 
 `fetch(leadEndpoint, { method: "POST", mode: "no-cors", keepalive: true, headers: { "Content-Type": "text/plain;charset=utf-8" }, body })`.
 `no-cors` means the page cannot read the response: the server must accept a `text/plain` body containing JSON. The page waits
-at most 1.5 s and then moves on.
+for nothing: the form shows the thank-you and the story opens after 2.5 s, while `keepalive` finishes the send.
 
 ```json
 {
@@ -45,6 +50,7 @@ at most 1.5 s and then moves on.
   "class": "Class 10",
   "phone": "9000000000",
   "wantsCommunity": true,
+  "foundingId": "DR-K7QM",
   "styleKey": "k",
   "areas": { "routine": 67, "emotions": 50, "drive": 58, "connection": 75, "expression": 44, "clarity": 60, "purpose": 71 },
   "indices": { "studyReadiness": 56, "emotionalBalance": 65, "focusEnergy": 61, "direction": 66 },
@@ -55,11 +61,12 @@ at most 1.5 s and then moves on.
 }
 ```
 
-- `phone`: 10 digits, no country code.
+- `phone`: 10 digits starting 6–9, no country code (the field shows a fixed +91 and groups the digits 3-3-4).
+- `foundingId`: the student's Founding ID, `DR-` + 4 characters from A–Z / 2–9 without O, 0, I or 1. Made once per student on this device
+  (`localStorage "dhirise.founding.v1"`, keyed to the name). Not unique across devices: give it a unique index server-side and re-issue on a clash.
 - `wantsCommunity`: the "Add me to Dhi early access on WhatsApp" tick (on by default). This is the WhatsApp opt-in.
 - `styleKey`: internal only, never shown to students. `v` = quick and creative ("The Creative Explorer"), `p` = sharp and driven ("The Focused Achiever"), `k` = steady and patient ("The Steady Builder").
 - `areas`, `indices`, `dhiStart`: 0–100. Bands: 70+ Strong, 45–69 Growing, under 45 Next to grow. `dhiStart` is a starting point, never a rank.
-- Skip sends nothing.
 
 ### Feedback POST (`report-student.html`, on Submit)
 
@@ -86,7 +93,9 @@ Sent the same way (`no-cors`, `text/plain`, `keepalive`). `phone` is included on
 |---|---|---|
 | `dhirise.gate.v1` | `js/gate.js` | `{ name, age, class, provider: "google", at, consent: true, consentAt, consentText }` (`consentText` is the full notice as shown) |
 | `dhirise.check.v1` | `js/engine/store.js` | `{ profile: { name, age, class }, answers: { q1: "q1o3", …, q18: "q18o4" }, startedAt, completedAt }` |
-| `dhirise.lead.v1` | `js/done.js` | `{ lead: <lead payload above> \| null, skipped?: true, completedAt, sent: boolean, at }` |
+| `dhirise.lead.v1` | `js/done.js` | `{ lead: <lead payload above>, completedAt, sent: boolean, at }` (older browsers may hold `lead: null, skipped: true` from the removed Skip) |
+| `dhirise.founding.v1` | `js/engine/identity.js` | `{ id: "DR-XXXX", name, at }`: the Founding ID |
+| `dhirise.music.muted` | `js/music.js` | `"1"` when the student muted the music (sessionStorage `dhirise.music.pos` holds the play position) |
 | `dhirise.reportFeedback.v1` | `js/report-student.js` | `{ feedback: <feedback payload above>, completedAt, sent: boolean, at }` |
 | `dhirise.path.v1` | `js/report-student.js` | `{ completedAt, ticks: { "a0d1": true, … } }`: Week 1 ticks (action index, day) |
 

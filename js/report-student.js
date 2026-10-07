@@ -100,7 +100,7 @@
   (function header() {
     var h = el("header", "card head span2");
     var logo = el("img", "logo");
-    logo.src = "assets/dhirise-logo-light.png"; logo.alt = "Dhirise"; logo.width = 40; logo.height = 40;
+    logo.src = "assets/dhirise-logo-light.png"; logo.alt = "DhiRise"; logo.width = 40; logo.height = 40;
     logo.onerror = function () { logo.onerror = null; logo.src = "assets/dhirise-logo.png"; };
     var d = new Date(check.completedAt);
     var date = isNaN(d) ? "" : d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
@@ -417,7 +417,7 @@
     status.setAttribute("aria-live", "polite");
     share.addEventListener("click", function () {
       var url = new URL("landing.html", location.href).href;
-      if (navigator.share) { navigator.share({ title: "Dhirise", text: T.shareText, url: url }).catch(function () {}); return; }
+      if (navigator.share) { navigator.share({ title: "DhiRise", text: T.shareText, url: url }).catch(function () {}); return; }
       var done = function () { status.textContent = T.shareCopied; setTimeout(function () { status.textContent = ""; }, 2500); };
       if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(T.shareText + " " + url).then(done, function () {});
     });

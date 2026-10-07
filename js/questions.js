@@ -7,7 +7,7 @@
   if (!(n >= 3 && n <= 18) || !DhiQuestions.question(n)) { location.replace("question.html"); return; }
   var $ = function (id) { return document.getElementById(id); };
 
-  document.title = "Dhirise · " + n + " / 18";
+  document.title = "DhiRise · " + n + " / 18";
   $("qscreen").style.backgroundImage = 'url("assets/interview%20bg/Q' + n + '.png")';
   $("step").textContent = n + " / 18";
   $("track").style.setProperty("--n", n);

@@ -1,4 +1,4 @@
-# Dhirise · student interview funnel
+# DhiRise · student interview funnel
 
 A short self-check for students, and the marketing funnel for **Dhi**, our upcoming student app.
 A student signs in, answers 18 everyday questions, sees a teaser, can join the Dhi early-access WhatsApp group, reads a short
@@ -11,21 +11,22 @@ Plain HTML, CSS and JavaScript. There is no build step and no framework, and no 
 | # | Page | What the student sees |
 |---|---|---|
 | 1 | `landing.html` | Name, age, class and consent ("Continue with Gmail" is a stub for now). |
-| 2 | `meet.html` | One screen about what Dhi is. |
+| 2 | `meet.html` | One screen about DhiRise: founding batch, productivity app, mentorship, community. |
 | 3 | `question.html`, `question2.html`, `questions.html?q=3…18` | 18 questions; each answer shows a tip card about the Dhi room that fits. |
-| 4 | `done.html` | A short wait, a teaser (style, Dhi starting score, locked cards), then mobile number + WhatsApp early-access tick, or Skip. |
+| 4 | `done.html` | A constellation reveal ("You are …"), a teaser (style, Dhi starting score, locked cards), then +91 mobile number + WhatsApp early-access tick and a thank-you. |
 | 5 | `who.html` | "Who you are": 6 swipeable cards built from their answers. |
-| 6 | `report-student.html` | The full report: score ring, KPIs, radar, style, strengths, next steps, 21-day path, Dhi rooms, food, hobbies, careers, feedback. |
+| 6 | `report-student.html` | The Founding Card (save / share to Instagram), then the full report: score ring, KPIs, radar, style, strengths, next steps, 21-day path, Dhi rooms, food, hobbies, careers, feedback. |
 
 A returning student who taps "Continue as …" on the landing page resumes where they left off.
 
 ## Run it locally
 
 ```bash
-python -m http.server 8081
+npx --yes serve -l 8081 --no-clean-urls .
 ```
 
-Then open **http://localhost:8081/landing.html**. Use port 8081 (8080 is taken on the main dev machine).
+Then open **http://localhost:8081/landing.html**. (`--no-clean-urls` keeps `.html` and `?q=` links exactly as written;
+`python -m http.server 8081` works too.) Use port 8081 (8080 is taken on the main dev machine).
 Answers live in the browser's localStorage, so to start fresh use a private window or clear the `dhirise.*` keys.
 
 ## Folder map
@@ -37,7 +38,14 @@ Answers live in the browser's localStorage, so to start fresh use a private wind
 | `landing.html`, `js/gate.js`, `css/landing.css` | Sign-in and consent |
 | `meet.html`, `js/meet.js` | Meet Dhi |
 | `question.html`, `question2.html`, `questions.html`, `js/q1.js`, `js/q2.js`, `js/questions.js`, `js/question.js`, `js/leaves.js`, `css/question.css` | Question screens, tip card, falling leaves |
-| `done.html`, `js/done.js`, `css/done.css` | Wait, teaser, join (lead capture) |
+| `done.html`, `js/done.js`, `css/done.css` | Constellation reveal, teaser, join (lead capture) |
+| `js/music.js`, `assets/music/hero.mp3` | Background music from the landing page to question 18, with the mute button |
+| `js/card.js`, `css/card.css` | The Founding Card at the top of the report (flip, shine, tilt) |
+| `js/card-export.js` | Draws the card and the Instagram story on a canvas for "Save card" / "Share to Instagram" |
+| `js/engine/identity.js` | Style theme and name, the Founding ID (`dhirise.founding.v1`), sound effects |
+| `assets/cards/` | `owl-builder/achiever/explorer`, `seal-founding-cut` (PNG for the canvas, WebP for the page), `card-back`, `story-bg`, `flip.mp3`, `reveal.mp3`, `card-mockup (1).html` (the design reference) |
+| `assets/cards/_unused/` | Local only, git-ignored: retired frame/hero card art |
+| `tools/prepare_cards.py` | Built the retired frame card art (kept for reference) |
 | `who.html`, `js/who.js`, `css/who.css` | "Who you are" story |
 | `report-student.html`, `js/report-student.js`, `css/report-student.css` | Full report |
 | `js/engine/questions.js` | The 18 questions, 72 options, their scoring and tip-card text (single source of truth) |
@@ -68,4 +76,4 @@ Nothing in the funnel loads a legacy file.
 ## Privacy
 
 Real student data never goes in the repo: `recovery/`, session JSON and report PDFs are git-ignored (see `.gitignore`).
-`js/funnel-config.js` stays empty in the repo. The landing consent text says students under 18 need a parent or guardian with them.
+`js/funnel-config.js` stays empty in the repo (`shareUrl` is set to the live site at deploy time). The landing consent text says students under 18 need a parent or guardian with them.

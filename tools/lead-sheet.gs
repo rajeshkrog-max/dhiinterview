@@ -8,7 +8,7 @@
 var AREAS = ["routine", "emotions", "drive", "connection", "expression", "clarity", "purpose"];
 var INDICES = ["studyReadiness", "emotionalBalance", "focusEnergy", "direction"];
 var LEAD_HEADER = ["receivedAt", "name", "age", "class", "phone", "wantsCommunity", "styleKey", "dhiStart"]
-  .concat(INDICES).concat(AREAS).concat(["flags", "completedAt"]);
+  .concat(INDICES).concat(AREAS).concat(["flags", "completedAt", "foundingId"]);   /* foundingId last, so older sheets keep their columns */
 var FEEDBACK_HEADER = ["receivedAt", "rating", "text", "canShare", "styleKey", "completedAt", "phone"];
 
 function doPost(e) {
@@ -33,7 +33,7 @@ function appendLead_(d) {
   ]
     .concat(INDICES.map(function (k) { return indices[k] != null ? indices[k] : ""; }))
     .concat(AREAS.map(function (k) { return areas[k] != null ? areas[k] : ""; }))
-    .concat([Object.keys(flags).filter(function (k) { return flags[k] === true; }).join(", "), d.completedAt || ""]);
+    .concat([Object.keys(flags).filter(function (k) { return flags[k] === true; }).join(", "), d.completedAt || "", safe_(d.foundingId)]);
   getSheet_("Leads", LEAD_HEADER).appendRow(row);
 }
 

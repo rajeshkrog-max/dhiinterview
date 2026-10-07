@@ -379,10 +379,10 @@ window.DhiReportText = {
   joinLine: "A quiet WhatsApp group for students. Be first in when Dhi opens.",
   joinButton: "Join Dhi early access on WhatsApp",
   joinSoon: "WhatsApp early access opens soon",
-  joinedLine: "You're in · ••••{last4}",
+  joinedLine: "You're in · +91 ••• ••• {last4}",
   openGroup: "Open the WhatsApp group",
   shareButton: "Share with a friend",
-  shareText: "I just found my study style with Dhirise. Try it:",
+  shareText: "I just found my study style with DhiRise. Try it:",
   shareCopied: "Link copied",
 
   footer: "A study and wellbeing screening based on your answers. Not a medical or psychological diagnosis."

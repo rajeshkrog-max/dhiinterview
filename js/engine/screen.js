@@ -38,7 +38,8 @@
         var missing = DhiStore.firstMissing();             /* Finish: any skipped question first */
         if (missing) { location.href = DhiStore.urlFor(missing); return; }
         DhiStore.complete();
-        location.href = "done.html";
+        var go = function () { location.href = "done.html"; };
+        if (window.DhiMusic) DhiMusic.finish(go); else go();   /* the music fades out first */
       }
     });
   };

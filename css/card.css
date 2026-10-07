@@ -1,0 +1,73 @@
+/* DhiRise · the Founding Card (js/card.js), built from assets/cards/card-mockup (1).html.
+   The mockup card is 290px wide; here every size is that mockup's px ÷ 2.9 in cqw (1% of the card's width),
+   so at any width it is the mockup, scaled. js/card-export.js draws the same layout on a canvas: keep them in step.
+   Colours per style come from js/card.js as --c (style), --win-a / --win-b (the window's gradient). */
+.fc-wrap{display:flex;flex-direction:column;align-items:center;gap:22px;padding:calc(min(82vw,320px) * .1) 0 10px}
+.fc{position:relative;width:min(82vw,320px);aspect-ratio:2/3;container-type:inline-size;perspective:1100px;
+  --c:#b5452f;--win-a:#d99f86;--win-b:#a03d2f;--gold:#d9a441;--ink:#1b1d33;
+  --rx:0deg;--ry:0deg;touch-action:pan-y;-webkit-user-select:none;user-select:none}
+.fc-tilt{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateX(var(--rx)) rotateY(var(--ry));
+  transition:transform .5s cubic-bezier(.2,.7,.2,1)}
+.fc.tilting .fc-tilt{transition:transform .08s linear}
+.fc-flip{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateY(180deg);transition:transform .9s cubic-bezier(.2,.7,.2,1)}
+.fc.front .fc-flip{transform:none}
+.fc.still .fc-flip{transition:none}
+.fc img{pointer-events:none}
+
+/* both faces: rounded, gold rim, dark outer ring, thin gold edge, a drop shadow and a glow in the style colour */
+.fc-face{position:absolute;inset:0;border-radius:calc(22cqw / 2.9);-webkit-backface-visibility:hidden;backface-visibility:hidden;
+  box-shadow:0 0 0 calc(2cqw / 2.9) var(--gold),0 0 0 calc(6cqw / 2.9) #2a2440,0 0 0 calc(7cqw / 2.9) rgba(217,164,65,.55),
+    0 calc(28cqw / 2.9) calc(60cqw / 2.9) calc(-18cqw / 2.9) rgba(0,0,0,.8),0 0 calc(60cqw / 2.9) calc(-10cqw / 2.9) var(--c)}
+.fc-back{transform:rotateY(180deg);overflow:hidden}
+.fc-back img{display:block;width:100%;height:100%;object-fit:cover;border-radius:inherit}
+
+/* front: ivory card; content starts 14px below the 39% window */
+.fc-front{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  padding:calc(58.5% + 14cqw / 2.9) calc(18cqw / 2.9) calc(18cqw / 2.9);
+  background:linear-gradient(180deg,#fffaf0,#f3e6c9);font-family:var(--f-body)}
+.fc-front::before{content:"";position:absolute;inset:calc(10cqw / 2.9);border-radius:calc(14cqw / 2.9);
+  border:1px solid rgba(185,134,46,.45);pointer-events:none}
+.fc-front::after{content:"";position:absolute;left:calc(10cqw / 2.9);right:calc(10cqw / 2.9);top:calc(10cqw / 2.9);height:calc(39% - 10cqw / 2.9);
+  border-radius:calc(14cqw / 2.9) calc(14cqw / 2.9) 0 0;
+  background:radial-gradient(90% 80% at 50% 100%,var(--win-a),var(--win-b) 85%);
+  border-bottom:calc(2cqw / 2.9) solid var(--gold);box-shadow:inset 0 calc(-20cqw / 2.9) calc(30cqw / 2.9) calc(-20cqw / 2.9) rgba(0,0,0,.35);pointer-events:none}
+
+/* the owl breaks out of its window */
+.fc-owl{position:absolute;left:50%;transform:translateX(-50%);width:96%;bottom:calc(61% - var(--sink,4%));z-index:2;
+  filter:drop-shadow(0 calc(10cqw / 2.9) calc(14cqw / 2.9) rgba(0,0,0,.35))}
+
+.fc-tag{position:relative;z-index:1;font-family:"Cinzel",Georgia,serif;font-weight:700;font-size:calc(11cqw / 2.9);line-height:1.3;
+  letter-spacing:.16em;color:#fff;background:var(--c);padding:calc(6cqw / 2.9) calc(14cqw / 2.9) calc(5cqw / 2.9);border-radius:999px;
+  box-shadow:0 0 0 1px var(--gold),0 calc(4cqw / 2.9) calc(12cqw / 2.9) calc(-4cqw / 2.9) var(--c);white-space:nowrap}
+.fc-name{position:relative;z-index:1;max-width:100%;font-family:"Cinzel",Georgia,serif;font-weight:800;font-size:calc(34cqw / 2.9);line-height:1;
+  letter-spacing:.04em;color:var(--ink);margin:calc(12cqw / 2.9) 0 calc(2cqw / 2.9);text-align:center;white-space:nowrap;text-shadow:0 1px 0 #fff}
+.fc-rule{position:relative;z-index:1;flex:none;width:56%;height:1px;margin:calc(8cqw / 2.9) 0 calc(10cqw / 2.9);
+  background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.fc-line{position:relative;z-index:1;margin:0 0 calc(12cqw / 2.9);text-align:center;font-size:calc(12cqw / 2.9);font-weight:500;line-height:1.42;
+  color:#4a4560;max-width:30ch}
+.fc-line b{color:var(--ink);font-weight:700}
+.fc-seal{position:relative;z-index:1;flex:none;margin-top:auto;width:27%;filter:drop-shadow(0 calc(6cqw / 2.9) calc(8cqw / 2.9) rgba(80,50,0,.35))}
+
+/* a subtle shine sweep */
+.fc-shine{position:absolute;inset:0;z-index:3;border-radius:inherit;pointer-events:none;mix-blend-mode:soft-light;opacity:.55;
+  background:linear-gradient(115deg,transparent 38%,rgba(255,255,255,.9) 48%,rgba(255,255,255,.4) 52%,transparent 62%) no-repeat;
+  background-size:300% 100%;background-position:150% 0;animation:fcSweep 5s ease-in-out 1.6s infinite}
+@keyframes fcSweep{0%{background-position:150% 0}45%,100%{background-position:-50% 0}}
+
+.fc-actions{display:flex;flex-direction:column;gap:10px;width:min(86vw,360px)}
+.fc-actions .btn-ghost{margin-top:0}
+.fc-actions button[aria-busy="true"]{opacity:.7;cursor:progress}
+@media (min-width:480px){.fc-actions{flex-direction:row}.fc-actions > *{flex:1}}
+
+/* the hint after a story is saved */
+.fc-toast{position:fixed;z-index:50;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));width:max-content;max-width:calc(100% - 32px);
+  padding:12px 18px;border-radius:14px;font:600 15px/1.4 var(--f-body);color:#fff;text-align:center;
+  background:rgba(20,17,14,.94);border:1px solid rgba(233,185,92,.5);box-shadow:0 12px 30px -10px rgba(0,0,0,.6);
+  opacity:0;transform:translate(-50%,8px);pointer-events:none;transition:opacity .3s ease,transform .3s ease}
+.fc-toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* reduced motion: no flip, no tilt, no shine */
+@media (prefers-reduced-motion:reduce){
+  .fc-tilt,.fc-flip{transition:none}
+  .fc-shine{display:none}
+}

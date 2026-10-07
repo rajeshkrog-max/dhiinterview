@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#000000">
-<title>Dhirise · Preparing your result</title>
+<title>DhiRise · Preparing your result</title>
 <link rel="icon" href="assets/dhirise-logo.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Mukta:wght@400;500;600;700&display=swap">
@@ -12,13 +12,17 @@
 </head>
 <body>
 <main class="done">
-  <img class="logo" src="assets/dhirise-logo-light.png" alt="Dhirise" width="72" height="72"
+  <img class="logo" src="assets/dhirise-logo-light.png" alt="DhiRise" width="72" height="72"
        onerror="this.onerror=null;this.src='assets/dhirise-logo.png'">
 
-  <!-- wait -->
+  <!-- reveal: the constellation of your 18 answers -->
   <section class="wait" id="wait">
-    <div class="fill" aria-hidden="true"><i id="fill"></i></div>
-    <p class="line" id="line" aria-live="polite"></p>
+    <canvas class="sky" id="sky" aria-hidden="true"></canvas>
+    <p class="sr" id="line" aria-live="polite">DhiRise is reading your answers</p>
+    <div class="youare" id="youare" aria-hidden="true">
+      <span>You are</span>
+      <strong id="youName"></strong>
+    </div>
     <button type="button" class="gold" id="see" hidden>See your result</button>
   </section>
 
@@ -54,7 +58,10 @@
     <p>Add your mobile number. Your full report opens right after.</p>
     <form id="join" novalidate>
       <label for="phone">Mobile number</label>
-      <input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel-national" maxlength="14" placeholder="10-digit number" aria-describedby="phoneErr">
+      <div class="phone-field">
+        <span class="cc" aria-hidden="true">+91</span>
+        <input id="phone" name="phone" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="987 654 3210" aria-describedby="phoneErr">
+      </div>
       <p class="err" id="phoneErr" aria-live="polite"></p>
       <div class="tick">
         <input type="checkbox" id="community" checked>
@@ -62,13 +69,18 @@
       </div>
       <button type="submit" class="gold" id="submit">Submit</button>
     </form>
-    <a class="skip" href="who.html" id="skip">Skip</a>
+    <div class="thanks" id="thanks" hidden role="status">
+      <svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="21"/><path d="M15 24.5l6 6 12-13"/></svg>
+      <p>Thank you! Our team will message you soon.</p>
+    </div>
   </section>
 </main>
 <script src="js/funnel-config.js"></script>
 <script src="js/engine/questions.js"></script>
 <script src="js/engine/score.js"></script>
 <script src="js/engine/store.js"></script>
+<script src="js/engine/reportText.js"></script>
+<script src="js/engine/identity.js"></script>
 <script src="js/done.js"></script>
 </body>
 </html>

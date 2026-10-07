@@ -149,7 +149,7 @@
   function extras(i) {
     if (i === 1) return DISCLAIMER;
     if (i === 6) return (FACTS.onList
-        ? P("You are on the list. Your pilot place will reach you on the number ending in " + String(community.phone).slice(-4) + ".")
+        ? P("You are on the list. Your pilot place will reach you on +91 ••• ••• " + String(community.phone).replace(/\D/g, "").slice(-4) + ".")
         : P("You are not on the list yet.") + '<p><a href="done.html">Join the list</a></p>') +
       '<button type="button" class="gold" id="share">Share the pilot with a friend</button><p class="saved" id="shared" hidden>Link copied.</p>';
     if (i === 7) return '<div class="rate" role="radiogroup" aria-label="How well this fits you" id="rate">' +
