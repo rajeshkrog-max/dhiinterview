@@ -1,0 +1,100 @@
+---
+import Guard from "../../components/Guard.astro";
+// The phone notice is drawn from the same lines the server checks (spec 0003), so the two cannot drift apart.
+import { LEAD_CONSENT_LINES, LEAD_CONSENT_VERSION } from "../../../convex/consentText";
+---
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>DhiRise · Preparing your result</title>
+<link rel="icon" href="assets/dhirise-logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Mukta:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/done.css">
+<Guard mode="protected" />
+</head>
+<body>
+<div id="dhiBoot" hidden></div>
+<main class="done">
+  <img class="logo" src="assets/dhirise-logo-light.png" alt="DhiRise" width="72" height="72"
+       onerror="this.onerror=null;this.src='assets/dhirise-logo.png'">
+
+  <!-- reveal: the constellation of your 18 answers -->
+  <section class="wait" id="wait">
+    <canvas class="sky" id="sky" aria-hidden="true"></canvas>
+    <p class="sr" id="line" aria-live="polite">DhiRise is reading your answers</p>
+    <div class="youare" id="youare" aria-hidden="true">
+      <span>You are</span>
+      <strong id="youName"></strong>
+    </div>
+    <button type="button" class="gold" id="see" hidden>See your result</button>
+  </section>
+
+  <!-- teaser -->
+  <section class="teaser" id="teaser" hidden aria-labelledby="tName">
+    <h1 id="tName"></h1>
+    <p class="badge" id="tBadge"></p>
+
+    <div class="ring" role="img" id="tRing">
+      <svg viewBox="0 0 120 120" aria-hidden="true">
+        <circle class="ring-bg" cx="60" cy="60" r="52"></circle>
+        <circle class="ring-fg" id="ringFg" cx="60" cy="60" r="52"></circle>
+      </svg>
+      <span class="ring-num" id="tScore"></span>
+    </div>
+    <p class="ring-cap">Your Dhi starting score.<br>A starting point, never a rank.</p>
+
+    <div class="lockcard">
+      <h2>Your strongest area</h2>
+      <div class="blur" aria-hidden="true" id="tTop"></div>
+    </div>
+    <div class="lockcard">
+      <h2>Where you can grow next</h2>
+      <div class="blur" aria-hidden="true" id="tGrow"></div>
+    </div>
+
+    <button type="button" class="gold" id="unlock">Unlock my full report</button>
+  </section>
+
+  <!-- join -->
+  <section class="join" id="joinCard" hidden>
+    <h1>Unlock your full report.</h1>
+    <p>Add your mobile number. Your full report opens right after.</p>
+    <form id="join" novalidate>
+      <label for="phone">Mobile number</label>
+      <div class="phone-field">
+        <span class="cc" aria-hidden="true">+91</span>
+        <input id="phone" name="phone" type="tel" inputmode="numeric" autocomplete="tel-national" placeholder="987 654 3210" aria-describedby="phoneErr">
+      </div>
+      <p class="err" id="phoneErr" aria-live="polite"></p>
+      <div class="notice" id="leadConsent" data-version={LEAD_CONSENT_VERSION}>
+        {LEAD_CONSENT_LINES.map((line) => <p>{line}</p>)}
+      </div>
+      <div class="tick">
+        <input type="checkbox" id="community" checked>
+        <label for="community">Add me to Dhi early access on WhatsApp</label>
+      </div>
+      <div class="tick" id="guardianRow" hidden>
+        <input type="checkbox" id="guardian" aria-describedby="formErr">
+        <label for="guardian">My parent or guardian is with me and agrees</label>
+      </div>
+      <p class="err" id="formErr" role="alert"></p>
+      <button type="submit" class="gold" id="submit">Submit</button>
+    </form>
+    <div class="thanks" id="thanks" hidden role="status">
+      <svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="21"/><path d="M15 24.5l6 6 12-13"/></svg>
+      <p>Thank you! Our team will message you soon.</p>
+    </div>
+  </section>
+</main>
+<script is:inline type="text/dhi-deferred" src="js/engine/questions.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/engine/score.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/engine/store.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/engine/reportText.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/engine/identity.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/done.js"></script>
+</body>
+</html>

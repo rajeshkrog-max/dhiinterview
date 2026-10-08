@@ -1,6 +1,5 @@
 @echo off
-rem Dhirise Mind Mirror: always serve on port 8081 so saved sessions stay in the same browser storage.
-rem (Port 8080 is used by the Sera project.)
+rem Dhirise: local dev server. Astro serves the funnel pages on http://localhost:4321 (run "pnpm install" once first).
 cd /d "%~dp0"
-start "" http://localhost:8081
-python -m http.server 8081 || py -m http.server 8081
+start "" http://localhost:4321/dhiinterviews/landing.html
+pnpm dev

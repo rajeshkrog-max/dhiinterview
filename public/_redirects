@@ -1,0 +1,4 @@
+# Cloudflare Pages redirects. The main address will later be a separate dashboard app, so these are temporary (302).
+/ /dhiinterviews/landing 302
+/dhiinterviews /dhiinterviews/landing 302
+/dhiinterviews/ /dhiinterviews/landing 302

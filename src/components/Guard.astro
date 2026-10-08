@@ -1,0 +1,32 @@
+---
+// The page guard (spec 0002, AC-1 and AC-16). Put it in the <head> of every page after the landing page, and of
+// the landing page itself. It hides the page until src/lib/session.ts knows who is here, sends a signed out
+// visitor to landing, then starts the page's own scripts (written as type="text/dhi-deferred").
+// mode "protected": the whole page waits. mode "landing": only the card waits, so the logo and text show at once.
+interface Props {
+  mode: "protected" | "landing";
+}
+const { mode } = Astro.props;
+const boot = `document.documentElement.dataset.dhiGuard=${JSON.stringify(mode)};document.documentElement.classList.add("dhi-pending");` +
+  `setTimeout(function(){if(!document.documentElement.classList.contains("dhi-pending"))return;var b=document.getElementById("dhiBoot");` +
+  `if(b){b.hidden=false;b.innerHTML='<p>This is taking longer than usual. Please check your connection.</p><button type="button" onclick="location.reload()">Try again</button>';}},15000);`;
+---
+{mode === "landing" ? (
+  <style is:global>
+    html.dhi-pending #card{visibility:hidden}
+    #dhiBoot{font:16px/1.5 system-ui,sans-serif;color:#fff;text-align:center;padding:24px}
+    #dhiBoot[hidden]{display:none}
+    #dhiBoot button,#dhiRetry{font:inherit;padding:10px 18px;border-radius:10px;border:0;margin-top:8px}
+  </style>
+) : (
+  <style is:global>
+    html.dhi-pending body>*:not(#dhiBoot){visibility:hidden}
+    #dhiBoot{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#16122b;color:#fff;font:16px/1.5 system-ui,sans-serif;text-align:center;padding:24px;z-index:99}
+    #dhiBoot[hidden]{display:none}
+    #dhiBoot button{font:inherit;padding:10px 18px;border-radius:10px;border:0;margin-top:8px}
+  </style>
+)}
+<script is:inline set:html={boot}></script>
+<script>
+  import "../lib/session";
+</script>

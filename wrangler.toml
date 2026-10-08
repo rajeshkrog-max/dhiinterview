@@ -1,0 +1,13 @@
+# Cloudflare Pages settings (direct upload, see "deploy:pages" in package.json).
+# Public values only. Secrets are never put here (spec 0001, configuration and secrets).
+name = "dhirise"
+pages_build_output_dir = "./dist"
+compatibility_date = "2026-10-01"
+
+# Production: the Convex production deployment's .convex.site address.
+[vars]
+CONVEX_SITE_URL = "https://abundant-caiman-975.convex.site"
+
+# Preview deploys (any branch other than main) talk to the dev deployment, so test data never mixes with real students.
+[env.preview.vars]
+CONVEX_SITE_URL = "https://proper-camel-616.ap-southeast-2.convex.site"

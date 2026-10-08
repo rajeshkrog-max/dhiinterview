@@ -1,0 +1,151 @@
+/* Dhirise · question screen. Mobile first (390px).
+   The photo is already gold, so the UI is dark ink glass with gold used only as an accent. */
+:root{
+  --ink:#14110e; --ink-text:#1c140c; --white:#fff;
+  --gold:#e9b95c;
+  --f-body:"Mukta",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --nav-h:48px; --nav-gap:16px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font-family:var(--f-body);color:var(--white);-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;background:var(--ink)}
+[hidden]{display:none!important}
+
+.qscreen{
+  position:relative;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;
+  padding:calc(12px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right))
+          calc(var(--nav-h) + var(--nav-gap) * 2 + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
+  background:var(--ink) url("../assets/interview%20bg/Q1.png") no-repeat;
+  background-size:cover;background-position:center 14%;
+}
+.qscreen.q2{background-image:url("../assets/interview%20bg/Q2.png")}
+
+/* ---------- top: slim glass bar + thin gold track ---------- */
+.topbar{
+  display:grid;grid-template-columns:1fr auto 1fr;align-items:center;min-height:44px;padding:0 16px;
+  border-radius:999px;background:rgba(20,17,14,.62);border:1px solid rgba(255,255,255,.18);
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+}
+.who{font-size:15px;font-weight:600;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.step{font-size:14px;font-weight:600;letter-spacing:.08em;color:var(--white)}
+.track{height:3px;margin:8px 6px 0;border-radius:3px;background:rgba(20,17,14,.55);overflow:hidden}
+.track i{display:block;height:100%;width:calc(100% * var(--n,1) / 18);border-radius:3px;background:var(--gold)}
+
+/* ---------- question panel: the question and four options, nothing else ---------- */
+.panel{
+  margin-top:auto;align-self:center;width:100%;max-width:520px;
+  padding:18px 16px 16px;border-radius:22px;
+  background:rgba(20,17,14,.78);border:1px solid rgba(233,185,92,.45);
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  box-shadow:0 0 24px rgba(233,185,92,.28);
+}
+.panel h1{margin:0 2px 14px;font-family:var(--f-body);font-weight:600;font-size:17px;line-height:1.4;color:var(--white)}
+
+.options{display:flex;flex-direction:column;gap:8px}
+.options button{
+  display:flex;align-items:center;width:100%;min-height:52px;padding:12px 16px;text-align:left;cursor:pointer;pointer-events:auto;
+  font:500 16px/1.35 var(--f-body);color:var(--ink-text);
+  background:rgba(255,255,255,.92);border:1.5px solid transparent;border-radius:14px;
+  transition:opacity .3s ease,background .3s ease,color .3s ease,border-color .3s ease;
+}
+.options.chosen button{opacity:.55}
+.options button[aria-checked="true"]{opacity:1;background:var(--ink);color:var(--white);border-color:var(--gold)}
+.options button:focus-visible,.qnav button:focus-visible{outline:2px solid var(--white);outline-offset:3px}
+
+/* ---------- tip: its own card over the photo, centred in the space above the panel ---------- */
+.tip{
+  position:fixed;z-index:10;left:50%;top:var(--tip-top,30%);width:calc(100% - 32px);max-width:420px;
+  transform:translateX(-50%);
+  padding:16px 18px 18px;border-radius:18px;overflow:hidden;pointer-events:none;
+  background:rgba(12,10,8,.84);border:1px solid rgba(255,255,255,.14);
+  -webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
+  box-shadow:0 18px 50px -18px rgba(0,0,0,.7);
+}
+.tip b{display:block;margin-bottom:6px;font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold)}
+.tip p{margin:0;font-size:16px;line-height:1.5;color:var(--white)}
+/* tip parts (js/engine/screen.js): mirror, gold room pill, the Dhi line, peer footer */
+.tip p span{display:block}
+.tip .tip-mirror{font-weight:600}
+.tip .tip-room{display:inline-block;margin:10px 0 6px;padding:2px 10px;border-radius:999px;font-size:13px;font-weight:700;line-height:1.6;
+  color:var(--ink-text);background:var(--gold)}
+.tip .tip-line{color:rgba(255,255,255,.88)}
+.tip .tip-peer{margin-top:10px;font-size:13px;color:rgba(255,255,255,.6)}
+/* a thin gold line that drains across the reading time */
+.tip .drain{position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--gold);transform-origin:left center}
+.tip.reading .drain{animation:drain var(--read,10s) linear forwards}
+@keyframes drain{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+
+/* ---------- Back / Next: fixed to the bottom corners, above the safe area ---------- */
+.qnav button{
+  position:fixed;z-index:20;bottom:calc(var(--nav-gap) + env(safe-area-inset-bottom));
+  min-height:var(--nav-h);min-width:112px;padding:0 22px;border-radius:999px;cursor:pointer;
+  font:700 16px var(--f-body);
+}
+.back{left:calc(var(--nav-gap) + env(safe-area-inset-left));color:var(--white);
+  background:rgba(20,17,14,.55);border:1px solid rgba(255,255,255,.3);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.next{right:calc(var(--nav-gap) + env(safe-area-inset-right));color:var(--ink-text);background:var(--gold);border:0}
+.next:disabled{cursor:default;color:rgba(255,255,255,.75);background:rgba(20,17,14,.62);border:1px solid rgba(255,255,255,.22);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+
+@media (min-width:900px){
+  .qscreen{padding-left:32px;padding-right:32px;background-position:center 12%}
+  .topbar{align-self:center;width:100%;max-width:520px}
+  .track{align-self:center;width:100%;max-width:508px}
+  /* wide screens: the face sits left of centre, so the panel takes the window side. The tip is taller than
+     the gap above the panel, so it sits bottom left, above Back, over the shoulder and clear of the face */
+  .panel{align-self:flex-end;margin-right:max(0px,calc(6vw - 32px))}
+  .tip{left:max(32px,4vw);right:auto;top:auto;bottom:calc(var(--nav-gap) + var(--nav-h) + 20px + env(safe-area-inset-bottom));
+    width:min(340px,calc(100vw - 600px - max(0px,6vw - 32px) - max(32px,4vw)));transform:none}
+}
+
+/* motion only when welcome */
+@media (prefers-reduced-motion:no-preference){
+  .panel{animation:glow 4s ease-in-out infinite}
+  @keyframes glow{0%,100%{box-shadow:0 0 16px rgba(233,185,92,.18)}50%{box-shadow:0 0 28px rgba(233,185,92,.34)}}
+  .tip.enter{animation:tipIn .4s ease-out both}
+  .tip.leave{animation:tipOut .7s ease-in both}
+  @keyframes tipIn{from{opacity:0;scale:.96}to{opacity:1;scale:1}}
+  /* drifts down and away like a leaf in wind */
+  @keyframes tipOut{
+    0%{opacity:1;translate:0 0;rotate:0deg}
+    40%{opacity:.8;translate:-10px 22px;rotate:-2deg}
+    100%{opacity:0;translate:14px 70px;rotate:3deg}
+  }
+}
+@media (prefers-reduced-motion:reduce){
+  .options button{transition:none}
+  .tip .drain{display:none}
+}
+
+/* ---------- before Q1 (meet.html): logo on top, one card, Back / Start the check.
+   Sized to sit on a 390×844 phone with little or no scrolling. ---------- */
+.meet{gap:14px}
+/* meet only: a dark night sky instead of the photo (question screens keep their images) */
+.qscreen.meet{background:#0b0c18 radial-gradient(130% 85% at 50% 0%,#1b1e3d 0%,#121429 45%,#0b0c18 100%) no-repeat}
+.meet .brand::before{content:"";position:absolute;z-index:-1;left:50%;top:28px;width:180px;height:180px;transform:translate(-50%,-50%);
+  border-radius:50%;background:radial-gradient(circle,rgba(233,185,92,.18) 0%,rgba(233,185,92,.06) 45%,rgba(233,185,92,0) 70%);pointer-events:none}
+.meet .brand{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:4px}
+.meet .brand img{display:block;height:56px;width:auto}
+.meet .brand span{font-size:12px;font-weight:700;letter-spacing:.32em;text-indent:.32em;text-transform:uppercase;color:var(--gold)}
+.meet .panel{margin-block:auto;padding:18px 18px 16px}
+.meet .panel p{margin:0 2px;font-size:15px;line-height:1.45;color:rgba(255,255,255,.88)}
+.meet .panel .eyebrow{margin-bottom:6px;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.meet .panel h1{margin:0 2px 8px;font-family:"Playfair Display",Georgia,serif;font-weight:700;font-size:23px;line-height:1.25}
+.meet .pillars{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-direction:column;gap:11px}
+.meet .pillars li{display:flex;align-items:flex-start;gap:12px}
+.meet .pillars svg{flex:none;width:22px;height:22px;margin-top:2px;fill:none;stroke:var(--gold);stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.meet .pillars div{font-size:15px;line-height:1.4;color:rgba(255,255,255,.82)}
+.meet .pillars b{display:block;font-size:15px;font-weight:700;color:var(--white)}
+.meet .panel .meet-note{margin-top:14px;padding-top:12px;border-top:1px solid rgba(233,185,92,.35);font-weight:600;color:var(--gold)}
+.meet .panel .meet-meta{margin-top:6px;font-size:13px;color:rgba(255,255,255,.6)}
+.meet ~ .qnav .next{padding:0 24px}
+@media (min-width:900px){.meet .panel{align-self:center;margin-right:0}}
+
+/* ---------- falling leaves (js/leaves.js) ----------
+   Above the photo, below the panel, tip, Back and Next. Never takes a tap. */
+.leaves{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden;contain:strict}
+.leaf{position:absolute;left:0;top:0;pointer-events:none;will-change:transform;filter:drop-shadow(0 2px 3px rgba(40,20,0,.25))}
+.panel{position:relative;z-index:2}
+@media (prefers-reduced-motion:reduce){.leaves{display:none}}

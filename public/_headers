@@ -1,0 +1,7 @@
+# Cloudflare Pages response headers (spec 0001, domain and headers).
+# The content security policy is added in the sign in spike, once the Convex and PostHog addresses are known.
+/*
+  Strict-Transport-Security: max-age=31536000
+  X-Content-Type-Options: nosniff
+  Content-Security-Policy: frame-ancestors 'none'
+  Referrer-Policy: strict-origin-when-cross-origin

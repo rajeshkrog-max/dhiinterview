@@ -1,0 +1,84 @@
+---
+import Guard from "../../components/Guard.astro";
+---
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0c18">
+<title>DhiRise · Founding Circle Challenge</title>
+<link rel="icon" href="assets/dhirise-logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Mukta:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/card.css">
+<link rel="stylesheet" href="css/challenge.css">
+<link rel="stylesheet" href="css/challenge-page.css">
+<Guard mode="protected" />
+</head>
+<body>
+<div id="dhiBoot" hidden></div>
+<!-- Founding Circle Challenge: hero, why, how it works, rules, join (scratch card). Filled by js/challenge.js; data via js/api.js. -->
+<header class="cp-top">
+  <a class="cp-back" href="report-student.html">← Report</a>
+  <img src="assets/dhirise-logo-light.png" alt="DhiRise" width="32" height="32" onerror="this.onerror=null;this.src='assets/dhirise-logo.png'">
+  <span aria-hidden="true"></span>
+</header>
+
+<main class="cp">
+  <!-- 1. hero -->
+  <section class="cp-hero" aria-labelledby="cpTitle">
+    <img class="cp-prize" id="cpPrize" alt="Gift hamper: shoes, headphones and apparel" width="200" height="200">
+    <h1 id="cpTitle">Founding Circle Challenge</h1>
+    <p class="cp-prize-line" id="cpPrizeLine"></p>
+    <div class="ch-clock" id="cpClock" role="timer" aria-live="off"></div>
+  </section>
+
+  <!-- 2. why -->
+  <section class="cp-why">
+    <p>This isn't about a gift. It's about finding students who feel the way you do.</p>
+  </section>
+
+  <!-- 3. how it works -->
+  <section class="cp-how" aria-labelledby="cpHow">
+    <h2 id="cpHow">How it works</h2>
+    <ol class="cp-steps">
+      <li><span class="cp-step-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="18" cy="5.5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="18.5" r="2.5"/><path d="M8.2 10.8l7.6-4.1M8.2 13.2l7.6 4.1"/></svg></span>
+        <span><b>1</b> Share your code</span></li>
+      <li><span class="cp-step-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="3.5" width="14" height="17" rx="2.5"/><path d="M8.5 9l1.6 1.6L13 7.7M8.5 15h7"/></svg></span>
+        <span><b>2</b> Your friend completes the full check and gives honest feedback</span></li>
+      <li><span class="cp-step-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 20h16M7 20v-5M12 20V9M17 20v-8M12 5l2 2M12 5l-2 2"/></svg></span>
+        <span><b>3</b> You climb the leaderboard</span></li>
+    </ol>
+  </section>
+
+  <!-- 4. rules -->
+  <section class="cp-rules" aria-labelledby="cpRules">
+    <h2 id="cpRules">Rules</h2>
+    <ul>
+      <li>One email = one referral.</li>
+      <li>Your friend must finish the full check and give genuine feedback.</li>
+      <li>No self-referrals.</li>
+      <li>Ends 30 Oct, 11:59 pm IST.</li>
+      <li>The top 10 are reviewed; the top referrer wins.</li>
+      <li>DhiRise's decision is final.</li>
+    </ul>
+    <a class="cp-terms" href="terms.html">Full terms</a>
+  </section>
+
+  <!-- 5. join -->
+  <section class="cp-join" id="cpJoin" aria-labelledby="cpJoinTitle">
+    <h2 id="cpJoinTitle">Join the race</h2>
+    <div id="cpJoinBody"></div>
+  </section>
+</main>
+
+<script is:inline type="text/dhi-deferred" src="js/funnel-config.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/challenge-config.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/engine/questions.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/engine/score.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/api.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/share-icons.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/challenge.js"></script>
+</body>
+</html>

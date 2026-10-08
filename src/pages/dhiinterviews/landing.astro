@@ -1,0 +1,160 @@
+---
+import Guard from "../../components/Guard.astro";
+// The consent notice is drawn from the same lines the server checks (spec 0002), so the two cannot drift apart.
+import { CONSENT_LINES, CONSENT_VERSION } from "../../../convex/consentText";
+---
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#16122b">
+<title>DhiRise · I want to be heard</title>
+<link rel="icon" href="assets/dhirise-logo.png" type="image/png">
+<link rel="preload" as="image" href="assets/hero.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Playfair+Display:wght@600;700&family=Mukta:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/landing.css">
+<Guard mode="landing" />
+</head>
+<body>
+<div id="dhiBoot" hidden></div>
+<main class="gate" id="gate">
+
+  <header class="brand">
+    <img src="assets/dhirise-logo-light.png" alt="" width="44" height="44"
+         onerror="this.onerror=function(){this.onerror=null;this.src='assets/dhirise-logo.jpeg'};this.src='assets/dhirise-logo.png'">
+    <span class="wm"><b>DhiRise</b><small>Awaken your awareness.</small></span>
+  </header>
+
+  <section class="copy">
+    <h1>I want to be heard.</h1>
+    <p>Understand who you are, then study in a way that fits you.</p>
+  </section>
+
+  <div class="card" id="card">
+    <p class="card-brand">No student is weak. DhiRise is a calm place to study, with the right tools and the knowledge you need.</p>
+
+    <!-- 1. not signed in: Google first -->
+    <div class="state" id="stSignedOut" hidden>
+      <p class="msg" id="signMsg" role="status" aria-live="polite" hidden></p>
+      <button type="button" class="btn" id="google">Continue with Google</button>
+      <p class="notice">
+        We save your name, age, class and the email of your Google account, so you can carry on later on any phone.
+        <button type="button" class="link inline" id="readNotice">Read the full notice</button>
+      </p>
+      <p class="hint">Already started? Sign in with the same Google account.</p>
+      <button type="button" class="btn ghost" id="testBtn" hidden>Test sign in (dev only)</button>
+    </div>
+
+    <!-- 1b. Google does not work inside Instagram, Facebook and similar apps -->
+    <div class="state" id="stBlocked" hidden>
+      <p class="msg">Open this page in Chrome or Safari to continue. Google does not let you sign in from inside this app.</p>
+      <button type="button" class="btn" id="copyLink">Copy link</button>
+      <p class="hint" id="copyNote" aria-live="polite">Paste it into Chrome or Safari.</p>
+    </div>
+
+    <!-- 2. signed in, no details yet -->
+    <form id="form" novalidate hidden>
+      <div class="field">
+        <label for="name">Name</label>
+        <input id="name" name="name" type="text" maxlength="60" autocomplete="given-name" autocapitalize="words" enterkeyhint="next" aria-describedby="nameErr">
+        <p class="err" id="nameErr" aria-live="polite"></p>
+      </div>
+      <!-- age and class share a row, so the referral field adds no height -->
+      <div class="row2">
+        <div class="field">
+          <label for="age">Age</label>
+          <input id="age" name="age" type="number" inputmode="numeric" min="10" max="25" step="1" enterkeyhint="next" aria-describedby="ageErr">
+          <p class="err" id="ageErr" aria-live="polite"></p>
+        </div>
+        <div class="field">
+          <label for="cls">Class</label>
+          <select id="cls" name="class" aria-describedby="clsErr">
+            <option value="">Select</option>
+            <option>Class 8</option><option>Class 9</option><option>Class 10</option>
+            <option>Class 11</option><option>Class 12</option><option>College</option>
+          </select>
+          <p class="err" id="clsErr" aria-live="polite"></p>
+        </div>
+      </div>
+      <div class="field">
+        <label for="ref">Referral code (optional)</label>
+        <input id="ref" name="ref" type="text" maxlength="8" placeholder="e.g. RAJ7K2Q" autocomplete="off" autocapitalize="characters"
+               autocorrect="off" spellcheck="false" enterkeyhint="done" aria-describedby="refStatus">
+        <p class="ref-status" id="refStatus" aria-live="polite"></p>
+      </div>
+
+      <div class="or" aria-hidden="true"><span>and</span></div>
+
+      <div class="consent">
+        <input type="checkbox" id="consent" name="consent" aria-describedby="consentErr">
+        <label for="consent">I agree that DhiRise may use my name, age, and class to build my study picture and contact me about it. I can ask for it to be deleted.</label>
+      </div>
+      <p class="err" id="consentErr" aria-live="polite"></p>
+
+      <!-- shown only under 18 -->
+      <div class="consent" id="guardianRow" hidden>
+        <input type="checkbox" id="guardian" name="guardian" aria-describedby="guardianErr">
+        <label for="guardian">A parent or guardian is with me and agrees.</label>
+      </div>
+      <p class="err" id="guardianErr" aria-live="polite"></p>
+
+      <p class="err" id="formErr" role="alert"></p>
+      <div class="submit">
+        <button type="submit" class="btn" id="go" aria-disabled="true">Continue</button>
+      </div>
+    </form>
+
+    <!-- 3. signed in with a profile: "Continue as", never an automatic redirect -->
+    <div class="back" id="back" hidden>
+      <button type="button" class="btn" id="continueAs">Continue as <span id="backName"></span></button>
+      <p class="msg" id="outMsg" role="status" aria-live="polite" hidden></p>
+      <button type="button" class="link" id="notYou">Not you</button>
+    </div>
+
+    <!-- 3b. answers an earlier version kept in this browser (asked once) -->
+    <div class="state" id="stImport" hidden>
+      <p class="msg">We found answers saved on this device. Keep them?</p>
+      <button type="button" class="btn" id="importYes">Yes, keep them</button>
+      <button type="button" class="link" id="importNo">No, start fresh</button>
+    </div>
+
+    <!-- 4. the server cannot be reached and this device holds nothing -->
+    <div class="state" id="stUnknown" hidden>
+      <p class="msg">We could not reach DhiRise. Please check your connection.</p>
+      <button type="button" class="btn" id="tryAgain">Try again</button>
+    </div>
+  </div>
+
+</main>
+
+<!-- consent sheet: opened by tapping the consent row; closes only by the X -->
+<div class="sheet-dim" id="sheetDim" hidden>
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div class="sheet-head">
+      <h2 id="sheetTitle">Before we begin</h2>
+      <button type="button" class="sheet-x" id="sheetX" aria-label="Close">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="sheet-body" id="sheetBody" tabindex="0">
+      <div id="consentLines" data-version={CONSENT_VERSION}>
+        {CONSENT_LINES.map((line, i) => <p class={i === CONSENT_LINES.length - 1 ? "consent-final" : undefined}>{line}</p>)}
+      </div>
+    </div>
+    <div class="sheet-foot">
+      <p class="sheet-hint" id="sheetHint">Scroll to the end to continue</p>
+      <button type="button" class="btn" id="agree" aria-disabled="true">I agree</button>
+    </div>
+  </div>
+</div>
+
+<script is:inline type="text/dhi-deferred" src="js/challenge-config.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/funnel-config.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/api.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/engine/store.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/gate.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/music.js"></script>
+</body>
+</html>

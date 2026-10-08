@@ -35,7 +35,7 @@ Those are still in the folder, unchanged.
 - `js/report-student.js`, `css/report-student.css`, `report-student.html`: the report.
 - `meet.html`, `js/meet.js`: the meet-Dhi screen.
 - `js/funnel-config.js`: settings (below).
-- `tools/lead-sheet.gs`, `tools/LEAD-SHEET-SETUP.md`: the Google Sheet for leads.
+- `tools/LEAD-SHEET-SETUP.md`: setting up the Google Sheet copy of leads and feedback.
 
 Changed: `landing.html`, `js/gate.js`, `question.html`, `question2.html`, `questions.html`, `js/q1.js`, `js/q2.js`, `js/questions.js`,
 `js/question.js` (one line: the tip card is filled by the engine), `done.html`, `js/done.js`, `css/question.css`, `css/done.css`.
@@ -46,32 +46,22 @@ Changed: `landing.html`, `js/gate.js`, `question.html`, `question2.html`, `quest
 |---|---|
 | `dhirise.gate.v1` | Name, age, class, consent. |
 | `dhirise.check.v1` | `{ profile, answers: { qN: optionId }, startedAt, completedAt }`. Survives a refresh. A new name starts a fresh check. |
-| `dhirise.lead.v1` | The lead sent from the join (includes `foundingId`). |
 | `dhirise.path.v1` | Week 1 ticks on the report. |
-| `dhirise.reportFeedback.v1` | The feedback sent from the report. |
 
 To test from scratch, clear these keys (or use a private window).
 
 ## `js/funnel-config.js`
 
 ```js
-window.DHI_FUNNEL = { whatsappInvite: "", leadEndpoint: "", feedbackEndpoint: "" };
+window.DHI_FUNNEL = { whatsappInvite: "", shareUrl: "" };
 ```
 
 - `whatsappInvite`: your WhatsApp group invite link (`https://chat.whatsapp.com/...`). It powers the join button on the report. While it is empty, the report shows "WhatsApp early access opens soon".
-- `leadEndpoint`: the Google Apps Script web app URL (ends in `/exec`). When a student submits their number, the page POSTs
-  `{ name, age, class, phone, wantsCommunity, styleKey, areas, indices, dhiStart, flags, completedAt }` there (no-cors).
-  While it is empty, the lead is kept only in the student's browser, with no error.
-- `feedbackEndpoint`: usually the same web app URL. The report's feedback card POSTs `{ type: "feedback", rating, text, canShare, styleKey, completedAt, phone }`
-  there (`phone` only if they joined). The script writes it to a **Feedback** tab. While it is empty, feedback stays only in the browser.
+- `shareUrl`: the public site address printed on the Founding Card and used for referral links.
 
-## Google Sheet for leads and feedback (5 steps)
+Leads and feedback are no longer posted from the browser. Convex saves them (`leads.submit`, `feedback.submit`, specs 0003 and 0004) and the server copies them to the team's Google Sheet (`tools/LEAD-SHEET-SETUP.md`).
 
-1. Open https://sheets.new and name the sheet, for example "Dhi leads".
-2. Choose **Extensions → Apps Script**, replace the code with all of `tools/lead-sheet.gs`, and click **Save**.
-3. Click **Deploy → New deployment → Web app**. Set *Execute as* to **Me** and *Who has access* to **Anyone**, click **Deploy** and allow the permissions.
-4. Copy the **Web app URL** into both `leadEndpoint` and `feedbackEndpoint` in `js/funnel-config.js`. Paste your WhatsApp invite into `whatsappInvite`.
-5. Finish the check once and submit a number: a **Leads** tab appears. Rate the report and submit: a **Feedback** tab appears.
+## Google Sheet for leads and feedback
 
-After editing the script, use **Deploy → Manage deployments → Edit → New version**, or the old version keeps running.
-The sheet holds phone numbers. Share it only with people who need it.
+Set up in `tools/LEAD-SHEET-SETUP.md` (a Google Cloud service account, a Sheet shared with it, and two settings on the Convex deployment).
+The Sheet holds phone numbers. Share it only with people who need it.

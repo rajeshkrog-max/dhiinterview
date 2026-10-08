@@ -1,0 +1,63 @@
+---
+import Guard from "../../components/Guard.astro";
+---
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14110e">
+<title>DhiRise · 2 / 18</title>
+<link rel="icon" href="assets/dhirise-logo.png" type="image/png">
+<link rel="preload" as="image" href="assets/interview%20bg/Q2.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Mukta:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/question.css">
+<Guard mode="protected" />
+</head>
+<body>
+<div id="dhiBoot" hidden></div>
+<main class="qscreen q2">
+
+  <header class="topbar">
+    <span class="who" id="who">Student</span>
+    <span class="step">2 / 18</span>
+    <span class="spacer" aria-hidden="true"></span>
+  </header>
+  <div class="track" role="progressbar" aria-label="Question 2 of 18" aria-valuemin="0" aria-valuemax="18" aria-valuenow="2" style="--n:2"><i></i></div>
+
+  <!-- the question panel holds the question and the four options, nothing else -->
+  <section class="panel" id="panel" aria-labelledby="qText">
+    <h1 id="qText">Deep in study. A meal gets skipped. What happens next?</h1>
+    <div class="options" role="radiogroup" aria-labelledby="qText" id="options">
+      <button type="button" role="radio" aria-checked="false" data-choice="1">I forget to eat, then feel shaky or far away.</button>
+      <button type="button" role="radio" aria-checked="false" data-choice="2">I get sharp. Hunger makes me snappy.</button>
+      <button type="button" role="radio" aria-checked="false" data-choice="3">I barely notice. I can go a long time without food.</button>
+      <button type="button" role="radio" aria-checked="false" data-choice="4">It almost never happens. I eat at the same time.</button>
+    </div>
+  </section>
+
+</main>
+
+<!-- tip: its own card over the photo, above the panel -->
+<aside class="tip" id="tip" hidden aria-live="polite">
+  <b>DhiRise</b>
+  <p id="tipText"></p>
+  <i class="drain" id="drain" aria-hidden="true"></i>
+</aside>
+
+<nav class="qnav">
+  <button type="button" class="back" id="back">Back</button>
+  <button type="button" class="next" id="next" disabled>Next</button>
+</nav>
+
+<script is:inline type="text/dhi-deferred" src="js/leaves.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/engine/questions.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/engine/score.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/engine/store.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/engine/screen.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/question.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/q2.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/music.js"></script>
+</body>
+</html>

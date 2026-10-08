@@ -1,0 +1,37 @@
+{
+  "name": "dhirise",
+  "private": true,
+  "type": "module",
+  "version": "0.0.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev --port 4321",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "deploy:pages": "convex deploy --cmd-url-env-var-name PUBLIC_CONVEX_URL --cmd \"pnpm build\" && wrangler pages deploy dist --project-name dhirise --branch main",
+    "preview:pages": "pnpm build && wrangler pages dev dist",
+    "test": "vitest run",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@convex-dev/better-auth": "^0.12.5",
+    "@convex-dev/rate-limiter": "^0.4.1",
+    "astro": "^7.3.7",
+    "better-auth": "~1.6.33",
+    "convex": "^1.46.0",
+    "google-auth-library": "^11.1.0"
+  },
+  "devDependencies": {
+    "@edge-runtime/vm": "^5.0.0",
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^26.6.4",
+    "convex-test": "^0.0.60",
+    "typescript": "^7.0.2",
+    "vite": "8.3.3",
+    "vitest": "^5.0.3",
+    "wrangler": "^4.148.0"
+  }
+}
