@@ -49,6 +49,10 @@ body{font-family:var(--f-body);color:var(--white);-webkit-font-smoothing:antiali
 .tick{display:flex;align-items:flex-start;gap:10px;margin:10px 0 4px}
 .tick input{width:20px;height:20px;min-height:0;margin:2px 0 0;padding:0;flex:none;accent-color:var(--gold)}
 .tick label{margin:0;font-size:15px;font-weight:500;line-height:1.4;color:var(--white)}
+/* the phone notice, inline under the number: tapping Submit is the agreement */
+.notice{margin:6px 0 10px;padding:12px 14px;border-radius:12px;background:rgba(255,255,255,.06);font-size:13px;line-height:1.5;color:var(--muted)}
+.notice p{margin:0 0 8px}
+.notice p:last-child{margin:0}
 /* +91 sits inside the field, left, muted */
 .phone-field{position:relative}
 .phone-field .cc{position:absolute;left:14px;top:0;height:48px;display:flex;align-items:center;font:500 18px var(--f-body);letter-spacing:.04em;color:var(--muted);pointer-events:none}

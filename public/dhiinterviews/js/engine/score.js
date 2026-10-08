@@ -1,7 +1,7 @@
 /* Dhirise · scoring. Pure functions, no DOM, no storage. Needs js/engine/questions.js first.
    DhiScore.score(answers, { seed }) → the whole result. answers = { q1: "q1o4", … } (option ids).
    DhiScore.order(n, seed) → the option ids of question n in this student's screen order.
-   DhiScore.seedOf(profile, startedAt) → the shuffle seed (name + start date). */
+   The seed is checks.seed, made on the server (DhiStore.seed()), so the order is the same on every device. */
 (function (root) {
   "use strict";
   var Q = root.DhiQuestions;
@@ -25,10 +25,6 @@
       t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
       return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
     };
-  }
-  function seedOf(profile, startedAt) {
-    var name = profile && profile.name ? String(profile.name).trim().toLowerCase() : "";
-    return name + "|" + String(startedAt || "").slice(0, 10);
   }
   function order(n, seed) {
     var ids = Q.byN[n].options.map(function (o) { return o.id; });
@@ -169,5 +165,5 @@
     };
   }
 
-  root.DhiScore = { score: score, order: order, seedOf: seedOf, band: band };
+  root.DhiScore = { score: score, order: order, band: band };
 })(typeof window !== "undefined" ? window : globalThis);

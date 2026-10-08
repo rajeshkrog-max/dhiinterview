@@ -1,3 +1,6 @@
+---
+import Guard from "../../components/Guard.astro";
+---
 <!doctype html>
 <html lang="en">
 <head>
@@ -12,23 +15,25 @@
 <link rel="stylesheet" href="css/card.css">
 <link rel="stylesheet" href="css/challenge.css">
 <link rel="preload" as="image" href="assets/cards/card-back.webp">
+<Guard mode="protected" />
 </head>
 <body>
+<div id="dhiBoot" hidden></div>
 <!-- filled by js/report-student.js from score() and js/engine/reportText.js -->
 <main class="report" id="report" aria-label="Your report"></main>
 
-<script is:inline src="js/leaves.js"></script>
-<script is:inline src="js/funnel-config.js"></script>
-<script is:inline src="js/challenge-config.js"></script>
-<script is:inline src="js/api.js"></script>
-<script is:inline src="js/engine/questions.js"></script>
-<script is:inline src="js/engine/score.js"></script>
-<script is:inline src="js/engine/store.js"></script>
-<script is:inline src="js/engine/reportText.js"></script>
-<script is:inline src="js/report-student.js"></script>
-<script is:inline src="js/engine/identity.js"></script>
-<script is:inline src="js/card-export.js"></script>
-<script is:inline src="js/card.js"></script>
-<script is:inline src="js/challenge-ui.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/leaves.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/funnel-config.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/challenge-config.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/api.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/engine/questions.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/engine/score.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/engine/store.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/engine/reportText.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/report-student.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/engine/identity.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/card-export.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/card.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/challenge-ui.js"></script>
 </body>
 </html>

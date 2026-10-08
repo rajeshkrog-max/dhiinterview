@@ -10,8 +10,10 @@
     location.replace(missing ? DhiStore.urlFor(missing) : DhiStore.urlFor(Q.TOTAL));
     return;
   }
+  if (!DhiStore.requireLead(check)) return;                   /* the phone step comes first (spec 0003) */
   var r = DhiScore.score(check.answers, { seed: DhiStore.seed() });
   var profile = check.profile || {};
+  if (window.DhiSession) DhiSession.markReportSeen();         /* saved on the server, so every device resumes at the report */
   var reduced = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
   var SVGNS = "http://www.w3.org/2000/svg";
   var root = document.getElementById("report");
@@ -403,20 +405,11 @@
   /* ---------- 11. join ---------- */
   (function join() {
     var cfg = window.DHI_FUNNEL || {};
-    var lead = null;
-    try { lead = JSON.parse(localStorage.getItem("dhirise.lead.v1")); } catch (e) {}
-    var l = lead && lead.completedAt === check.completedAt ? lead.lead : null;
-    var joined = !!(l && l.phone && l.wantsCommunity);
     var c = card("join", T.joinTitle);
     add(c, el("p", "lede", T.joinLine));
-    if (joined) {
-      add(c, el("p", "joined", fill(T.joinedLine, { last4: String(l.phone).slice(-4) })));
-      if (cfg.whatsappInvite) { var g = el("a", "btn-ghost", T.openGroup); g.href = cfg.whatsappInvite; g.target = "_blank"; g.rel = "noopener"; add(c, g); }
-    } else if (cfg.whatsappInvite) {
-      var a = el("a", "btn-gold", T.joinButton); a.href = cfg.whatsappInvite; a.target = "_blank"; a.rel = "noopener"; add(c, a);
-    } else {
-      add(c, el("p", "soon", T.joinSoon));
-    }
+    /* the number and the tick are kept on the server and never sent back to the browser, so every student sees the same card */
+    if (cfg.whatsappInvite) { var a = el("a", "btn-gold", T.joinButton); a.href = cfg.whatsappInvite; a.target = "_blank"; a.rel = "noopener"; add(c, a); }
+    else add(c, el("p", "soon", T.joinSoon));
     var share = el("button", "btn-ghost", T.shareButton);
     share.type = "button";
     var status = el("p", "share-status");
@@ -431,23 +424,19 @@
     add(root, c);
   })();
 
-  /* ---------- 11b. feedback: stars, a note, optional share; saved locally and POSTed to feedbackEndpoint ---------- */
+  /* ---------- 11b. feedback: stars, a note, optional share; saved on the server (DhiSession.submitFeedback) ---------- */
   (function feedback() {
-    var KEY = "dhirise.reportFeedback.v1";
-    var cfg = window.DHI_FUNNEL || {};
     var c = card("feedback span2", T.feedbackTitle);
-    var prior = null;
-    try { prior = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
     var thanks = el("p", "thanks", T.feedbackThanks);
     thanks.setAttribute("aria-live", "polite");
-    if (prior && prior.completedAt === check.completedAt) { add(c, thanks); add(root, c); return; }
+    if (check.feedbackSavedAt) { add(c, thanks); add(root, c); return; }    /* already given, on this or another device */
 
     var rating = 0;
     var stars = el("div", "stars");
     stars.setAttribute("role", "radiogroup");
     stars.setAttribute("aria-label", T.feedbackAsk);
     var starBtns = [1, 2, 3, 4, 5].map(function (n) {
-      var b = el("button", "star", "★");
+      var b = el("button", "star", "\u2605");
       b.type = "button";
       b.setAttribute("role", "radio");
       b.setAttribute("aria-checked", "false");
@@ -460,8 +449,8 @@
     var text = el("textarea", "fb-text");
     text.rows = 4; text.maxLength = 1000; text.placeholder = T.feedbackPlaceholder;
     text.setAttribute("aria-label", T.feedbackPlaceholder);
-    /* live counter "12 / 30" until the minimum is reached */
-    var MIN = (window.DHI_CHALLENGE && window.DHI_CHALLENGE.minFeedbackChars) || 30;
+    /* live counter "12 / 30" until the minimum is reached; the rules are the server's (convex/feedbackRules.ts) */
+    var MIN = (window.DhiSession && DhiSession.minNoteChars) || 30;
     var counter = el("p", "fb-count");
     counter.setAttribute("aria-live", "off");
     function count() {
@@ -471,10 +460,7 @@
     }
     text.addEventListener("input", function () { count(); if (hint.textContent) hint.textContent = ""; });
     count();
-    function genuine(s) {
-      if (window.DhiApi && DhiApi.isGenuine) return DhiApi.isGenuine(s);
-      return String(s || "").trim().length >= MIN;
-    }
+    function genuine(s) { return !!(window.DhiSession && DhiSession.isGenuine(s)); }
     var share = el("input"); share.type = "checkbox"; share.id = "fbShare";
     var shareLabel = el("label", null, T.feedbackShare); shareLabel.htmlFor = "fbShare";
     var hint = el("p", "fb-hint"); hint.setAttribute("aria-live", "polite");
@@ -487,32 +473,23 @@
       if (!genuine(said)) { hint.textContent = T.feedbackJunk; text.focus(); return; }
       if (submit.getAttribute("aria-busy")) return;
       submit.setAttribute("aria-busy", "true");
+      hint.textContent = "";
 
-      var api = window.DhiApi;
-      var steps = api
-        ? api.submitFeedback({ rating: rating, text: said }).then(function () { return api.markReportComplete(); })
-            .then(function () { return api.getMe(); })
-        : Promise.resolve({});
-      steps.catch(function () { return {}; }).then(function (me) {
-        me = me || {};
-        var lead = null;
-        try { lead = JSON.parse(localStorage.getItem("dhirise.lead.v1")); } catch (e) {}
-        var l = lead && lead.completedAt === check.completedAt ? lead.lead : null;
-        var payload = { type: "feedback", rating: rating, text: said, canShare: share.checked,
-          styleKey: r.styleKey, completedAt: check.completedAt,
-          challengeJoined: !!me.joined, joinedAt: me.joinedAt || null };
-        if (l && l.phone) payload.phone = l.phone;
-        try { localStorage.setItem(KEY, JSON.stringify({ feedback: payload, completedAt: check.completedAt, sent: !!cfg.feedbackEndpoint, at: new Date().toISOString() })); } catch (e) {}
-        if (cfg.feedbackEndpoint) {
-          try {
-            fetch(cfg.feedbackEndpoint, { method: "POST", mode: "no-cors", keepalive: true,
-              headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(payload) }).catch(function () {});
-          } catch (e) {}
+      DhiSession.submitFeedback({ rating: rating, text: said, canShare: share.checked }).then(function (res) {
+        if (!res.ok) {                                             /* nothing is lost: the note stays in the box */
+          submit.removeAttribute("aria-busy");
+          if (res.code === "not_signed_in" || res.code === "no_profile") { location.replace("landing.html"); return; }
+          if (res.code === "not_completed") { location.replace(DhiStore.resumeTarget()); return; }
+          hint.textContent = res.code === "rate_limited" ? T.feedbackLater : res.code === "invalid_input" ? fill(T.feedbackTooShort, { n: MIN }) : T.feedbackRetry;
+          return;
         }
+        /* the challenge mock in js/api.js still keeps its own copy until scope row 10 (live referrals) */
+        var api = window.DhiApi;
+        if (api) api.submitFeedback({ rating: rating, text: said }).then(function () { return api.markReportComplete(); }).catch(function () {});
         c.textContent = "";
         add(c, el("h2", "eyebrow", T.feedbackTitle), thanks);
-        /* a valid feedback opens the challenge invite (js/challenge-ui.js) */
-        document.dispatchEvent(new CustomEvent("dhirise:feedback", { detail: { genuine: true } }));
+        /* a valid (genuine) feedback opens the challenge invite (js/challenge-ui.js) */
+        if (res.genuine) document.dispatchEvent(new CustomEvent("dhirise:feedback", { detail: { genuine: true } }));
       });
     });
 

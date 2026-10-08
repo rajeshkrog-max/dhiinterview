@@ -228,3 +228,13 @@ form{display:flex;flex-direction:column;gap:10px;margin:0}
 
 /* temporary: preview link for the new question screen */
 .preview{display:block;margin-top:8px;text-align:center;font-size:13px;color:var(--muted);text-decoration:underline;min-height:24px}
+
+/* ---------- sign in states (spec 0002) ---------- */
+.state{display:flex;flex-direction:column;gap:10px}
+.msg{margin:0;font-size:14px;line-height:1.45;color:var(--ink)}
+.msg.kind{padding:10px 12px;border-left:3px solid var(--gold);border-radius:8px;background:rgba(233,185,92,.12)}
+.notice{margin:0;font-size:13px;line-height:1.45;color:var(--muted)}
+.hint{margin:0;font-size:13px;line-height:1.4;color:var(--muted);text-align:center}
+.link.inline{display:inline;padding:0;font-size:inherit;vertical-align:baseline}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid rgba(255,255,255,.3);box-shadow:none;font-size:14px;min-height:40px}
+.sheet-dim[data-readonly] #agree,.sheet-dim[data-readonly] .sheet-hint{display:none}

@@ -33,6 +33,8 @@ type Env = {
   readonly BETTER_AUTH_URL: string | undefined;
   readonly GOOGLE_CLIENT_ID: string | undefined;
   readonly GOOGLE_CLIENT_SECRET: string | undefined;
+  readonly GOOGLE_SERVICE_ACCOUNT_KEY: string | undefined;
+  readonly SHEET_ID: string | undefined;
   readonly TEST_SIGNIN_ENABLED: string | undefined;
 };
 

@@ -375,13 +375,14 @@ window.DhiReportText = {
   feedbackTooShort: "A little more, please: at least {n} characters.",
   feedbackJunk: "Tell us in real words what fit and what didn't.",
   feedbackThanks: "Thank you.",
+  feedbackLater: "Please try again a little later.",
+  feedbackRetry: "We could not save your feedback just now. Please check your connection and try again. Your note is kept here.",
 
   /* join */
   joinTitle: "Dhi early access",
   joinLine: "A quiet WhatsApp group for students. Be first in when Dhi opens.",
   joinButton: "Join Dhi early access on WhatsApp",
   joinSoon: "WhatsApp early access opens soon",
-  joinedLine: "You're in · +91 ••• ••• {last4}",
   openGroup: "Open the WhatsApp group",
   shareButton: "Share with a friend",
   shareText: "I just found my study style with DhiRise. Try it:",

@@ -1,6 +1,6 @@
 /* Dhirise · questions 3–18 on one page: questions.html?q=N. The image is assets/interview bg/Q{N}.png.
    Text, order and tips come from js/engine/questions.js (via js/engine/screen.js);
-   answers are saved as option ids in localStorage "dhirise.check.v1". */
+   answers are saved as option ids in localStorage "dhirise.session.v1" and sent to the server. */
 (function () {
   "use strict";
   var n = parseInt(new URLSearchParams(location.search).get("q"), 10);

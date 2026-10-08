@@ -18,7 +18,7 @@
   "use strict";
   var CFG = root.DHI_CHALLENGE || { minFeedbackChars: 30, leaderboardSize: 50 };
   var ME_KEY = "dhirise.challenge.v1", MOCK_KEY = "dhirise.challenge.mock.v1";
-  var GATE_KEY = "dhirise.gate.v1", CHECK_KEY = "dhirise.check.v1";
+  var SESSION_KEY = "dhirise.session.v1";   /* the signed in student's cached check, filled by src/lib/session.ts */
   var ABC = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";            /* A–Z and 2–9 without O, 0, I, 1 */
   var CODE_RE = /^[A-Z]{3}[A-HJ-NP-Z2-9]{4}$/;
   var STYLE = { v: "Explorer", p: "Achiever", k: "Builder" };
@@ -34,8 +34,8 @@
     for (var i = 0; i < n; i++) out += ABC.charAt(buf[i] % ABC.length);
     return out;
   }
-  function gate() { return read(GATE_KEY) || {}; }
-  function check() { return read(CHECK_KEY) || {}; }
+  function gate() { var c = read(SESSION_KEY); return (c && c.profile) || {}; }   /* { name, age, class } of the signed in student */
+  function check() { return read(SESSION_KEY) || {}; }
   function firstName(name) { var f = String(name || "").trim().split(/\s+/)[0] || ""; return f ? f.charAt(0).toUpperCase() + f.slice(1).toLowerCase() : ""; }
   function displayName(name) {
     var parts = String(name || "").trim().split(/\s+/);
@@ -57,14 +57,8 @@
     if (!c.completedAt || !root.DhiScore || !root.DhiQuestions) return null;
     try { return STYLE[root.DhiScore.score(c.answers).styleKey] || null; } catch (e) { return null; }
   }
-  function genuine(text) {
-    var t = String(text || "").trim();
-    if (t.length < (CFG.minFeedbackChars || 30)) return false;
-    var letters = t.toLowerCase().replace(/[^a-zऀ-ॿ]/g, "");
-    var distinct = {}; for (var i = 0; i < letters.length; i++) distinct[letters[i]] = 1;
-    /* junk: fewer than 5 distinct letters, or one character repeated (a run of 5+ of the same character) */
-    return Object.keys(distinct).length >= 5 && !/(.)\1{4,}/.test(t);
-  }
+  /* the one rule lives in convex/feedbackRules.ts; the page bridge (src/lib/session.ts) exposes it */
+  function genuine(text) { return !!(root.DhiSession && root.DhiSession.isGenuine && root.DhiSession.isGenuine(text)); }
   function shareBase() {
     var u = String((root.DHI_FUNNEL && root.DHI_FUNNEL.shareUrl) || "").replace(/\/+$/, "");
     return u || (typeof location !== "undefined" ? location.href.replace(/[^/]*([?#].*)?$/, "").replace(/\/+$/, "") : "");

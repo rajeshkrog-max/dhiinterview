@@ -16,10 +16,10 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 1 | Stack & architecture | Foundation | in-progress |
 | 2 | Data model | Foundation | planned |
 | 3 | Coding standards & tooling | Foundation | planned |
-| 4 | Real sign in and saved check | Slice 1 | planned |
-| 5 | Leads and feedback saved | Slice 2 | planned |
+| 4 | Real sign in and saved check | Slice 1 | in-progress |
+| 5 | Leads and feedback saved | Slice 2 | in-progress |
 | 6 | Results and report from saved data | Slice 2 | planned |
-| 7 | Sheet copy | Slice 3 | planned |
+| 7 | Sheet copy | Slice 3 | in-progress |
 | 8 | Product analytics with consent | Slice 3 | planned |
 | 9 | Error monitoring and alerts | Slice 3 | planned |
 | 10 | Live referral codes and tracking | Slice 4 | planned |
@@ -70,17 +70,36 @@ Refresh `AGENTS.md` for the chosen stack, then add lint, format, type checks and
 
 ## Slice 1: the thinnest real thread
 
-### 4. Real sign in and saved check · needs a decision
+### 4. Real sign in and saved check · in-progress
 A student signs in with Google, their name, age, class and consent are stored, and each answer is saved as they go. They can close the tab, come back on another device and resume. This is the walking skeleton: real sign in, real storage, real screens, narrow.
 **Done when:** a new student can sign in, answer questions, refresh or switch device and resume at the same question; a wrong or repeated sign in does not start a second check.
-- [ ] Design it (spec): `/architect real sign in and saved check`
+- [x] Design it (spec): `/architect real sign in and saved check`
+- [ ] Build it: `/develop real sign in and saved check`
+  - [x] M1 The thin thread: tables, `me`, `createProfile`, `saveAnswers`, the browser bridge and guard, one question page saving and resuming on a second browser (AC-1, 2, 3, 4, 5, 6, 7, 9, 16)
+  - [x] M2 The real landing page and the full check: Google button with notice, the form states, every page on the guard, offline queue, sign in problems (AC-1, 2, 3, 4, 5, 7, 12, 15)
+  - [ ] M3 Safety and clean up: sign out and cache wipe, import of old browser answers, the purge cron, production refuses test sign in (AC-8, 10, 11, 14) · built; the production check of AC-14 is still open (spec task 13)
+  - [ ] M4 Report PDF, after row 6: file table, upload and download route, the PDF made in the browser (AC-13)
+- [ ] Verify it: `/check verify real sign in and saved check`
+- [ ] Test it: `/test real sign in and saved check`
+- [ ] Review it (fresh model): `/check review real sign in and saved check`
+- [ ] Document it: `/document real sign in and saved check`
+Spec [0002](../specs/0002-google-sign-in-and-saved-check/index.md) · code in `convex/` (students, checks, helpers, purge, crons, consentText), `src/lib/session.ts`, `src/components/Guard.astro`, `public/dhiinterviews/js/gate.js`, `js/engine/store.js`
 
 ## Slice 2: leads, feedback and results
 
-### 5. Leads and feedback saved · needs a decision
+### 5. Leads and feedback saved · in-progress
 The mobile number and WhatsApp opt in from `done.html`, and the report feedback, are stored for real, with checks on what is accepted and limits on abuse.
 **Done when:** a valid lead and a valid feedback note are stored once each; a bad phone number, a rating out of range, or a flood of posts is refused; empty config no longer silently keeps data only in the browser.
-- [ ] Design it (spec): `/architect leads and feedback saved`
+- [x] Design it (spec): `/architect leads and feedback saved`
+- [x] Build it: `/develop leads and feedback saved`
+  - [x] M1 The lead thread: tables, rate limiter, `leads.submit`, `me` additions, the phone step on `done.html` waiting for the server (AC-1, 2, 3, 4, 5, 6, 11, 12, 14)
+  - [x] M2 The feedback thread and the report gate: `feedback.submit`, the shared note rules, the report feedback card, `who.html` and `report-student.html` sending students with no lead back (AC-7, 8, 9, 10, 11, 12)
+  - [x] M3 Clean up: remove the browser post to the Sheet and its settings and local keys (AC-13)
+- [x] Verify it: `/check verify leads and feedback saved`
+- [ ] Test it: `/test leads and feedback saved`
+- [ ] Review it (fresh model): `/check review leads and feedback saved`
+- [ ] Document it: `/document leads and feedback saved`
+Spec [0003](../specs/0003-leads-and-feedback-saved/index.md) · code in `convex/` (leads, feedback, feedbackRules, limits, consentText, schema, students), `src/lib/session.ts`, `src/pages/dhiinterviews/done.astro`, `public/dhiinterviews/js/done.js`, `js/report-student.js`, `js/who.js`, `js/engine/store.js`
 
 ### 6. Results and report from saved data · needs a decision
 Keep the scored result with the version of the scoring that made it, and load the report from saved data, so it looks the same on any device and later changes to scoring do not rewrite old results.
@@ -89,10 +108,20 @@ Keep the scored result with the version of the scoring that made it, and load th
 
 ## Slice 3: team copy and tracking
 
-### 7. Sheet copy · needs a decision
+### 7. Sheet copy · in-progress
 The database stays the source of truth. Leads and feedback are copied into the team's Google Sheet, with retries, so a sheet failure never loses data and a gap can be refilled.
 **Done when:** every new lead and feedback row appears in the sheet shortly after saving; a failed copy is retried and visible; a full refill from the database is possible.
-- [ ] Design it (spec): `/architect sheet copy`
+- [x] Design it (spec): `/architect sheet copy`
+- [x] Build it: `/develop sheet copy` (built in the same pass as row 5, interleaved: row 5 lead thread, then M1 here, then row 5 feedback thread, then M2 here, then both clean ups)
+  - [x] M1 A lead reaches the Sheet: queue tables, Google module, lead row builder, the copy job with its lease and cron, `leads.submit` queuing, status tab (AC-1, 2, 3, 4, 7, 10, 11, 12, 13, 14) · proven on dev against the real Sheet on 2026-10-08
+  - [x] M2 Feedback, rebuild and housekeeping: feedback tab and queuing, delete, retry failed, refill, CSV export, the daily change check (AC-1, 4, 5, 6, 8, 9, 10, 11)
+  - [x] M3 Clean up: remove the Apps Script receiver, rewrite the setup note, confirm per deployment Sheets and no keys in the repo (AC-13, 15)
+  - [x] M4 Keep team notes beside their students (found by `/check verify`): `prune` replaces `clear` with the guards, a dry run, a status line, and delete removes every copy of a row (AC-5, 9, 14, 16)
+- [ ] Verify it: `/check verify sheet copy`
+- [ ] Test it: `/test sheet copy`
+- [ ] Review it (fresh model): `/check review sheet copy`
+- [ ] Document it: `/document sheet copy`
+Spec [0004](../specs/0004-sheet-copy-of-leads-and-feedback/index.md) · code in `convex/` (sheetSync, sheetRows, sheetRowsCore, sheetFlush, sheetFlushCore with `runPrune`, sheetsGoogle, sheetAdmin, crons), `tools/LEAD-SHEET-SETUP.md`
 
 ### 8. Product analytics with consent · needs a decision
 Measure drop off per step, lead conversion, referral growth and report feedback quality, only after the student has made an analytics choice. Many are under 18, so tracking waits for consent. (basis: India's data protection law on children's data, a named practice)

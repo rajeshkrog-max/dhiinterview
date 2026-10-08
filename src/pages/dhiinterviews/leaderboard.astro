@@ -1,3 +1,6 @@
+---
+import Guard from "../../components/Guard.astro";
+---
 <!doctype html>
 <html lang="en">
 <head>
@@ -10,8 +13,10 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Mukta:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="css/card.css">
 <link rel="stylesheet" href="css/leaderboard.css">
+<Guard mode="protected" />
 </head>
 <body>
+<div id="dhiBoot" hidden></div>
 <!-- Founding Circle leaderboard: filled by js/leaderboard.js; data only via js/api.js -->
 <header class="lb-top">
   <a class="lb-back" href="report-student.html" aria-label="Back to your report">
@@ -39,12 +44,12 @@
 <!-- sticky: your card, or "Join the challenge →" -->
 <aside class="lb-you" id="lbYou" hidden aria-label="Your place"></aside>
 
-<script is:inline src="js/funnel-config.js"></script>
-<script is:inline src="js/challenge-config.js"></script>
-<script is:inline src="js/engine/questions.js"></script>
-<script is:inline src="js/engine/score.js"></script>
-<script is:inline src="js/api.js"></script>
-<script is:inline src="js/share-icons.js"></script>
-<script is:inline src="js/leaderboard.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/funnel-config.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/challenge-config.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/engine/questions.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/engine/score.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/api.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/share-icons.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/leaderboard.js"></script>
 </body>
 </html>

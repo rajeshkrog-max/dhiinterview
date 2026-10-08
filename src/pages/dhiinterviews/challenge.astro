@@ -1,3 +1,6 @@
+---
+import Guard from "../../components/Guard.astro";
+---
 <!doctype html>
 <html lang="en">
 <head>
@@ -11,8 +14,10 @@
 <link rel="stylesheet" href="css/card.css">
 <link rel="stylesheet" href="css/challenge.css">
 <link rel="stylesheet" href="css/challenge-page.css">
+<Guard mode="protected" />
 </head>
 <body>
+<div id="dhiBoot" hidden></div>
 <!-- Founding Circle Challenge: hero, why, how it works, rules, join (scratch card). Filled by js/challenge.js; data via js/api.js. -->
 <header class="cp-top">
   <a class="cp-back" href="report-student.html">← Report</a>
@@ -68,12 +73,12 @@
   </section>
 </main>
 
-<script is:inline src="js/funnel-config.js"></script>
-<script is:inline src="js/challenge-config.js"></script>
-<script is:inline src="js/engine/questions.js"></script>
-<script is:inline src="js/engine/score.js"></script>
-<script is:inline src="js/api.js"></script>
-<script is:inline src="js/share-icons.js"></script>
-<script is:inline src="js/challenge.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/funnel-config.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/challenge-config.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/engine/questions.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/engine/score.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/api.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/share-icons.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/challenge.js"></script>
 </body>
 </html>

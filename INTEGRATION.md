@@ -17,8 +17,6 @@ The only settings file. The pages load it as a plain script that sets `window.DH
 ```js
 window.DHI_FUNNEL = {
   whatsappInvite:   "https://chat.whatsapp.com/XXXXXXXXXXXXXXXXXXXXXX",
-  leadEndpoint:     "https://script.google.com/macros/s/XXXXXXXXXXXXXXXXXXXXXXXX/exec",
-  feedbackEndpoint: "https://script.google.com/macros/s/XXXXXXXXXXXXXXXXXXXXXXXX/exec",
   shareUrl:         "https://dhirise.com"
 };
 ```
@@ -26,20 +24,20 @@ window.DHI_FUNNEL = {
 | Key | Used in | What it does | If empty |
 |---|---|---|---|
 | `whatsappInvite` | `js/report-student.js` → `join()` | The "Join Dhi early access on WhatsApp" button, and "Open the WhatsApp group" for students who already joined | The card says "WhatsApp early access opens soon" |
-| `leadEndpoint` | `js/done.js` → the `#join` form `submit` handler | Receives the lead POST when a student submits their mobile number | The lead is saved only in localStorage; no error |
-| `feedbackEndpoint` | `js/report-student.js` → `feedback()` | Receives the feedback POST from the report | Feedback is saved only in localStorage; no error |
 | `shareUrl` | `js/card.js`, `js/card-export.js`, `js/api.js` | The public site address printed on the story image, sent in the share text, and the base of every **referral link** (`shareUrl + "/landing.html?ref=CODE"`) | The story has no link line, and the share text falls back to this page's own `landing.html` address |
 
 **`shareUrl` must be set to the live site address** (e.g. `https://dhirise.com`) when you deploy. Left empty, shared stories carry no link,
 and the share text points at whatever host the page runs on.
 
-There are no other keys. Endpoints are public URLs, never secrets: anyone can read front-end code (see the do-not list).
+There are no other keys. Leads and feedback are no longer posted from the browser. Convex saves them (`leads.submit`, `feedback.submit`, specs 0003 and 0004) and the server copies them to the team's Google Sheet (`tools/LEAD-SHEET-SETUP.md`). Anything in this file is public: anyone can read front-end code (see the do-not list).
 
 ---
 
 ## b) Payloads and browser storage
 
-### Lead POST (`done.html`, on Submit)
+> **Replaced.** Leads and feedback are no longer posted from the browser. Convex saves them (`leads.submit`, `feedback.submit`, specs 0003 and 0004) and the server copies them to the team's Google Sheet (`tools/LEAD-SHEET-SETUP.md`). The two payloads below describe the old browser posts and stay only as a record of the old columns.
+
+### Lead POST (`done.html`, on Submit), old
 
 `fetch(leadEndpoint, { method: "POST", mode: "no-cors", keepalive: true, headers: { "Content-Type": "text/plain;charset=utf-8" }, body })`.
 `no-cors` means the page cannot read the response: the server must accept a `text/plain` body containing JSON. The page waits
@@ -86,7 +84,6 @@ Sent the same way (`no-cors`, `text/plain`, `keepalive`). `phone` is included on
 }
 ```
 
-`type: "feedback"` lets one endpoint take both payloads (that is how `tools/lead-sheet.gs` routes them).
 `canShare` is the "You may share my feedback anonymously" tick. Only quote feedback publicly when it is `true`, and never with a name.
 
 ### localStorage keys
@@ -95,10 +92,8 @@ Sent the same way (`no-cors`, `text/plain`, `keepalive`). `phone` is included on
 |---|---|---|
 | `dhirise.gate.v1` | `js/gate.js` | `{ name, age, class, provider: "google", at, consent: true, consentAt, consentText }` (`consentText` is the full notice as shown) |
 | `dhirise.check.v1` | `js/engine/store.js` | `{ profile: { name, age, class }, answers: { q1: "q1o3", …, q18: "q18o4" }, startedAt, completedAt }` |
-| `dhirise.lead.v1` | `js/done.js` | `{ lead: <lead payload above>, completedAt, sent: boolean, at }` (older browsers may hold `lead: null, skipped: true` from the removed Skip) |
 | `dhirise.founding.v1` | `js/engine/identity.js` | `{ id: "DR-XXXX", name, at }`: the Founding ID |
 | `dhirise.music.muted` | `js/music.js` | `"1"` when the student muted the music (sessionStorage `dhirise.music.pos` holds the play position) |
-| `dhirise.reportFeedback.v1` | `js/report-student.js` | `{ feedback: <feedback payload above>, completedAt, sent: boolean, at }` |
 | `dhirise.path.v1` | `js/report-student.js` | `{ completedAt, ticks: { "a0d1": true, … } }`: Week 1 ticks (action index, day) |
 
 Notes
@@ -169,11 +164,9 @@ The simplest hook points for live sync are steps 3–4 (`store.js`) and the two 
 
 ---
 
-## e) Google Sheet option (no server needed)
+## e) Google Sheet copy
 
-`tools/lead-sheet.gs` is a Google Apps Script web app: one URL takes both payloads. Leads go to a **Leads** tab and
-`type: "feedback"` goes to a **Feedback** tab; header rows are created automatically. Phone numbers keep leading zeros, and typed text can't run as a formula.
-Setup in 5 steps: `tools/LEAD-SHEET-SETUP.md`. Put the web app URL into both `leadEndpoint` and `feedbackEndpoint`.
+The server copies each saved lead and feedback to a Google Sheet through the Sheets API, with retries and a status tab. Rows are found by reference code, typed text is written as plain text (it can never run as a formula), and phone numbers keep their leading zeros. Setup, the team commands and the rules for the Sheet: `tools/LEAD-SHEET-SETUP.md`. The design: `docs/specs/0004-sheet-copy-of-leads-and-feedback/`.
 
 ---
 
@@ -293,8 +286,7 @@ genuine feedback → `feedback_at`, `valid = true`, `reached_valid_at = now`. Th
 
 ### Sheet columns
 
-Leads and Feedback rows now also carry `challengeJoined` (yes/no) and `joinedAt` (in `tools/lead-sheet.gs`; it adds the new column names to older sheets).
-Redeploy the script as a new version after updating it.
+The columns of the Leads and Feedback tabs are listed in `docs/specs/0004-sheet-copy-of-leads-and-feedback/index.md` (columns A to X are written by the app, the team's own start at Y). Challenge columns are added inside that block when the challenge goes live (scope rows 10 and 11).
 
 ### Local storage used by the mock
 

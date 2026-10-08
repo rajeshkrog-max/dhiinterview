@@ -26,7 +26,7 @@ Goals: (1) collect qualified leads with a WhatsApp opt-in for early access; (2) 
 (3) give every student a useful, kind report.
 
 Tech today: **plain static HTML/CSS/JS**, no framework or build step, and **no backend**. Everything is kept in the browser's
-`localStorage`. The only network calls are optional `no-cors` POSTs of leads and feedback to a Google Apps Script (section 9).
+`localStorage`. Leads and feedback are saved by Convex functions and copied to a Google Sheet by the server (section 9).
 
 ---
 
@@ -104,30 +104,7 @@ All keys are per browser and per origin. Nothing here is shared between devices.
 ```
 `DR-` + 4 random characters from `ABCDEFGHJKLMNPQRSTUVWXYZ23456789`. **Made in the browser, not unique globally** (section 13).
 
-### `localStorage "dhirise.lead.v1"`: `js/done.js`
-
-```json
-{
-  "lead": { "…": "the lead payload, see section 9" },
-  "completedAt": "2026-10-07T09:18:44.512Z",
-  "sent": false,
-  "at": "2026-10-07T09:19:30.300Z"
-}
-```
-`sent` is `true` only if `leadEndpoint` was set; the page cannot know whether the POST succeeded (`no-cors`).
-
-### `localStorage "dhirise.reportFeedback.v1"`: `js/report-student.js`
-
-```json
-{
-  "feedback": { "type": "feedback", "rating": 4, "text": "The study blueprint really fits how I revise.", "canShare": false,
-                "styleKey": "p", "completedAt": "2026-10-07T09:18:44.512Z", "challengeJoined": false, "joinedAt": null,
-                "phone": "9000000000" },
-  "completedAt": "2026-10-07T09:18:44.512Z",
-  "sent": false,
-  "at": "2026-10-07T09:25:10.000Z"
-}
-```
+> `dhirise.lead.v1` and `dhirise.reportFeedback.v1` no longer exist: the lead and the feedback are saved on the server (specs 0003 and 0004).
 
 ### `localStorage "dhirise.path.v1"`: Week 1 ticks on the report
 
@@ -379,31 +356,9 @@ Only the provider's public client id / anon key may be in front-end code (sectio
 
 ## 9. Leads and WhatsApp
 
-**What is sent today:** on `done.html` Submit, `js/done.js` builds the lead and, if `DHI_FUNNEL.leadEndpoint` is set, sends
-`fetch(leadEndpoint, { method: "POST", mode: "no-cors", keepalive: true, headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON })`.
-`no-cors` means the page can't read the response.
+**How it works now:** on `done.html` Submit, `DhiSession.submitLead` calls the Convex mutation `leads.submit` (number, WhatsApp tick, guardian tick for under 18, the exact consent text version and fingerprint). The report feedback card calls `feedback.submit` the same way. The server checks everything, keeps the first one per check, and queues a copy to the team's Google Sheet (Leads and Feedback tabs, columns A to X, reference code in column A). Details: `docs/specs/0003-leads-and-feedback-saved/` and `docs/specs/0004-sheet-copy-of-leads-and-feedback/`. Sheet setup and the team commands: `tools/LEAD-SHEET-SETUP.md`. The sensitive flags and the results are not copied.
 
-```json
-{
-  "name": "Asha Kumar", "age": 15, "class": "Class 10",
-  "phone": "9000000000", "wantsCommunity": true, "foundingId": "DR-7KQ2",
-  "styleKey": "p",
-  "areas": { "routine": 58, "emotions": 25, "drive": 83, "connection": 25, "expression": 60, "clarity": 88, "purpose": 60 },
-  "indices": { "studyReadiness": 67, "emotionalBalance": 37, "focusEnergy": 71, "direction": 74 },
-  "dhiStart": 62,
-  "flags": { "keepsFeelingsInside": true, "lowCareerClarity": false, "heavyExpectations": false, "selfDoubt": true, "sleepStrain": false, "lowMood": false, "lowConsistency": false },
-  "completedAt": "2026-10-07T09:18:44.512Z",
-  "challengeJoined": false, "joinedAt": null
-}
-```
-
-The feedback POST (`report-student.html`) goes to `feedbackEndpoint`: `{ type: "feedback", rating, text, canShare, styleKey, completedAt, challengeJoined, joinedAt, phone? }`.
-
-**Google Sheet receiver:** `tools/lead-sheet.gs` (Apps Script web app; setup in `tools/LEAD-SHEET-SETUP.md`). Leads go to a **Leads** tab
-(receivedAt, name, age, class, phone, wantsCommunity, styleKey, dhiStart, 4 indices, 7 areas, flags, completedAt, foundingId, challengeJoined, joinedAt);
-`type: "feedback"` goes to a **Feedback** tab. Phones keep leading zeros, and typed text can't run as a formula.
-
-**WhatsApp today:** the team **adds students to the WhatsApp early-access group by hand from the sheet** (`wantsCommunity = yes`).
+**WhatsApp today:** the team **adds students to the WhatsApp early-access group by hand from the sheet** (WhatsApp choice = yes, status `new`).
 The report shows a "Join on WhatsApp" link only if `whatsappInvite` is set. **⚠ Needs decision:** that's currently empty.
 
 **Suggested final approach:** keep the opt-in tick (it is the WhatsApp opt-in; store `whatsapp_opt_in_at`). On a new lead with the opt-in,
@@ -419,8 +374,6 @@ Until then, an admin view or CSV export of `leads where wants_community and what
 | Key | Used by | Must set before launch? |
 |---|---|---|
 | `whatsappInvite` | report join card | **Yes**, or the card says "opens soon" |
-| `leadEndpoint` | `js/done.js` lead POST | **Yes** (sheet URL or `POST /api/leads`), else leads stay in the browser |
-| `feedbackEndpoint` | report feedback POST | **Yes** (or replaced by `POST /api/feedback`) |
 | `shareUrl` | Founding Card text, story image, share text, **referral links** | **Yes**: the public site origin (e.g. `https://check.dhirise.com`). Empty makes referral links point at whatever URL the page was opened from, including localhost |
 
 `js/challenge-config.js` (`window.DHI_CHALLENGE`):

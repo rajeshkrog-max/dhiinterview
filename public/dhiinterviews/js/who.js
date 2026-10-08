@@ -10,6 +10,7 @@
     location.replace(missing ? DhiStore.urlFor(missing) : DhiStore.urlFor(Q.TOTAL));
     return;
   }
+  if (!DhiStore.requireLead(check)) return;                    /* the phone step comes first (spec 0003) */
   var r = DhiScore.score(check.answers, { seed: DhiStore.seed() });
   var a = check.answers;
   var $ = function (id) { return document.getElementById(id); };

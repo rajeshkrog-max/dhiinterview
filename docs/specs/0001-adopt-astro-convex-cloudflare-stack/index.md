@@ -34,7 +34,7 @@ Build the live app as a static Astro site on Cloudflare Pages that talks to one 
 | Error monitoring | PostHog error tracking for pages, plus the Convex dashboard for backend failures. A daily health check job writes sheet copy and sign in failures to a table, shown as a failure count on the admin view, and you review it once a day | One fewer account. The free plan has no alerts, so a daily look replaces them |
 | Abuse limits | Per student rate limits inside Convex functions. Every write needs a signed in student | Stops floods and scripted fake referrals without another service |
 | Email sending | None now | Google only sign in sends no email. WhatsApp welcome is deferred |
-| File storage | None now. Images and audio stay as static assets served by Cloudflare | The card export is drawn in the browser. No uploads exist |
+| File storage | Convex file storage for one use only: each student's report PDF (spec 0002, built after scope row 6). Images and audio stay as static assets served by Cloudflare | The card export is drawn in the browser. The report PDF is made in the browser and uploaded once |
 | Testing | Vitest for pure code (scoring), `convex-test` with a mocked identity for Convex functions, Playwright for funnel flows. Google sign in cannot run in a test browser, so a test only sign in path (a fake student) exists on dev and preview deployments and is switched off in production by an environment flag | The scoring file already runs in Node. A guarded test path keeps the most important flow under automatic test. Runner up: Node test runner plus Cypress |
 
 **Deploys and environments**:
@@ -87,7 +87,7 @@ Reasoning and options: see [rationale.md](rationale.md).
 
 ## Follow-up
 
-- [ ] First build task: a thin spike of Google sign in with Better Auth on Convex from a static Astro page, with `/api/auth/*` forwarded through the site's own address by a Pages Function, tested on iPhone Safari and Android Chrome. Also confirm in the spike: Google sign in works through the Better Auth Convex component, the free plan allows Convex preview deployments, and the exact Cloudflare build steps. If it fails, fall back to the Convex Auth library (see `rationale.md`)
+- [x] (Proven 2026-10-08: a real Google account signed in on dhirise.com and Convex recognised it; the Convex preview deployment and exact Cloudflare steps question stays open) First build task: a thin spike of Google sign in with Better Auth on Convex from a static Astro page, with `/api/auth/*` forwarded through the site's own address by a Pages Function, tested on iPhone Safari and Android Chrome. Also confirm in the spike: Google sign in works through the Better Auth Convex component, the free plan allows Convex preview deployments, and the exact Cloudflare build steps. If it fails, fall back to the Convex Auth library (see `rationale.md`)
 - [ ] Check which regions Convex offers and pick the closest to India. Record the answer in the privacy notice
 - [ ] Legal check before launch: PostHog (cookieless plus identified students) for students under 18, and the "parental supervision per our terms" basis against verifiable parental consent. Settle it before launch, not after. Revisit scope row 8 at its own spec. Keep names, phone numbers, emails and sensitive flags out of every event
 - [ ] Write the new privacy page (linked from the landing consent and Google's consent screen) and appoint a grievance contact
@@ -95,7 +95,7 @@ Reasoning and options: see [rationale.md](rationale.md).
 
 **Cross check items routed to the specs that own them** (decisions not settled here, kept so none are lost):
 - [ ] Row 2, data model: identity is Google's stable ID, email is an attribute (lowercase). Phone is optional and unverified, unique only when present, kept in a separate claim table, so it is not an identity key. One clock, Asia/Kolkata, day keys computed on the server
-- [ ] Row 4, sign in: which pages are public static and which need a session; what happens to answers saved in the browser before sign in
+- [x] Row 4, sign in: which pages are public static and which need a session; what happens to answers saved in the browser before sign in (settled in spec 0002: only landing and terms are public; old browser answers are offered for import once)
 - [ ] Row 5, leads: concrete rate limits per function and a bot check at sign in
 - [ ] Row 7, sheet copy: an outbox table, one scheduled job sending in batches, upsert by student ID, retries in code, a visible failure count, a CSV export fallback
 - [ ] Row 10, referrals: keep `?ref=` out of the Google round trip, send it once after first sign in as one repeat safe call, first use wins, no self referral

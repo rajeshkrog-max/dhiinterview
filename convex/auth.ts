@@ -8,7 +8,7 @@ import { convex } from "@convex-dev/better-auth/plugins";
 import { betterAuth } from "better-auth/minimal";
 import { components } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
-import { env, query } from "./_generated/server";
+import { env } from "./_generated/server";
 import authConfig from "./auth.config";
 
 export const authComponent = createClient<DataModel>(components.betterAuth);
@@ -30,6 +30,8 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
         prompt: "select_account",
       },
     },
+    // Google tokens are stored encrypted. No offline access is asked for: the app never calls Google on the student's behalf.
+    account: { encryptOAuthTokens: true },
     emailAndPassword: {
       enabled: env.TEST_SIGNIN_ENABLED === "true",
       requireEmailVerification: false,
@@ -37,12 +39,3 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
     plugins: [convex({ authConfig })],
   });
 };
-
-// The signed in student, or null. The spike page uses it to show who is signed in.
-export const getCurrentUser = query({
-  args: {},
-  handler: async (ctx) => {
-    const user = await authComponent.safeGetAuthUser(ctx);
-    return user ? { id: user._id, name: user.name, email: user.email } : null;
-  },
-});

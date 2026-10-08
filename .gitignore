@@ -24,3 +24,8 @@ dist/
 
 # keep the example env file
 !.env.example
+
+# test output
+test-results/
+playwright-report/
+.playwright-mcp/

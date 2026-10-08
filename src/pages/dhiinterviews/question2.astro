@@ -1,3 +1,6 @@
+---
+import Guard from "../../components/Guard.astro";
+---
 <!doctype html>
 <html lang="en">
 <head>
@@ -10,8 +13,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Mukta:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="css/question.css">
+<Guard mode="protected" />
 </head>
 <body>
+<div id="dhiBoot" hidden></div>
 <main class="qscreen q2">
 
   <header class="topbar">
@@ -46,13 +51,13 @@
   <button type="button" class="next" id="next" disabled>Next</button>
 </nav>
 
-<script is:inline src="js/leaves.js"></script>
-<script is:inline src="js/engine/questions.js"></script>
-<script is:inline src="js/engine/score.js"></script>
-<script is:inline src="js/engine/store.js"></script>
-<script is:inline src="js/engine/screen.js"></script>
-<script is:inline src="js/question.js"></script>
-<script is:inline src="js/q2.js"></script>
-<script is:inline src="js/music.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/leaves.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/engine/questions.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/engine/score.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/engine/store.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/engine/screen.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/question.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/q2.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/music.js"></script>
 </body>
 </html>

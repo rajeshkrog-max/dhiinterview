@@ -71,7 +71,7 @@ Answers live in the browser's localStorage, so to start fresh use a private wind
 | `js/engine/screen.js` | Fills a question screen from the engine |
 | `js/engine/reportText.js`, `js/engine/storyText.js` | Every word on the report and the story |
 | `js/funnel-config.js` | WhatsApp link and backend endpoints (empty in the repo); see `js/funnel-config.example.js` |
-| `tools/lead-sheet.gs`, `tools/LEAD-SHEET-SETUP.md` | Google Sheet receiver for leads and feedback |
+| `tools/LEAD-SHEET-SETUP.md` | How to set up the Google Sheet copy of leads and feedback |
 | `assets/` | Logo, landing hero, `interview bg/Q1–Q18.png` |
 | `BACKEND.md` | Full backend handover: flow, storage, scoring, API contract, database, auth, challenge rules, TODO, tests |
 | `INTEGRATION.md` | Shorter integration guide |

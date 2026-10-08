@@ -1,0 +1,9 @@
+{
+  "tool": "vitest",
+  "gate": null,
+  "additionalTools": ["convex-test", "@edge-runtime/vm"],
+  "e2eTool": "playwright",
+  "testDir": "beside the Convex code (convex/*.test.ts) and tests/ for the browser scripts; browser flows in e2e/",
+  "filePattern": "*.test.ts, *.test.js, e2e/*.spec.ts",
+  "packageManager": "pnpm"
+}

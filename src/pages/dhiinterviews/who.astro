@@ -1,3 +1,6 @@
+---
+import Guard from "../../components/Guard.astro";
+---
 <!doctype html>
 <html lang="en">
 <head>
@@ -10,8 +13,10 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Mukta:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="css/who.css">
 <link rel="preload" as="image" href="assets/report/web/slide1.webp" type="image/webp">
+<Guard mode="protected" />
 </head>
 <body>
+<div id="dhiBoot" hidden></div>
 <!-- "Who you are": 6 cards from the student's answers (js/who.js + js/engine/storyText.js), then the full report -->
 <header class="topbar">
   <span class="who" id="who">You</span>
@@ -27,11 +32,11 @@
   <button type="button" class="next" id="next">Next</button>
 </nav>
 
-<script is:inline src="js/leaves.js"></script>
-<script is:inline src="js/engine/questions.js"></script>
-<script is:inline src="js/engine/score.js"></script>
-<script is:inline src="js/engine/store.js"></script>
-<script is:inline src="js/engine/storyText.js"></script>
-<script is:inline src="js/who.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/leaves.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/engine/questions.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/engine/score.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/engine/store.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/engine/storyText.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/who.js"></script>
 </body>
 </html>

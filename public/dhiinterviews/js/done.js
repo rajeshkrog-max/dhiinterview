@@ -1,12 +1,13 @@
 /* Dhirise · reveal, teaser, join. A constellation of the 18 answers draws itself on the 7-area shape (~7 s),
    then "You are <style>"; "See your result" opens a teaser (name, style badge, Dhi starting score, two locked cards).
-   "Unlock my full report" opens the join: +91 mobile (shown 3-3-4) + WhatsApp early-access tick. On Submit the form
-   gives way to a thank-you, then who.html (the story), then report-student.html, opens after 2.5 s.
-   The lead is kept in localStorage "dhirise.lead.v1" and, if DHI_FUNNEL.leadEndpoint is set, POSTed there (no-cors). */
+   "Unlock my full report" opens the join: +91 mobile (shown 3-3-4), the phone notice, the WhatsApp early-access tick and,
+   under 18, the guardian tick. Submit saves the lead on the server (DhiSession.submitLead, spec 0003); only after the
+   server says yes does the form give way to a thank-you, then who.html (the story) opens after 2.5 s. A student whose
+   lead is already saved skips the join. Needs window.DhiSession (the page guard) and the engine files loaded first. */
 (function () {
   "use strict";
   var $ = function (id) { return document.getElementById(id); };
-  var REPORT = "who.html", LEAD = "dhirise.lead.v1";
+  var REPORT = "who.html";
 
   /* only a finished check reaches this page */
   var check = DhiStore.get();
@@ -178,6 +179,7 @@
     $("unlock").focus({ preventScroll: true });
   });
   $("unlock").addEventListener("click", function () {
+    if (check.leadSavedAt) { location.href = REPORT; return; }   /* the number is already saved: nothing to ask */
     $("teaser").hidden = true; $("joinCard").hidden = false;
     window.scrollTo(0, 0);
     $("phone").focus({ preventScroll: true });
@@ -211,33 +213,37 @@
     if (ok) phone.removeAttribute("aria-invalid"); else phone.setAttribute("aria-invalid", "true");
     return ok;
   }
-  function areaScores() { var o = {}; DhiQuestions.AREAS.forEach(function (a) { o[a] = r.areas[a].score; }); return o; }
-  function keep(v) { try { localStorage.setItem(LEAD, JSON.stringify(v)); } catch (e) {} }
-  /* challenge status for the sheet (js/api.js); read early so the submit stays instant */
-  var challenge = { challengeJoined: false, joinedAt: null };
-  if (window.DhiApi) DhiApi.getMe().then(function (m) { challenge = { challengeJoined: !!(m && m.joined), joinedAt: (m && m.joinedAt) || null }; }, function () {});
+  /* a student under 18 also ticks that a parent or guardian agrees */
+  var minor = Number(profile.age) < 18;
+  $("guardianRow").hidden = !minor;
+
+  var MESSAGES = {
+    invalid_input: "Please enter a valid 10-digit mobile number.",
+    guardian_required: "A parent or guardian needs to tick the box first.",
+    rate_limited: "Please try again a little later.",
+    consent_text_changed: "The notice was just updated. Please refresh this page and read it again.",
+    offline: "We could not save your number just now. Please check your connection and try again. Your number is kept here."
+  };
+  function say(code) { $("formErr").textContent = MESSAGES[code] || MESSAGES.offline; }
 
   $("join").addEventListener("submit", function (e) {
     e.preventDefault();
     if (!check10()) { phone.focus(); return; }
-    var lead = {
-      name: profile.name || "", age: profile.age || "", class: profile.class || "",
-      phone: digits(), wantsCommunity: $("community").checked, foundingId: DhiIdentity.foundingId(profile),
-      styleKey: r.styleKey, areas: areaScores(), indices: r.indices, dhiStart: r.dhiStart, flags: r.flags,
-      completedAt: check.completedAt,
-      challengeJoined: challenge.challengeJoined, joinedAt: challenge.joinedAt
-    };
-    var cfg = window.DHI_FUNNEL || {};
-    keep({ lead: lead, completedAt: check.completedAt, sent: !!cfg.leadEndpoint, at: new Date().toISOString() });
+    if (minor && !$("guardian").checked) { say("guardian_required"); $("guardian").focus(); return; }
+    if ($("submit").disabled) return;
+    $("formErr").textContent = "";
     $("submit").disabled = true;
-    if (cfg.leadEndpoint) {                                  /* no endpoint: kept locally only */
-      /* keepalive finishes the send even after we leave */
-      try {
-        fetch(cfg.leadEndpoint, { method: "POST", mode: "no-cors", keepalive: true,
-          headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(lead) }).catch(function () {});
-      } catch (err) {}
-    }
-    $("join").hidden = true; $("thanks").hidden = false;
-    setTimeout(function () { location.href = REPORT; }, 2500);
+    DhiSession.submitLead({ phone: digits(), wantsCommunity: $("community").checked, guardianPresent: minor ? $("guardian").checked : false })
+      .then(function (res) {
+        if (res.ok) {
+          $("join").hidden = true; $("thanks").hidden = false;
+          setTimeout(function () { location.href = REPORT; }, 2500);
+          return;
+        }
+        $("submit").disabled = false;
+        if (res.code === "not_signed_in" || res.code === "no_profile") { location.replace("landing.html"); return; }
+        if (res.code === "not_completed") { location.replace(DhiStore.resumeTarget()); return; }
+        say(res.code);                                       /* the typed number stays in the field */
+      });
   });
 })();

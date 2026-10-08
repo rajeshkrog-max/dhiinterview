@@ -1,3 +1,8 @@
+---
+import Guard from "../../components/Guard.astro";
+// The consent notice is drawn from the same lines the server checks (spec 0002), so the two cannot drift apart.
+import { CONSENT_LINES, CONSENT_VERSION } from "../../../convex/consentText";
+---
 <!doctype html>
 <html lang="en">
 <head>
@@ -10,8 +15,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Playfair+Display:wght@600;700&family=Mukta:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="css/landing.css">
+<Guard mode="landing" />
 </head>
 <body>
+<div id="dhiBoot" hidden></div>
 <main class="gate" id="gate">
 
   <header class="brand">
@@ -28,17 +35,30 @@
   <div class="card" id="card">
     <p class="card-brand">No student is weak. DhiRise is a calm place to study, with the right tools and the knowledge you need.</p>
 
-    <!-- returning student -->
-    <div class="back" id="back" hidden>
-      <button type="button" class="btn" id="continueAs">Continue as <span id="backName"></span></button>
-      <button type="button" class="link" id="notYou">Not you</button>
+    <!-- 1. not signed in: Google first -->
+    <div class="state" id="stSignedOut" hidden>
+      <p class="msg" id="signMsg" role="status" aria-live="polite" hidden></p>
+      <button type="button" class="btn" id="google">Continue with Google</button>
+      <p class="notice">
+        We save your name, age, class and the email of your Google account, so you can carry on later on any phone.
+        <button type="button" class="link inline" id="readNotice">Read the full notice</button>
+      </p>
+      <p class="hint">Already started? Sign in with the same Google account.</p>
+      <button type="button" class="btn ghost" id="testBtn" hidden>Test sign in (dev only)</button>
     </div>
 
-    <!-- new student -->
-    <form id="form" novalidate>
+    <!-- 1b. Google does not work inside Instagram, Facebook and similar apps -->
+    <div class="state" id="stBlocked" hidden>
+      <p class="msg">Open this page in Chrome or Safari to continue. Google does not let you sign in from inside this app.</p>
+      <button type="button" class="btn" id="copyLink">Copy link</button>
+      <p class="hint" id="copyNote" aria-live="polite">Paste it into Chrome or Safari.</p>
+    </div>
+
+    <!-- 2. signed in, no details yet -->
+    <form id="form" novalidate hidden>
       <div class="field">
         <label for="name">Name</label>
-        <input id="name" name="name" type="text" autocomplete="given-name" autocapitalize="words" enterkeyhint="next" aria-describedby="nameErr">
+        <input id="name" name="name" type="text" maxlength="60" autocomplete="given-name" autocapitalize="words" enterkeyhint="next" aria-describedby="nameErr">
         <p class="err" id="nameErr" aria-live="polite"></p>
       </div>
       <!-- age and class share a row, so the referral field adds no height -->
@@ -65,7 +85,7 @@
         <p class="ref-status" id="refStatus" aria-live="polite"></p>
       </div>
 
-      <div class="or" aria-hidden="true"><span>or</span></div>
+      <div class="or" aria-hidden="true"><span>and</span></div>
 
       <div class="consent">
         <input type="checkbox" id="consent" name="consent" aria-describedby="consentErr">
@@ -73,10 +93,38 @@
       </div>
       <p class="err" id="consentErr" aria-live="polite"></p>
 
+      <!-- shown only under 18 -->
+      <div class="consent" id="guardianRow" hidden>
+        <input type="checkbox" id="guardian" name="guardian" aria-describedby="guardianErr">
+        <label for="guardian">A parent or guardian is with me and agrees.</label>
+      </div>
+      <p class="err" id="guardianErr" aria-live="polite"></p>
+
+      <p class="err" id="formErr" role="alert"></p>
       <div class="submit">
-        <button type="submit" class="btn" id="go" aria-disabled="true">Continue with Gmail</button>
+        <button type="submit" class="btn" id="go" aria-disabled="true">Continue</button>
       </div>
     </form>
+
+    <!-- 3. signed in with a profile: "Continue as", never an automatic redirect -->
+    <div class="back" id="back" hidden>
+      <button type="button" class="btn" id="continueAs">Continue as <span id="backName"></span></button>
+      <p class="msg" id="outMsg" role="status" aria-live="polite" hidden></p>
+      <button type="button" class="link" id="notYou">Not you</button>
+    </div>
+
+    <!-- 3b. answers an earlier version kept in this browser (asked once) -->
+    <div class="state" id="stImport" hidden>
+      <p class="msg">We found answers saved on this device. Keep them?</p>
+      <button type="button" class="btn" id="importYes">Yes, keep them</button>
+      <button type="button" class="link" id="importNo">No, start fresh</button>
+    </div>
+
+    <!-- 4. the server cannot be reached and this device holds nothing -->
+    <div class="state" id="stUnknown" hidden>
+      <p class="msg">We could not reach DhiRise. Please check your connection.</p>
+      <button type="button" class="btn" id="tryAgain">Try again</button>
+    </div>
   </div>
 
 </main>
@@ -91,12 +139,8 @@
       </button>
     </div>
     <div class="sheet-body" id="sheetBody" tabindex="0">
-      <div id="consentLines">
-        <p>DhiRise collects your name, age, class, and the Google account you use to continue. We use these to create your study profile, save your check, and send you the result.</p>
-        <p>If you are under 18, a parent or guardian must be with you and must agree. Do not continue alone.</p>
-        <p>Your answers are used only to prepare your study picture and to improve this check. We do not sell your data.</p>
-        <p>You may withdraw this consent, correct your details, or request erasure by writing to the address below. Withdrawal does not affect a result already prepared. Grievance contact: privacy@dhirise.com</p>
-        <p class="consent-final">By tapping I agree, you confirm that you have read this notice, and that a parent or guardian has agreed if you are under 18.</p>
+      <div id="consentLines" data-version={CONSENT_VERSION}>
+        {CONSENT_LINES.map((line, i) => <p class={i === CONSENT_LINES.length - 1 ? "consent-final" : undefined}>{line}</p>)}
       </div>
     </div>
     <div class="sheet-foot">
@@ -106,10 +150,11 @@
   </div>
 </div>
 
-<script is:inline src="js/challenge-config.js"></script>
-<script is:inline src="js/funnel-config.js"></script>
-<script is:inline src="js/api.js"></script>
-<script is:inline src="js/gate.js"></script>
-<script is:inline src="js/music.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/challenge-config.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/funnel-config.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/api.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/engine/store.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/gate.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/music.js"></script>
 </body>
 </html>

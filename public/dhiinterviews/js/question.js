@@ -10,9 +10,9 @@
     var READ_MS = 10000, OUT_MS = 700;
     var reduced = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    /* first name from the landing gate, or "Student" */
+    /* first name of the signed in student (js/engine/store.js), or "Student" */
     try {
-      var g = JSON.parse(localStorage.getItem("dhirise.gate.v1"));
+      var g = window.DhiStore ? DhiStore.get().profile : null;
       var first = g && g.name ? String(g.name).trim().split(/\s+/)[0] : "";
       if (first) $("who").textContent = first.charAt(0).toUpperCase() + first.slice(1);
     } catch (e) {}

@@ -1,52 +1,134 @@
-/* Dhirise · landing gate. No backend: the Gmail button is a stub that saves who the student is,
-   with their consent, in localStorage (dhirise.gate.v1) and opens the check where the student left it. */
+/* Dhirise · landing. Google first (spec 0002): the page reads who is here (window.DhiSession, src/lib/session.ts) and
+   paints exactly one state: signed out (Google button + short notice), needs details (the form), or signed in
+   ("Continue as", "Not you"). Nothing is saved until the form is submitted. Needs js/engine/store.js, js/api.js
+   (referral check) and the page guard loaded first; the guard starts this script once the page may run. */
 (function () {
   "use strict";
-  var KEY = "dhirise.gate.v1";
   var $ = function (id) { return document.getElementById(id); };
-  var form = $("form"), back = $("back"), btn = $("go");
-  var name = $("name"), age = $("age"), cls = $("cls"), consent = $("consent");
+  var S = window.DhiSession;
+  var REF_KEY = "dhirise.ref.v1";
+  var CODE_OK = /^[A-Z0-9]{1,8}$/;
+  var states = ["stSignedOut", "stBlocked", "form", "back", "stImport", "stUnknown"];
+  var form = $("form"), btn = $("go");
+  var name = $("name"), age = $("age"), cls = $("cls"), consent = $("consent"), guardian = $("guardian");
 
-  function read() { try { var g = JSON.parse(localStorage.getItem(KEY)); return g && g.name ? g : null; } catch (e) { return null; } }
-  function write(v) { try { localStorage.setItem(KEY, JSON.stringify(v)); return true; } catch (e) { return false; } }
-  /* a new student meets Dhi first (meet.html); a returning one resumes the check (localStorage "dhirise.check.v1"):
-     first unanswered question, or once finished the teaser (done.html), or the report once they joined or skipped */
-  function go() {
-    var url = "meet.html";
-    try {
-      var c = JSON.parse(localStorage.getItem("dhirise.check.v1")), g = read();
-      if (c && c.answers && c.profile && g && c.profile.name === g.name && Object.keys(c.answers).length) {
-        if (c.completedAt) {
-          var lead = JSON.parse(localStorage.getItem("dhirise.lead.v1"));
-          url = lead && lead.completedAt === c.completedAt ? "report-student.html" : "done.html";
-        }
-        else {
-          url = "questions.html?q=18";
-          for (var n = 1; n <= 18; n++) if (!c.answers["q" + n]) { url = n === 1 ? "question.html" : n === 2 ? "question2.html" : "questions.html?q=" + n; break; }
-        }
-      }
-    } catch (e) {}
-    location.href = url;
+  function show(id) { states.forEach(function (s) { $(s).hidden = s !== id; }); }
+  function say(el, text, kind) { el.textContent = text || ""; el.hidden = !text; if (kind) el.classList.add("kind"); }
+  var params = new URLSearchParams(location.search);
+
+  /* ---------- referral code across the Google trip: kept in localStorage, sent once with the form ---------- */
+  function cleanCode(v) { return String(v || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8); }
+  (function keepRef() {
+    var fromUrl = cleanCode(params.get("ref"));
+    if (fromUrl) { try { localStorage.setItem(REF_KEY, fromUrl); } catch (e) {} }
+  })();
+  function storedRef() { try { return cleanCode(localStorage.getItem(REF_KEY)); } catch (e) { return ""; } }
+
+  /* ---------- painting the state ---------- */
+  function messageFromReturn() {
+    if (params.get("signin") !== "error") return "";
+    var why = params.get("error") || "";
+    return /access_denied|cancel/i.test(why)
+      ? "No problem. You can try again whenever you like."
+      : "Google did not let this account in. If you were asked to be a test user, please tell the DhiRise team. You can also try another account.";
+  }
+  function clearReturnParams() {
+    if (!params.has("signin") && !params.has("error")) return;
+    try { history.replaceState(null, "", location.pathname); } catch (e) {}
   }
 
-  /* returning student: "Continue as <name>" / "Not you" */
-  var saved = read();
-  if (saved) { $("backName").textContent = saved.name; back.hidden = false; form.hidden = true; }
-  $("continueAs").addEventListener("click", go);
-  $("notYou").addEventListener("click", function () {
-    try { localStorage.removeItem(KEY); } catch (e) {}
-    consent.checked = false; consent.removeAttribute("aria-invalid"); $("consentErr").textContent = "";   /* clear the tick too */
-    back.hidden = true; form.hidden = false; syncButton(); name.focus();
-  });
+  function paintSignedOut() {
+    if (S.isBlockedBrowser()) { show("stBlocked"); return; }
+    show("stSignedOut");
+    say($("signMsg"), messageFromReturn(), true);
+    if (params.get("test") !== null) $("testBtn").hidden = false;
+  }
+  function paintForm() {
+    show("form");
+    if (!name.value) name.value = (S.googleName || "").slice(0, 60);
+    var code = storedRef();
+    if (code && !$("ref").value) { $("ref").value = code; validateRef(); }
+    syncButton();
+    try { name.focus({ preventScroll: true }); } catch (e) {}
+  }
+  function paintBack(displayName) {
+    $("backName").textContent = displayName;
+    say($("outMsg"), "");
+    $("notYou").textContent = "Not you";
+    $("notYou").dataset.force = "";
+    show("back");
+  }
+  function paintReady() {
+    var check = DhiStore.get();
+    var answered = Object.keys(check.answers || {}).length;
+    /* answers an earlier version kept only in this browser: asked once, and only when the server has none */
+    if (!check.completedAt && answered === 0 && S.oldAnswers()) { show("stImport"); return; }
+    paintBack((check.profile && check.profile.name) || "");
+  }
 
-  /* field rules */
+  function paint(state) {
+    if (state === "ready") paintReady();
+    else if (state === "needsProfile") paintForm();
+    else if (state === "signedOut") paintSignedOut();
+    else if (S.cachedName()) paintBack(S.cachedName());      /* cannot reach the server, but this device knows the student */
+    else show("stUnknown");
+    clearReturnParams();
+    S.reveal();
+  }
+  S.ready().then(paint);
+
+  /* ---------- signed out ---------- */
+  $("google").addEventListener("click", function () {
+    $("google").setAttribute("aria-busy", "true");
+    S.signInWithGoogle().catch(function () {
+      $("google").removeAttribute("aria-busy");
+      say($("signMsg"), "We could not start Google sign in. Please try again.", true);
+    });
+  });
+  $("readNotice").addEventListener("click", function () { openSheet(true); });
+  $("copyLink").addEventListener("click", function () {
+    var done = function (ok) { $("copyNote").textContent = ok ? "Link copied. Paste it into Chrome or Safari." : "Press and hold the address bar to copy the link."; };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(location.origin + location.pathname).then(function () { done(true); }, function () { done(false); });
+    else done(false);
+  });
+  $("testBtn").addEventListener("click", function () {
+    var n = params.get("test"), email = n && n !== "1" ? "test.student" + n.replace(/[^a-z0-9]/gi, "") + "@example.com" : "test.student@example.com";
+    S.testSignIn(email).then(function (r) {
+      if (!r.ok) { say($("signMsg"), "Test sign in refused: " + r.message, true); return; }
+      S.ready().then(paint);
+    });
+  });
+  $("tryAgain").addEventListener("click", function () { location.reload(); });
+
+  /* ---------- signed in ---------- */
+  $("continueAs").addEventListener("click", function () { location.href = DhiStore.resumeTarget(); });
+  $("notYou").addEventListener("click", function () {
+    var force = $("notYou").dataset.force === "1";
+    S.signOut(force).then(function (r) {
+      if (r.ok) { form.reset(); syncButton(); paint("signedOut"); return; }
+      if (r.offline) {                             /* the server could not end the session: nothing was cleared */
+        say($("outMsg"), "We could not sign you out because we could not reach DhiRise. Please connect and try again.", true);
+        return;
+      }
+      say($("outMsg"), r.unsent + (r.unsent === 1 ? " answer has" : " answers have") + " not been sent yet. If you sign out now, they will be lost.", true);
+      $("notYou").textContent = "Sign out anyway"; $("notYou").dataset.force = "1";
+    });
+  });
+  $("importYes").addEventListener("click", function () { S.importOld().then(function () { paintBack(DhiStore.get().profile.name); }); });
+  $("importNo").addEventListener("click", function () { S.dismissOld(); paintBack(DhiStore.get().profile.name); });
+
+  /* ---------- field rules ---------- */
   var cleanName = function () { return name.value.trim().replace(/\s+/g, " "); };
-  var ageOk = function () { var a = Number(age.value); return age.value !== "" && Number.isInteger(a) && a >= 10 && a <= 25; };
-  function complete() { return !!cleanName() && ageOk() && !!cls.value && consent.checked; }
+  var ageNum = function () { return Number(age.value); };
+  var ageOk = function () { return age.value !== "" && Number.isInteger(ageNum()) && ageNum() >= 10 && ageNum() <= 25; };
+  var isMinor = function () { return ageOk() && ageNum() < 18; };
+  function complete() { return !!cleanName() && ageOk() && !!cls.value && consent.checked && (!isMinor() || guardian.checked); }
 
   /* the button looks disabled until everything is set, but still takes a click so we can say what's missing */
-  function syncButton() { btn.setAttribute("aria-disabled", complete() ? "false" : "true"); }
-
+  function syncButton() {
+    $("guardianRow").hidden = !isMinor();
+    btn.setAttribute("aria-disabled", complete() ? "false" : "true");
+  }
   function setErr(input, msgEl, msg) {
     $(msgEl).textContent = msg || "";
     if (msg) input.setAttribute("aria-invalid", "true"); else input.removeAttribute("aria-invalid");
@@ -58,23 +140,23 @@
     ok = setErr(age, "ageErr", age.value === "" ? "Please enter your age." : ageOk() ? "" : "Age should be between 10 and 25.") && ok;
     ok = setErr(cls, "clsErr", cls.value ? "" : "Please choose your class.") && ok;
     ok = setErr(consent, "consentErr", consent.checked ? "" : "Please confirm before you continue.") && ok;
+    ok = setErr(guardian, "guardianErr", !isMinor() || guardian.checked ? "" : "A parent or guardian needs to be with you and agree.") && ok;
     return ok;
   }
-
-  [name, age, cls, consent].forEach(function (el) {
+  [name, age, cls, consent, guardian].forEach(function (el) {
     el.addEventListener(el === name || el === age ? "input" : "change", function () {
       if (el.getAttribute("aria-invalid")) check();   /* clear an error as soon as it's fixed */
+      $("formErr").textContent = "";
       syncButton();
     });
   });
-  syncButton();
 
   /* ---------- consent sheet ----------
      The box isn't ticked by hand: tapping the row or box opens the sheet; "I agree" ticks it.
-     Closes only by the X. "I agree" unlocks once the body has been scrolled to the end. */
+     Closes only by the X. "I agree" unlocks once the body has been scrolled to the end.
+     From "Read the full notice" (signed out) the sheet is read only. */
   var dim = $("sheetDim"), sheetBody = $("sheetBody"), agree = $("agree"), hint = $("sheetHint");
   var lastFocus = null;
-  var CONSENT_TEXT = Array.prototype.map.call(document.querySelectorAll("#consentLines p"), function (p) { return p.textContent.trim(); }).join("\n\n");   /* the full notice, as shown */
 
   function atEnd() { return sheetBody.scrollTop + sheetBody.clientHeight >= sheetBody.scrollHeight - 4; }
   function syncAgree() {
@@ -85,8 +167,9 @@
       agree.classList.remove("pulse"); void agree.offsetWidth; agree.classList.add("pulse");
     }
   }
-  function openSheet() {
+  function openSheet(readOnly) {
     lastFocus = document.activeElement;
+    if (readOnly) dim.setAttribute("data-readonly", ""); else dim.removeAttribute("data-readonly");
     dim.hidden = false;
     sheetBody.scrollTop = 0;
     syncAgree();                                   /* short text that already fits counts as read */
@@ -110,38 +193,55 @@
   consent.addEventListener("click", function (e) {
     if (consent.checked) {                         /* the click just ticked it: undo and ask first */
       e.preventDefault();
-      openSheet();
+      openSheet(false);
     }
   });
   /* the dim layer never closes the sheet; keep Tab inside it while open */
   dim.addEventListener("keydown", function (e) {
     if (e.key !== "Tab") return;
-    var items = [$("sheetX"), sheetBody, agree];
+    var items = [$("sheetX"), sheetBody].concat(dim.hasAttribute("data-readonly") ? [] : [agree]);
     var i = items.indexOf(document.activeElement);
     e.preventDefault();
     items[(i + (e.shiftKey ? items.length - 1 : 1)) % items.length].focus({ preventScroll: true });
   });
 
+  /* ---------- submit: creates the student, the consent and the check on the server ---------- */
+  var ERRORS = {
+    guardian_required: "A parent or guardian needs to be with you and agree.",
+    invalid_input: "Something in the form does not look right. Please check your name, age and class.",
+    consent_text_changed: "The notice was just updated. Please refresh this page and read it again.",
+    account_conflict: "This Google email is already used by another sign in. Please use the Google account you started with.",
+    not_signed_in: "Please sign in with Google again.",
+    offline: "We could not reach DhiRise. Please check your connection and try again."
+  };
   form.addEventListener("submit", function (e) {
     e.preventDefault();
+    if (btn.getAttribute("aria-busy") === "true") return;
     if (!check()) { var bad = form.querySelector('[aria-invalid="true"]'); if (bad) bad.focus(); return; }
-    var now = new Date().toISOString();
-    write({ name: cleanName(), age: Number(age.value), class: cls.value, provider: "google", at: now, consent: true, consentAt: now, consentText: CONSENT_TEXT });
-    /* a valid referral code that isn't their own is recorded once (js/api.js checks both); a wrong code never blocks */
     var code = refCode();
-    if (!code || !window.DhiApi) { go(); return; }
-    btn.setAttribute("aria-busy", "true");
-    var done = function () { try { sessionStorage.removeItem(REF_KEY); } catch (err) {} go(); };
-    DhiApi.recordReferralUse(code).then(done, done);
+    btn.setAttribute("aria-busy", "true"); $("formErr").textContent = "";
+    S.createProfile({
+      name: cleanName(), age: ageNum(), "class": cls.value, guardianPresent: isMinor() ? guardian.checked : false,
+      referralCode: code || undefined
+    }).then(function (r) {
+      if (!r.ok) {
+        btn.removeAttribute("aria-busy");
+        if (r.code === "not_signed_in") { paint("signedOut"); return; }
+        $("formErr").textContent = ERRORS[r.code] || ERRORS.offline;
+        return;
+      }
+      /* the mock challenge layer notes the referral use (js/api.js); a wrong code never blocks */
+      var go = function () { location.href = DhiStore.resumeTarget(); };
+      if (!code || !window.DhiApi) { go(); return; }
+      DhiApi.recordReferralUse(code).then(go, go);
+    });
   });
 
   /* ---------- referral code (optional) ----------
-     ?ref=CODE pre-fills the field and is kept in sessionStorage until sign-in. Checked on blur: a green tick and
-     "Invited by <name>", or a muted note. Uppercase, letters and digits only, max 8. */
-  var REF_KEY = "dhirise.ref", ref = $("ref"), refStatus = $("refStatus");
+     Checked on blur: a green tick and "Invited by <name>", or a muted note. Uppercase, letters and digits only, max 8. */
+  var ref = $("ref"), refStatus = $("refStatus");
   var TICK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
-  function refCode() { return ref.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8); }
-  function keepRef() { try { if (refCode()) sessionStorage.setItem(REF_KEY, refCode()); else sessionStorage.removeItem(REF_KEY); } catch (e) {} }
+  function refCode() { var c = cleanCode(ref.value); return CODE_OK.test(c) ? c : ""; }
   function showRef(ok, text) {
     refStatus.className = "ref-status" + (ok ? " ok" : "");
     refStatus.innerHTML = ok ? TICK : "";
@@ -160,19 +260,10 @@
       else showRef(false, "Code not found. You can still continue.");
     }, function () { if (mine === checking) refStatus.textContent = ""; });
   }
-  (function prefill() {
-    var fromUrl = "";
-    try { fromUrl = (new URLSearchParams(location.search).get("ref") || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8); } catch (e) {}
-    var saved = ""; try { saved = sessionStorage.getItem(REF_KEY) || ""; } catch (e) {}
-    ref.value = fromUrl || saved;
-    keepRef();
-    if (ref.value) validateRef();
-  })();
   ref.addEventListener("input", function () {
-    var at = ref.selectionStart, clean = refCode();
+    var at = ref.selectionStart, clean = cleanCode(ref.value);
     if (ref.value !== clean) { ref.value = clean; try { ref.setSelectionRange(at, at); } catch (e) {} }
     refStatus.textContent = ""; checking++;
-    keepRef();
   });
   ref.addEventListener("blur", validateRef);
 
