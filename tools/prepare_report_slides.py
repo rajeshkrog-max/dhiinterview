@@ -1,14 +1,14 @@
 """DhiRise · optimised backgrounds for who.html ("Who you are").
 
-Reads assets/report/slide1.png … slide6.png (left untouched) and writes, for each,
-assets/report/web/slideN.webp (quality 82) and slideN.jpg (fallback), at most 1080 px wide.
+Reads public/dhiinterviews/assets/report/slide1.png … slide6.png (left untouched) and writes, for each,
+public/dhiinterviews/assets/report/web/slideN.webp (quality 82) and slideN.jpg (fallback), at most 1080 px wide.
 
 Run from the project folder:  python tools/prepare_report_slides.py
 """
 from pathlib import Path
 from PIL import Image
 
-SRC = Path("assets/report")
+SRC = Path("public/dhiinterviews/assets/report")
 OUT = SRC / "web"
 MAX_W = 1080
 

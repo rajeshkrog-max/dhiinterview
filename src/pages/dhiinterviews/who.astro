@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14110e">
+<title>DhiRise · Who you are</title>
+<link rel="icon" href="assets/dhirise-logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Mukta:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/who.css">
+<link rel="preload" as="image" href="assets/report/web/slide1.webp" type="image/webp">
+</head>
+<body>
+<!-- "Who you are": 6 cards from the student's answers (js/who.js + js/engine/storyText.js), then the full report -->
+<header class="topbar">
+  <span class="who" id="who">You</span>
+  <span class="step" id="step"></span>
+  <span class="spacer" aria-hidden="true"></span>
+</header>
+<div class="dots" id="dots" aria-hidden="true"></div>
+
+<main class="track" id="track" aria-roledescription="carousel" aria-label="Who you are"></main>
+
+<nav class="qnav">
+  <button type="button" class="back" id="back">Back</button>
+  <button type="button" class="next" id="next">Next</button>
+</nav>
+
+<script is:inline src="js/leaves.js"></script>
+<script is:inline src="js/engine/questions.js"></script>
+<script is:inline src="js/engine/score.js"></script>
+<script is:inline src="js/engine/store.js"></script>
+<script is:inline src="js/engine/storyText.js"></script>
+<script is:inline src="js/who.js"></script>
+</body>
+</html>

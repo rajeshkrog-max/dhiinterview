@@ -8,7 +8,7 @@ import numpy as np
 from PIL import Image
 
 SRC = "assets/cards/_unused"
-LIVE = "assets/cards"                      # card-back.png and story-bg.png stayed here
+LIVE = "public/dhiinterviews/assets/cards"                      # card-back.png and story-bg.png stayed here
 OUT = os.path.join(SRC, "final")
 os.makedirs(OUT, exist_ok=True)
 FRAMES = ["explorer", "achiever", "builder"]

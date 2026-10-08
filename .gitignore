@@ -16,4 +16,11 @@ node_modules/
 Thumbs.db
 
 # retired card art (kept on disk, not in the repo)
-assets/cards/_unused/
+public/dhiinterviews/assets/cards/_unused/
+
+# Astro and pnpm build output
+dist/
+.astro/
+
+# keep the example env file
+!.env.example

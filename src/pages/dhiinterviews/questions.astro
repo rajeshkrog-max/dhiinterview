@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14110e">
+<title>DhiRise</title>
+<link rel="icon" href="assets/dhirise-logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Mukta:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/question.css">
+</head>
+<body>
+<!-- questions 3–18: one page, filled from js/questions.js by ?q=N -->
+<main class="qscreen" id="qscreen">
+
+  <header class="topbar">
+    <span class="who" id="who">Student</span>
+    <span class="step" id="step"></span>
+    <span class="spacer" aria-hidden="true"></span>
+  </header>
+  <div class="track" id="track" role="progressbar" aria-valuemin="0" aria-valuemax="18"><i></i></div>
+
+  <section class="panel" id="panel" aria-labelledby="qText">
+    <h1 id="qText"></h1>
+    <div class="options" role="radiogroup" aria-labelledby="qText" id="options">
+      <button type="button" role="radio" aria-checked="false" data-choice="1"></button>
+      <button type="button" role="radio" aria-checked="false" data-choice="2"></button>
+      <button type="button" role="radio" aria-checked="false" data-choice="3"></button>
+      <button type="button" role="radio" aria-checked="false" data-choice="4"></button>
+    </div>
+  </section>
+
+</main>
+
+<aside class="tip" id="tip" hidden aria-live="polite">
+  <b>DhiRise</b>
+  <p id="tipText"></p>
+  <i class="drain" id="drain" aria-hidden="true"></i>
+</aside>
+
+<nav class="qnav">
+  <button type="button" class="back" id="back">Back</button>
+  <button type="button" class="next" id="next" disabled>Next</button>
+</nav>
+
+<script is:inline src="js/leaves.js"></script>
+<script is:inline src="js/engine/questions.js"></script>
+<script is:inline src="js/engine/score.js"></script>
+<script is:inline src="js/engine/store.js"></script>
+<script is:inline src="js/engine/screen.js"></script>
+<script is:inline src="js/question.js"></script>
+<script is:inline src="js/questions.js"></script>
+<script is:inline src="js/music.js"></script>
+</body>
+</html>
