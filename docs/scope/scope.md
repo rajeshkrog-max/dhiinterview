@@ -23,6 +23,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 21 | About page | Prototype pass | planned |
 | 18 | Privacy page and grievance contact | Prototype pass | in-progress |
 | 24 | Leaderboard on every screen size | Prototype pass | planned |
+| 27 | Browser tests run clean | Prototype pass | planned |
 | 4 | Real sign in and saved check | Slice 1 | in-progress |
 | 5 | Leads and feedback saved | Slice 2 | in-progress |
 | 6 | Results and report from saved data | Slice 2 | done |
@@ -31,7 +32,9 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 9 | Error monitoring and alerts | Slice 3 | planned |
 | 22 | Report copy saved when seen, with Download | Report copies | in-progress |
 | 23 | Team link to the saved report, in the admin view and the Sheet | Report copies | in-progress |
-| 25 | Privacy notice names Cloudflare Browser Run | Report copies | planned |
+| 25 | Privacy notice names Cloudflare Browser Run | Report copies | in-progress |
+| 28 | Team list keeps its order when copies are replaced | Report copies | planned |
+| 26 | Ship what is built to production | Go live | planned |
 | 10 | Live referral codes and tracking | Slice 4 | planned |
 | 11 | Challenge join with parent consent | Slice 4 | planned |
 | 12 | Live leaderboard | Slice 4 | planned |
@@ -88,7 +91,7 @@ Walk the whole student flow on the live address (sign in, form, 18 questions, do
 
 ### 20. Site layout, root address and 404 · needs a decision
 Settle how the one domain is organised: `/` sends visitors to the DhiRise interview landing page now, and stays a reserved slot so a different product (an invitation style page) can take over the root later without moving anything under `/dhiinterviews`. A shared page frame (header, footer, fonts, colours) so 404, About and Privacy look like the funnel. Any unknown address on the domain shows a friendly 404.
-**Done when:** `/` and `/dhiinterviews` open the landing page; any unknown address shows the styled 404 with a link home (and answers with a 404 status); changing what the root does is a one place change that leaves `/dhiinterviews` untouched; About, Privacy and 404 all use the same frame.
+**Done when:** `/` and `/dhiinterviews` open the landing page; any unknown address shows the styled 404 with a link home (and answers with a 404 status); the two team pages (row 23) move into the frame without breaking the Sheet link `/dhiinterviews/team-report.html?s=`; changing what the root does is a one place change that leaves `/dhiinterviews` untouched; About, Privacy and 404 all use the same frame.
 - [ ] Design it (spec): `/architect site layout, root address and 404`
 
 ### 21. About page · Alpha
@@ -106,6 +109,11 @@ Code in `src/pages/dhiinterviews/privacy.astro`, the links in `landing.astro` an
 The leaderboard only has a phone layout today (no width breakpoints in `leaderboard.css`). Make the podium, the list and the sticky "you" card work on phone, tablet and desktop. Stays on demo rows.
 **Done when:** at phone, tablet and desktop widths the podium and list use the space well, nothing scrolls sideways or looks stretched, the "you" card still works, and motion respects the reduced motion setting.
 - [ ] Build it: `/develop leaderboard on every screen size`
+
+### 27. Browser tests run clean · Alpha
+Three older browser tests fail on a clean checkout (the Astro dev toolbar sits on top of the phone step's Submit button at phone width), and the first test of a file sometimes times out when two files start together. Found while checking row 23.
+**Done when:** `pnpm test:e2e` and `pnpm test` each pass three runs in a row.
+- [ ] Fix what fails: `/debug browser tests that fail on a clean checkout`
 
 ## Slice 1: the thinnest real thread
 
@@ -215,17 +223,32 @@ A private team page (named Google accounts only, as you chose) lists students wh
 - [ ] Document it: `/document team link to the saved report`
 Code in `convex/team*.ts`, `functions/api/team`, `src/lib/team.ts`, `src/pages/dhiinterviews/team*.astro`, `public/dhiinterviews/css/team.css` and `convex/sheetRows*.ts` · Spec [0008](../specs/0008-team-link-to-saved-report/index.md) · needs the `TEAM_EMAILS` setting on each deployment (the consent v3 wording is approved and built) · M5 still owes the live check that the Sheet cell is clickable, because dev has no Sheet
 
-### 25. Privacy notice names Cloudflare Browser Run · needs a decision · from spec 0006
-The report copy (row 22) sends a student's report data to Cloudflare Browser Run to draw the PDF. Students, many under 18, and their parents should be told, in the consent text and the privacy page. Consent text is versioned, so this is a new text version; you supply or approve the wording.
+### 25. Privacy notice names Cloudflare Browser Run · in-progress · from spec 0006
+The report copy (row 22) sends a student's report data to Cloudflare Browser Run to draw the PDF. Students, many under 18, and their parents should be told, in the consent text and the privacy page. Consent text is versioned, so this is a new text version; you supplied the wording.
 **Done when:** the consent text and the privacy page (row 18) name Cloudflare Browser Run as a service that handles report data, a new consent text version is live, and it ships before real students open the report copy.
-_Progress 2026-10-09: consent text v2 (v1 plus one line that names Cloudflare Browser Run and says report data passes through it to draw the PDF) is in `convex/consentText.ts`, tested and pushed to dev; v1 stays frozen for saved consents. Still to do: the privacy page (row 18) naming it, and shipping to production. The wording was approved in chat by the owner._
-- [ ] Design it (spec): `/architect privacy notice names Cloudflare Browser Run` (before row 22 goes live)
+_Reconciled 2026-10-09: built. Consent v2 names Cloudflare Browser Run (v1 frozen), the privacy page names it in section 3, and the current consent is now v3 (it also names the team access, row 23; v1 and v2 stay frozen, and new students can only agree under the current text). Only shipping to production is left, in row 26._
+- [x] Design it (spec): skipped on purpose, you approved the wording in chat and it was built inside specs [0006](../specs/0006-report-copy-saved-when-seen/index.md), [0007](../specs/0007-privacy-page-and-grievance-contact.md) and [0008](../specs/0008-team-link-to-saved-report/index.md)
+- [ ] Ship it to production: part of row 26
+
+### 28. Team list keeps its order when copies are replaced · needs a decision · from the review of spec 0008
+The team list pages by the time a copy was made, and that time moves when a copy is replaced (a report version change replaces every copy over days), so Load more can skip or repeat a student. Also the spec's AC-4 still says the fake test sign in skips Google's verified check on dev, but the code now allows that only for fake `@example.com` addresses.
+**Done when:** Load more never skips or repeats a student when a copy is replaced between clicks (the code box already finds anyone); spec 0008's words match the narrower dev rule.
+- [ ] Design it (spec): `/architect team list order and gate wording`
+
+## Go live: ship what is built
+
+### 26. Ship what is built to production · Alpha
+Rows 4, 7, 22, 23 and 25 are built and checked on dev but each waits on production: settings, a real Sheet, a real report copy and the Google consent screen. Deploy Convex first, then Pages, set what each row needs, and run the checks dev could not show. Launch is planned for 30 October.
+**Done when:** production runs the current code and settings (`TEAM_EMAILS`, the report copy settings, the Sheet settings, consent v3); `sheetAdmin:refill` has run once; the team link in column N is clickable in the real Sheet; a real report copy is made and the team opens it; the open production checks of rows 4 (AC-14), 7, 22 and 23 are ticked.
+Owner decisions this row needs (from the specs' follow ups): move Google's consent screen from Testing to Production, and add each team member as a test user until then · Cloudflare Workers Paid (about 5 dollars a month) or accept 40 to 75 report copies a day · the paid Convex plan, backups and export · who owns the Sheet and who may see it · a named grievance contact on the privacy page · the legal check on a guardian tick and a required phone number for under 18s under the Data Protection Act · which Convex region, recorded in the privacy page.
+- [ ] Deploy and set production settings: `pnpm run deploy:pages` (you, with the settings above)
+- [ ] Check it live: `/check verify ship what is built to production`
 
 ## Slice 4: the challenge goes live
 
 ### 10. Live referral codes and tracking · needs a decision
 Replace the mock in `js/api.js` with real codes and uses. A referral counts only when the friend is new, used the code at sign in, finished all 18 questions, reached the report and left real feedback. No self referrals.
-**Done when:** the ten test scenarios in `BACKEND.md` section 15 pass against the real service; a wrong code never blocks sign in; the rules are enforced on the server, not the browser.
+**Done when:** the ten test scenarios in `BACKEND.md` section 15 pass against the real service; a wrong code never blocks sign in; the rules are enforced on the server, not the browser; an imported check never counts and a feedback note counts only when it is genuine.
 - [ ] Design it (spec): `/architect live referral codes and tracking`
 
 ### 11. Challenge join with parent consent · needs a decision
@@ -247,12 +270,12 @@ A private screen to review the top 10 referrers by hand (their valid and pending
 
 ### 14. Team admin view · needs a decision
 A private screen for the team to see leads, feedback and referral counts without opening the sheet, with access limited to named team members.
-**Done when:** only signed in team members can open it; it lists leads, feedback and referral totals; phone numbers are shown only to the roles that need them. (Row 23 builds the team sign in and the report list first; this row widens it.)
+**Done when:** only signed in team members can open it; it lists leads, feedback and referral totals; phone numbers are shown only to the roles that need them. (Row 23 builds the team sign in and the report list first; this row widens it into roles, audits who reads phone numbers and decides whether browsing the list is audited, and replaces the hand edits to the WhatsApp status.)
 - [ ] Design it (spec): `/architect team admin view`
 
 ### 15. Data export and deletion · needs a decision
 A student, or a parent, can ask for their data to be exported or erased, and the erase reaches the database, the sheet copy and analytics. (basis: India's data protection law on correction and erasure, a named practice)
-**Done when:** a request produces a complete export or a full erase across every store; erased students no longer appear on the leaderboard or in the sheet.
+**Done when:** a request produces a complete export or a full erase across every store, including the saved report PDF and its record, the sign in account and the Sheet rows; erased students no longer appear on the leaderboard or in the sheet. The team's open records (`reportViews`, ids and a team email only) stay, and this row is the only code that may delete them.
 - [ ] Design it (spec): `/architect data export and deletion`
 
 ## Launch readiness
