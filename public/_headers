@@ -14,3 +14,26 @@
 /dhiinterviews/report-render.html
   X-Robots-Tag: noindex
   Cache-Control: private, no-store
+
+# The team pages (spec 0008): the list and the report viewer, for named Google accounts only. Never indexed, never cached.
+# The content security policy allows only this site's own scripts, its own API calls and the PDF viewer (a blob address).
+# The first rule above (frame-ancestors 'none') still applies to these pages as well.
+/dhiinterviews/team
+  X-Robots-Tag: noindex
+  Cache-Control: private, no-store
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-src blob:; object-src blob:; base-uri 'none'; form-action 'self'
+
+/dhiinterviews/team.html
+  X-Robots-Tag: noindex
+  Cache-Control: private, no-store
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-src blob:; object-src blob:; base-uri 'none'; form-action 'self'
+
+/dhiinterviews/team-report
+  X-Robots-Tag: noindex
+  Cache-Control: private, no-store
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-src blob:; object-src blob:; base-uri 'none'; form-action 'self'
+
+/dhiinterviews/team-report.html
+  X-Robots-Tag: noindex
+  Cache-Control: private, no-store
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-src blob:; object-src blob:; base-uri 'none'; form-action 'self'

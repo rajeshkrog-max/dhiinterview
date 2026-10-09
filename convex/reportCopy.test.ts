@@ -500,7 +500,8 @@ describe("what the code can and cannot do", () => {
     expect(storing).toEqual(["./reportMakeCore.ts"]);
     const http = sources.find(([name]) => name === "./http.ts")![1];
     const routes = [...http.matchAll(/path:\s*"([^"]+)",\s*method:\s*"([A-Z]+)"/g)].map((m) => `${m[2]} ${m[1]}`);
-    expect(routes).toEqual(["GET /health", "GET /api/files/report", "GET /api/render/payload"]);
+    // every route is a GET; the two /api/team routes are the team link to the saved report (spec 0008), which stores and uploads nothing
+    expect(routes).toEqual(["GET /health", "GET /api/files/report", "GET /api/render/payload", "GET /api/team/list", "GET /api/team/report"]);
   });
 
   test("covers AC-5: the render payload never reads the flags table or the email and phone fields", () => {

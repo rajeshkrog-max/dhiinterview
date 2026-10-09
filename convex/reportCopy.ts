@@ -14,6 +14,7 @@ import { rateLimiter } from "./limits";
 import { FRESH_ROUND_AFTER_MS, LEASE_MS, UNATTACHED_FILE_MS, afterCountedFailure } from "./reportCore";
 import { REPORT_VERSION } from "./reportVersion";
 import { NO_FLAGS, findResult } from "./resultsCore";
+import { enqueueSheet } from "./sheetSync";
 import { flatten } from "../src/lib/result";
 
 const stateValidator = v.union(v.literal("queued"), v.literal("making"), v.literal("ready"), v.literal("failed"));
@@ -222,7 +223,7 @@ export const finishFailed = internalMutation({
   },
 });
 
-// Keeps a finished PDF. The new file is attached first, then the old one is deleted (AC-3). The same or an older version
+// Keeps a finished PDF. The new file is attached first, then the old one is deleted (AC-3). The first copy of a student also queues their Leads row again (spec 0008). The same or an older version
 // never replaces the held copy, and a copy stamped with a version the row no longer wants is thrown away and asked for again.
 export const attach = internalMutation({
   args: { id: v.id("reportFiles"), storageId: v.id("_storage"), size: v.number(), sha256: v.string(), version: v.number() },
@@ -259,7 +260,14 @@ export const attach = internalMutation({
       failedAt: undefined,
       lastError: undefined,
     });
-    if (old !== undefined) await ctx.storage.delete(old);
+    if (old !== undefined) {
+      await ctx.storage.delete(old);
+    } else {
+      // The first time this student's copy is ready: the Leads row gets its team link (column N, spec 0008, AC-8). A student with no
+      // phone step has no Leads row and so no link; one whose phone step comes later gets the link when that row is first built.
+      const lead = await ctx.db.query("leads").withIndex("by_checkId", (q) => q.eq("checkId", row.checkId)).unique();
+      if (lead) await enqueueSheet(ctx, "lead", lead._id, row.studentId, "upsert");
+    }
     return "attached" as const;
   },
 });

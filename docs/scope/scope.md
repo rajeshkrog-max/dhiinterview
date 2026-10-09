@@ -30,7 +30,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 8 | Product analytics with consent | Slice 3 | planned |
 | 9 | Error monitoring and alerts | Slice 3 | planned |
 | 22 | Report copy saved when seen, with Download | Report copies | in-progress |
-| 23 | Team link to the saved report, in the admin view and the Sheet | Report copies | planned |
+| 23 | Team link to the saved report, in the admin view and the Sheet | Report copies | in-progress |
 | 25 | Privacy notice names Cloudflare Browser Run | Report copies | planned |
 | 10 | Live referral codes and tracking | Slice 4 | planned |
 | 11 | Challenge join with parent consent | Slice 4 | planned |
@@ -199,10 +199,21 @@ When a student opens their report, the server makes one PDF copy of it with Clou
 - [ ] Document it: `/document report copy saved when seen, with download`
 Code in `convex/report*.ts`, `functions/api/files`, `functions/api/render`, `src/pages/dhiinterviews/report-render.astro`, `public/dhiinterviews/js/render-boot.js` and `report-download.js` · Spec [0006](../specs/0006-report-copy-saved-when-seen/index.md) · runs on the Cloudflare Workers Free plan for roughly 150 to 200 copies a day (one request every 10 seconds, 10 minutes of browser time a day), so a paid plan is needed for launch volume; needs three new Convex settings (see the spec's Follow up)
 
-### 23. Team link to the saved report, in the admin view and the Sheet · needs a decision
+### 23. Team link to the saved report, in the admin view and the Sheet · in-progress
 A private team page (named Google accounts only, as you chose) lists students whose report was seen, each with a link that opens the frozen copy in the same look. The same link goes into the Sheet row for that student, filled in once the report is seen. This starts the team sign in that row 14 widens later.
 **Done when:** a signed in team member opens a student's saved report from the admin list and from the Sheet link; a signed out visitor or a non team account is refused; a student who has not seen their report shows an empty link; the Sheet link appears shortly after the report is first seen.
-- [ ] Design it (spec): `/architect team link to the saved report` (after rows 22, 7)
+- [x] Design it (spec): `/architect team link to the saved report` (after rows 22, 7)
+- [ ] Build it: `/develop team link to the saved report`
+  - [x] M1 The thin thread: the `TEAM_EMAILS` gate, the Pages forwarder and headers, `reportViews` and the PDF route with its hourly limit, the viewer page with Google sign in (AC-3, 4, 5, 6, 7, 9, 10)
+  - [x] M2 The list: the list route and page, Load more, the reference code box (AC-1, 2, 7, 10)
+  - [x] M3 The Sheet link: column N filled from the saved copy, queued again when a copy is first ready, refill for older copies (AC-8)
+  - [x] M4 The notice: privacy page sentence and consent text v3, after you approve the words (AC-11)
+  - [ ] M5 Proof: tests for the gate, limit and audit, browser tests, a live check that the Sheet cell is clickable (AC-1 to 10)
+- [ ] Verify it: `/check verify team link to the saved report`
+- [ ] Test it: `/test team link to the saved report`
+- [ ] Review it (fresh model): `/check review team link to the saved report`
+- [ ] Document it: `/document team link to the saved report`
+Code in `convex/team*.ts`, `functions/api/team`, `src/lib/team.ts`, `src/pages/dhiinterviews/team*.astro`, `public/dhiinterviews/css/team.css` and `convex/sheetRows*.ts` · Spec [0008](../specs/0008-team-link-to-saved-report/index.md) · needs the `TEAM_EMAILS` setting on each deployment (the consent v3 wording is approved and built) · M5 still owes the live check that the Sheet cell is clickable, because dev has no Sheet
 
 ### 25. Privacy notice names Cloudflare Browser Run · needs a decision · from spec 0006
 The report copy (row 22) sends a student's report data to Cloudflare Browser Run to draw the PDF. Students, many under 18, and their parents should be told, in the consent text and the privacy page. Consent text is versioned, so this is a new text version; you supply or approve the wording.

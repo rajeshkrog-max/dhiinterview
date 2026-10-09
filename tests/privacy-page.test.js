@@ -43,4 +43,10 @@ describe("privacy page", () => {
       expect(read(p), p).toMatch(/<a href="privacy\.html" target="_blank" rel="noopener">Read our privacy page<\/a>/);
     }
   });
+
+  test("covers spec 0008 AC-11: it says named members of the DhiRise team can open a report, and that each open is recorded", () => {
+    expect(words).toMatch(/Named members of the DhiRise team can also open your report/);
+    expect(words).toMatch(/we record who opened it and when/);
+    expect(words).not.toMatch(/only you can open your report/i); // no longer true
+  });
 });

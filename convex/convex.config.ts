@@ -22,6 +22,9 @@ const app = defineApp({
     CLOUDFLARE_API_TOKEN: v.optional(v.string()), // custom token with only "Browser Rendering - Edit"
     REPORT_RENDER_SECRET: v.optional(v.string()), // signs the 2 minute render tokens; different on dev and production
     REPORT_RENDER_BASE_URL: v.optional(v.string()), // the public site address Browser Run opens (never localhost)
+    // The team link to the saved report (spec 0008): comma separated Google emails allowed to open any ready report.
+    // Unset or empty means nobody. Read on every team request, so removing an email takes effect at once. Set per deployment.
+    TEAM_EMAILS: v.optional(v.string()),
   },
 });
 app.use(betterAuth);

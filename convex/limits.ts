@@ -4,6 +4,7 @@
 // every expected refusal (the count then stays), and throw only for not_signed_in and no_profile.
 import { DAY, HOUR, RateLimiter } from "@convex-dev/rate-limiter";
 import { components } from "./_generated/api";
+import { TEAM_OPEN_PER_HOUR } from "./teamCore";
 
 export const rateLimiter = new RateLimiter(components.rateLimiter, {
   submitLead: { kind: "token bucket", rate: 10, period: HOUR, capacity: 10 },
@@ -12,4 +13,7 @@ export const rateLimiter = new RateLimiter(components.rateLimiter, {
   // and at most 1500 jobs started a day across everyone (used when a job starts, key "all").
   reportCopy: { kind: "token bucket", rate: 10, period: HOUR, capacity: 10 },
   reportCopyDay: { kind: "fixed window", rate: 1500, period: DAY },
+  // The team link to the saved report (spec 0008, AC-6): one team member opens at most 200 PDFs in a fixed hour window.
+  // Key = the signed in team email. Used only when a PDF is about to be served.
+  teamOpen: { kind: "fixed window", rate: TEAM_OPEN_PER_HOUR, period: HOUR },
 });

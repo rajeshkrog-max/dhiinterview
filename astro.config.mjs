@@ -7,7 +7,7 @@
 import { defineConfig } from 'astro/config';
 import { existsSync, readFileSync } from 'node:fs';
 
-// Local development only: send /api/auth/* (and /api/files, /api/render) to the Convex dev deployment, like functions/api does in
+// Local development only: send /api/auth/* (and /api/files, /api/render, /api/team) to the Convex dev deployment, like functions/api does in
 // production. The address comes from .env.local, which `convex dev` writes (git ignored).
 const convexSite =
   process.env.CONVEX_SITE_URL ??
@@ -33,6 +33,8 @@ export default defineConfig({
             // the saved report PDF (spec 0006): the student's download and the render page's data, like functions/api/files and render
             '/api/files': { target: convexSite, changeOrigin: true },
             '/api/render': { target: convexSite, changeOrigin: true },
+            // the team list and the team's report viewer (spec 0008), like functions/api/team
+            '/api/team': { target: convexSite, changeOrigin: true },
           }
         : {},
     },

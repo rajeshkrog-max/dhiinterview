@@ -1,9 +1,9 @@
-// Builds the Sheet rows from the database (spec 0004). Reads the lead, the student and the consent the lead points at;
-// never the sensitive flags or any result. Used by the copy job (`build`) and by the daily check and the CSV export.
+// Builds the Sheet rows from the database (spec 0004). Reads the lead, the student and the consent the lead points at, and
+// whether the student's saved report copy is stored (for the team link in column N, spec 0008); never the sensitive flags or any result. Used by the copy job (`build`) and by the daily check and the CSV export.
 import { v } from "convex/values";
-import { internalQuery } from "./_generated/server";
+import { env, internalQuery } from "./_generated/server";
 import type { Reader } from "./helpers";
-import { feedbackRow, leadRow, rowFingerprint, type SheetKind } from "./sheetRowsCore";
+import { feedbackRow, leadRow, rowFingerprint, teamReportLink, type SheetKind } from "./sheetRowsCore";
 
 export type BuiltRow = { refId: string; key: string; values: string[]; hash: string };
 
@@ -28,7 +28,8 @@ async function loadValues(ctx: Reader, kind: SheetKind, refId: string): Promise<
     const student = await ctx.db.get("students", lead.studentId);
     const consent = await ctx.db.get("consents", lead.consentId);
     if (!student || !consent) return null;
-    return leadRow(student, lead, consent);
+    const copy = await ctx.db.query("reportFiles").withIndex("by_studentId", (q) => q.eq("studentId", student._id)).first();
+    return leadRow(student, lead, consent, teamReportLink(env.BETTER_AUTH_URL, student._id, copy?.storageId !== undefined));
   }
   const id = ctx.db.normalizeId("feedback", refId);
   const feedback = id ? await ctx.db.get("feedback", id) : null;

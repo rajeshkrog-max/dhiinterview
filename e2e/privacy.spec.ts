@@ -26,5 +26,5 @@ test("covers AC-5: the landing consent sheet has a link to the privacy page that
   await expect(link).toBeVisible();
   await expect(link).toHaveAttribute("href", "privacy.html");
   await expect(link).toHaveAttribute("target", "_blank");
-  await expect(page.locator("#consentLines p")).toHaveCount(6); // the notice itself is unchanged by the link
+  await expect(page.locator("#consentLines p")).toHaveCount(7); // the notice itself is unchanged by the link: consent v3 has seven lines
 });

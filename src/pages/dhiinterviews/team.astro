@@ -1,0 +1,47 @@
+---
+// The team list (spec 0008): the students whose saved report copy is ready, newest first, with an Open link, and a box that
+// finds one student by reference code. For named Google accounts only (TEAM_EMAILS). No Guard: the guard sends anyone without
+// a student profile to the landing page, and a team member has none. src/lib/team.ts draws everything and sets every name and
+// class as plain text. The page is never indexed or cached (public/_headers).
+---
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0b0c18">
+<title>DhiRise · Team</title>
+<link rel="stylesheet" href="css/team.css">
+</head>
+<body data-page="list">
+<main class="tt">
+  <div class="tt-bar">
+    <h1>DhiRise team: saved reports</h1>
+    <button type="button" class="tt-btn" id="signOut" hidden>Sign out</button>
+  </div>
+
+  <p class="tt-msg" id="msg" role="status" aria-live="polite">Checking your sign in…</p>
+
+  <section id="signInBox" hidden>
+    <p class="tt-note">This page is for the DhiRise team. Please sign in with your Google account.</p>
+    <button type="button" class="tt-btn main" id="signIn">Sign in with Google</button>
+  </section>
+
+  <section id="listBox" hidden>
+    <form class="tt-find" id="find" autocomplete="off">
+      <label for="ref">Find a student by reference code</label>
+      <input id="ref" name="ref" type="text" inputmode="text" autocapitalize="off" spellcheck="false" maxlength="80" placeholder="Paste the code from column A">
+      <button type="submit" class="tt-btn main" id="findBtn">Find</button>
+      <button type="button" class="tt-btn" id="showAll" hidden>Show all</button>
+    </form>
+    <ul class="tt-rows" id="rows"></ul>
+    <button type="button" class="tt-btn" id="more" hidden>Load more</button>
+  </section>
+</main>
+
+<script>
+  import "../../lib/team";
+</script>
+</body>
+</html>

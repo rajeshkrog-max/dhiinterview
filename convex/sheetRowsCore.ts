@@ -72,8 +72,20 @@ export type LeadFields = {
 export type ConsentFields = { textVersion: string; guardianPresent: boolean };
 export type FeedbackFields = { _creationTime: number; rating: number; text: string; canShare: boolean; genuine: boolean };
 
-// The Leads row: columns A to N. O to X are held for results (scope row 6), not written here.
-export function leadRow(student: StudentFields, lead: LeadFields, consent: ConsentFields): string[] {
+// The team page that shows one saved report (spec 0008). The Sheet link is this path on the site's address, plus the student's
+// reference code, which is already in column A. Opening it signs the person in and checks the team list, so the link alone opens nothing.
+export const TEAM_REPORT_PATH = "/dhiinterviews/team-report.html";
+
+// The text of column N: `{site address}/dhiinterviews/team-report.html?s={reference code}`, or "" when the copy is not ready or the
+// site address is not set (or is not a web address). Plain text; the Sheet shows a full address as a clickable link.
+export function teamReportLink(siteUrl: string | undefined, studentId: string, ready: boolean): string {
+  const base = (siteUrl ?? "").trim().replace(/\/+$/, "");
+  if (!ready || !/^https?:\/\/[^\s]+$/i.test(base)) return "";
+  return `${base}${TEAM_REPORT_PATH}?s=${encodeURIComponent(studentId)}`;
+}
+
+// The Leads row: columns A to N. O to X are held for results (scope row 6), not written here. `reportLink` is column N, from `teamReportLink`.
+export function leadRow(student: StudentFields, lead: LeadFields, consent: ConsentFields, reportLink: string): string[] {
   return [
     student._id,
     student.name,
@@ -88,7 +100,7 @@ export function leadRow(student: StudentFields, lead: LeadFields, consent: Conse
     lead.phoneSeenBefore ? "yes" : "",
     consent.textVersion,
     yesNo(consent.guardianPresent),
-    "", // the report PDF link stays empty until a team only link exists (scope rows 6 and 14)
+    reportLink,
   ];
 }
 

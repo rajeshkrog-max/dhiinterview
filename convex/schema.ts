@@ -165,7 +165,21 @@ export default defineSchema({
     .index("by_checkId", ["checkId"])
     .index("by_studentId", ["studentId"]) // for erasing a student's data (scope row 15)
     .index("by_storageId", ["storageId"])
-    .index("by_state_and_nextAttemptAt", ["state", "nextAttemptAt"]),
+    .index("by_state_and_nextAttemptAt", ["state", "nextAttemptAt"])
+    .index("by_readyAt", ["readyAt"]), // the team list, newest copy first (spec 0008)
+
+  // One row for every PDF the team route served (spec 0008). Only ever added to: no app code edits or deletes a row, and
+  // only the erasure of a student (scope row 15) may delete them. Ids, a fingerprint and a team email only; no student data.
+  reportViews: defineTable({
+    studentId: v.id("students"), // whose report was opened
+    reportFileId: v.id("reportFiles"),
+    sha256: v.string(), // the fingerprint of the exact file that was served
+    reportVersion: v.number(),
+    teamEmail: v.string(), // lowercase, from the signed in account
+    viewedAt: v.number(),
+  })
+    .index("by_studentId", ["studentId"])
+    .index("by_teamEmail_and_viewedAt", ["teamEmail", "viewedAt"]),
 
   // One row: the one at a time lease of the copy job, and the numbers the Sync status tab shows.
   sheetStatus: defineTable({

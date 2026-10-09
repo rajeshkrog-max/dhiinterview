@@ -37,6 +37,9 @@ import type * as sheetRowsCore from "../sheetRowsCore.js";
 import type * as sheetSync from "../sheetSync.js";
 import type * as sheetsGoogle from "../sheetsGoogle.js";
 import type * as students from "../students.js";
+import type * as team from "../team.js";
+import type * as teamCore from "../teamCore.js";
+import type * as teamHttp from "../teamHttp.js";
 
 import type {
   ApiFromModules,
@@ -74,6 +77,9 @@ declare const fullApi: ApiFromModules<{
   sheetSync: typeof sheetSync;
   sheetsGoogle: typeof sheetsGoogle;
   students: typeof students;
+  team: typeof team;
+  teamCore: typeof teamCore;
+  teamHttp: typeof teamHttp;
 }>;
 
 /**

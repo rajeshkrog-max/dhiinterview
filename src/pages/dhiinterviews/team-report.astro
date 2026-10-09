@@ -1,0 +1,49 @@
+---
+// The team's report viewer (spec 0008): shows one student's saved PDF inside this page, with Download and Sign out. The Sheet
+// link points here: team-report.html?s=<reference code>. A signed out visitor signs in with Google and comes back to the same
+// report. For named Google accounts only (TEAM_EMAILS). No Guard (a team member has no student profile). src/lib/team.ts does
+// the work. The page is never indexed or cached (public/_headers).
+---
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0b0c18">
+<title>DhiRise · Team report</title>
+<link rel="stylesheet" href="css/team.css">
+</head>
+<body data-page="report">
+<main class="tt">
+  <div class="tt-bar">
+    <h1>DhiRise team: saved report</h1>
+    <button type="button" class="tt-btn" id="signOut" hidden>Sign out</button>
+  </div>
+
+  <p class="tt-msg" id="msg" role="status" aria-live="polite">Checking your sign in…</p>
+
+  <section id="signInBox" hidden>
+    <p class="tt-note">This page is for the DhiRise team. Please sign in with your Google account.</p>
+    <button type="button" class="tt-btn main" id="signIn">Sign in with Google</button>
+  </section>
+
+  <section id="viewerBox" hidden>
+    <div class="tt-actions">
+      <button type="button" class="tt-btn main" id="download">Download</button>
+      <a class="tt-btn" href="team.html">All saved reports</a>
+    </div>
+    <p class="tt-note">If the report does not show on your phone, tap Download.</p>
+    <iframe class="tt-pdf" id="pdf" title="Saved report"></iframe>
+  </section>
+
+  <section id="backBox" hidden>
+    <p><a class="tt-btn" href="team.html">All saved reports</a></p>
+  </section>
+</main>
+
+<script>
+  import "../../lib/team";
+</script>
+</body>
+</html>
