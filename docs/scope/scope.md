@@ -19,11 +19,12 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 2 | Data model | Foundation | planned |
 | 3 | Coding standards & tooling | Foundation | planned |
 | 19 | Live smoke test and fixes | Prototype pass | planned |
-| 20 | Site layout, root address and 404 | Prototype pass | planned |
+| 20 | Site layout, root address and 404 | Prototype pass | in-progress |
 | 21 | About page | Prototype pass | planned |
 | 18 | Privacy page and grievance contact | Prototype pass | in-progress |
 | 24 | Leaderboard on every screen size | Prototype pass | planned |
 | 27 | Browser tests run clean | Prototype pass | planned |
+| 29 | Funnel screens use our own fonts | Prototype pass | planned |
 | 4 | Real sign in and saved check | Slice 1 | in-progress |
 | 5 | Leads and feedback saved | Slice 2 | in-progress |
 | 6 | Results and report from saved data | Slice 2 | done |
@@ -89,10 +90,21 @@ Walk the whole student flow on the live address (sign in, form, 18 questions, do
 - [x] Check the live site and list what fails: `/check verify live prototype` (2026-10-09: found the live site was an old build, deployed it; then sign in, 18 answers, result, report, lead and feedback all reached production and the Sheet. Second device resume was confirmed by you, not recorded by the check. Staging alias of AC-14 not checked.)
 - [ ] Fix what fails: `/debug`
 
-### 20. Site layout, root address and 404 · needs a decision
+### 20. Site layout, root address and 404 · in-progress
 Settle how the one domain is organised: `/` sends visitors to the DhiRise interview landing page now, and stays a reserved slot so a different product (an invitation style page) can take over the root later without moving anything under `/dhiinterviews`. A shared page frame (header, footer, fonts, colours) so 404, About and Privacy look like the funnel. Any unknown address on the domain shows a friendly 404.
 **Done when:** `/` and `/dhiinterviews` open the landing page; any unknown address shows the styled 404 with a link home (and answers with a 404 status); the two team pages (row 23) move into the frame without breaking the Sheet link `/dhiinterviews/team-report.html?s=`; changing what the root does is a one place change that leaves `/dhiinterviews` untouched; About, Privacy and 404 all use the same frame.
-- [ ] Design it (spec): `/architect site layout, root address and 404`
+- [x] Design it (spec): `/architect site layout, root address and 404`
+- [ ] Build it: `/develop site layout, root address and 404`
+  - [ ] M1 The thin thread: the shared frame (layout, stylesheet, hosted Mukta fonts, 64px logo) and the root 404 page, proved on the built site (AC-3, 4, 5, 6, 9, 10)
+  - [ ] M2 The root address: one commented `/` redirect line, query string kept, the `verify:pages` script (AC-1, 2)
+  - [ ] M3 Privacy and terms in the frame, old stylesheet, Google Fonts links and logo handler removed (AC-5, 8, 10, 11)
+  - [ ] M4 The two team pages in the frame, their strict policy and tests kept (AC-7, 9, 11) (last move, droppable if risky)
+  - [ ] M5 Proof: source scans, contrast and layout tests, the live check on the built site with the real headers and the old links (AC-1 to 11)
+- [ ] Verify it: `/check verify site layout, root address and 404`
+- [ ] Test it: `/test site layout, root address and 404`
+- [ ] Review it (fresh model): `/check review site layout, root address and 404`
+- [ ] Document it: `/document site layout, root address and 404`
+Spec [0009](../specs/0009-site-frame-root-and-404/index.md) · the 404 words and the footer content are approved; About joins the footer in row 21
 
 ### 21. About page · Alpha
 A short About page in the shared frame: what DhiRise is, who it is for, and who is behind it, in the same kind and plain words as the funnel. You will need to supply or approve the wording; a draft can be written for you to edit.
@@ -114,6 +126,11 @@ The leaderboard only has a phone layout today (no width breakpoints in `leaderbo
 Three older browser tests fail on a clean checkout (the Astro dev toolbar sits on top of the phone step's Submit button at phone width), and the first test of a file sometimes times out when two files start together. Found while checking row 23.
 **Done when:** `pnpm test:e2e` and `pnpm test` each pass three runs in a row.
 - [ ] Fix what fails: `/debug browser tests that fail on a clean checkout`
+
+### 29. Funnel screens use our own fonts · Alpha · from spec 0009
+The landing page, question pages, report and the other funnel screens still load their fonts from Google's font servers, which tells Google a student's address on every visit. Spec 0009 hosts Mukta for the frame pages; this row moves the funnel screens to hosted files too (including the heading fonts they use).
+**Done when:** no funnel screen loads anything from Google's font servers, the screens look the same, and the font files carry their licence files and versioned names.
+- [ ] Build it: `/develop funnel screens use our own fonts` (after row 20)
 
 ## Slice 1: the thinnest real thread
 
