@@ -6,6 +6,8 @@
 //    `needsProfile` visitor to landing, then lets the page's own scripts run
 //  - the local copy of the check (dhirise.session.v1) and the per question queue of unsent answers
 //  - sign in, sign out ("Not you"), creating the profile, finishing, the one time import of old answers
+//  - the saved result (spec 0005): `result()` gives the pages the old flat result object, from the device copy,
+//    else from the server, and shows a kind "try again" state (never a redirect to landing) when it cannot be had
 //
 // Page scripts are written as <script type="text/dhi-deferred" src="...">; this file starts them, in order,
 // once the guard has let the page through. Sign in itself goes through the site's own /api/auth/* address.
@@ -15,10 +17,12 @@ import { api } from "../../convex/_generated/api";
 import { CONSENT_TEXTS, CONSENT_VERSION, LEAD_CONSENT_VERSION, consentHash } from "../../convex/consentText";
 import { MIN_NOTE_CHARS, isGenuine } from "../../convex/feedbackRules";
 import { authClient, createConvexClient } from "./auth-client";
+import { flatten, isFlat, startResult, type FlatResult, type ResultView } from "./result";
 import {
   OLD_CHECK_KEY,
   OWNER_KEY,
   REF_KEY,
+  RESULT_KEY,
   SESSION_KEY,
   readJSON,
   readString,
@@ -66,7 +70,12 @@ type QueueEntry = { optionId: string; answeredAt: number; synced: boolean };
 type Queue = Record<string, QueueEntry>;
 export type SyncStatus = "saving" | "saved" | "offline" | "signin" | "dropped";
 
+// The saved result's types and its pure helpers live in ./result.ts (unit tested without a page).
+export type { FlatResult } from "./result";
+type ResultCopy = { v: 1; owner: string; result: FlatResult };
+
 const LANDING = "landing.html";
+const RESULT_WAIT_MS = 10000; // after this the page says "could not load" instead of staying blank
 const TOTAL = 18;
 const html = document.documentElement;
 const mode = (html.dataset.dhiGuard as Mode | undefined) ?? "public";
@@ -540,6 +549,108 @@ async function importOld(): Promise<{ ok: boolean }> {
   }
 }
 
+// ---------- the saved result (spec 0005; the pure parts are in ./result.ts) ----------
+
+// The copy on this device, only while it belongs to the signed in account and the check is finished. A copy that is not
+// the shape the pages need (cut off, edited, from another version) is dropped, and the server is asked instead.
+function readResultCopy(cache: Cached): FlatResult | null {
+  const copy = readJSON<ResultCopy>(RESULT_KEY);
+  if (!copy) return null;
+  if (copy.v !== 1 || !isFlat(copy.result)) {
+    remove(RESULT_KEY);
+    return null;
+  }
+  if (!cache.completedAt || !authUserId || copy.owner !== authUserId || cache.owner !== authUserId) return null;
+  return copy.result;
+}
+
+function goToResume(): void {
+  const store = (window as unknown as { DhiStore?: { resumeTarget: () => string } }).DhiStore;
+  location.replace(store ? store.resumeTarget() : "meet.html"); // never the landing page: the sign in is fine
+}
+
+// Resolves with the flat result, or with null after sending the page somewhere else (an unfinished check to where it
+// left off, or a sign in that changed under us to the reload the guard is about to do).
+// Throws when the result cannot be had right now (offline, slow, server error).
+async function loadResult(): Promise<FlatResult | null> {
+  let cache = readCache();
+  if (!cache) {
+    await verify();
+    cache = readCache();
+    if (!cache) throw new Error("no_session");
+  }
+  if (!cache.completedAt) {
+    goToResume();
+    return null;
+  }
+  const kept = readResultCopy(cache);
+  if (kept) return kept;
+
+  const c = await getClient();
+  if (!c) throw new Error("offline");
+  let view: ResultView | null;
+  try {
+    view = await withTimeout(c.query(api.results.mine, {}), 12000);
+    if (!view) view = await withTimeout(c.mutation(api.results.ensure, {}), 15000);
+  } catch (e) {
+    if (codeOf(e) === "not_completed") {
+      resetVerification(); // this device thought the check was finished and the server says no: refresh, then resume
+      await verify();
+      goToResume();
+      return null;
+    }
+    throw e;
+  }
+  // The cookie may belong to another account than the cache this call started from (a sign in in the middle of the
+  // page load). Draw nothing of it and save nothing: the guard reloads the page once it knows.
+  if (authUserId !== cache.owner) return null;
+  const flat = flatten(view);
+  writeJSON(RESULT_KEY, { v: 1, owner: cache.owner, result: flat } satisfies ResultCopy); // only after the server answered
+  return flat;
+}
+
+// The "could not load" box. A result the server could not make (`scoring_failed`) gets its own words, not "check your
+// connection". Called again while the box shows, it only updates the words.
+function resultBox(show: boolean, retry?: () => void, error?: unknown): void {
+  let box = document.getElementById("dhiResultBox");
+  if (!show) return void box?.remove();
+  const words =
+    codeOf(error) === "scoring_failed"
+      ? "We could not prepare your result just now. Your answers are safe. Please try again in a little while."
+      : "We could not load your result just now. Please check your connection and try again.";
+  if (box) {
+    const p = box.querySelector("p");
+    if (p) p.textContent = words;
+    return;
+  }
+  box = document.createElement("div");
+  box.id = "dhiResultBox";
+  box.setAttribute("role", "alert");
+  box.style.cssText =
+    "position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#16122b;color:#fff;" +
+    "font:16px/1.5 system-ui,sans-serif;text-align:center;padding:24px;z-index:98";
+  const p = document.createElement("p");
+  p.textContent = words;
+  const b = document.createElement("button");
+  b.type = "button";
+  b.textContent = "Try again";
+  b.style.cssText = "font:inherit;padding:10px 18px;border-radius:10px;border:0;margin-top:8px";
+  b.addEventListener("click", () => retry?.());
+  box.append(p, b);
+  document.body.appendChild(box);
+}
+
+let resultPending: Promise<FlatResult> | null = null;
+
+// The result of the finished check, as the old flat object. The page draws only when this resolves. If it takes about
+// 10 seconds, or fails, the box shows with a button and the promise keeps waiting; it never redirects to landing. (A
+// call to `mine` may wait up to 12 seconds, so the box usually shows before the first attempt has failed: intended,
+// the attempt can still win.) An unfinished check is sent to where it left off and the promise never resolves.
+function result(): Promise<FlatResult> {
+  if (!resultPending) resultPending = startResult({ load: loadResult, box: resultBox, waitMs: RESULT_WAIT_MS });
+  return resultPending;
+}
+
 // ---------- the page guard ----------
 
 function startPageScripts(): Promise<void> {
@@ -675,6 +786,7 @@ export const DhiSession = {
   importOld,
   dismissOld: () => remove(OLD_CHECK_KEY),
   onStatus: (fn: (s: SyncStatus, detail?: number) => void) => listeners.add(fn),
+  result,
   hasCache: () => readCache() !== null,
   /** The cached student, for "Continue as" when the server cannot be reached. */
   cachedName: () => readCache()?.profile.name ?? null,

@@ -13,11 +13,12 @@
    and submitted genuine feedback (≥ minFeedbackChars, not repeated characters). No self-referrals.
    The top 10 are reviewed by hand before a winner is announced.
 
-   Needs: js/challenge-config.js (window.DHI_CHALLENGE), js/funnel-config.js (shareUrl). Uses DhiScore if loaded (style). */
+   Needs: js/challenge-config.js (window.DHI_CHALLENGE), js/funnel-config.js (shareUrl). Reads the style label from the saved result copy on the device (dhirise.result.v1, spec 0005). */
 (function (root) {
   "use strict";
   var CFG = root.DHI_CHALLENGE || { minFeedbackChars: 30, leaderboardSize: 50 };
   var ME_KEY = "dhirise.challenge.v1", MOCK_KEY = "dhirise.challenge.mock.v1";
+  var RESULT_KEY = "dhirise.result.v1";     /* the saved result of the finished check, { v:1, owner, result }, filled by src/lib/session.ts */
   var SESSION_KEY = "dhirise.session.v1";   /* the signed in student's cached check, filled by src/lib/session.ts */
   var ABC = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";            /* A–Z and 2–9 without O, 0, I, 1 */
   var CODE_RE = /^[A-Z]{3}[A-HJ-NP-Z2-9]{4}$/;
@@ -52,10 +53,12 @@
   function saveMe(m) { return write(ME_KEY, m); }
   function mock() { var d = read(MOCK_KEY); return d && d.codes && d.uses ? d : { codes: {}, uses: [] }; }
   function saveMock(d) { return write(MOCK_KEY, d); }
+  /* the same owner and finished checks as DhiStore.result() in js/engine/store.js (the challenge pages do not load that
+     file): change them together */
   function styleOf() {
-    var c = check();
-    if (!c.completedAt || !root.DhiScore || !root.DhiQuestions) return null;
-    try { return STYLE[root.DhiScore.score(c.answers).styleKey] || null; } catch (e) { return null; }
+    var c = check(), s = read(RESULT_KEY);
+    if (!c.completedAt || !c.owner || !s || s.v !== 1 || s.owner !== c.owner || !s.result) return null;   /* none on this device yet */
+    return STYLE[s.result.styleKey] || null;
   }
   /* the one rule lives in convex/feedbackRules.ts; the page bridge (src/lib/session.ts) exposes it */
   function genuine(text) { return !!(root.DhiSession && root.DhiSession.isGenuine && root.DhiSession.isGenuine(text)); }

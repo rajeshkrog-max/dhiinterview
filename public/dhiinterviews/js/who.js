@@ -1,4 +1,4 @@
-/* Dhirise · "Who you are". Six cards built only from the answers and score(), words from js/engine/storyText.js.
+/* Dhirise · "Who you are". Six cards built only from the answers and the saved result (DhiSession.result()), words from js/engine/storyText.js.
    Swipe (scroll-snap) or tap Next / Back; the last card's button opens report-student.html. */
 (function () {
   "use strict";
@@ -11,7 +11,10 @@
     return;
   }
   if (!DhiStore.requireLead(check)) return;                    /* the phone step comes first (spec 0003) */
-  var r = DhiScore.score(check.answers, { seed: DhiStore.seed() });
+  DhiSession.result().then(build);                             /* the saved result; the page draws only when it arrives (spec 0005) */
+
+  /* the whole page, drawn once the result is here (the body below is not indented a level, to keep the change small) */
+  function build(r) {
   var a = check.answers;
   var $ = function (id) { return document.getElementById(id); };
   var reduced = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -130,4 +133,5 @@
 
   show(0);
   if (window.dhiriseLeaves) window.dhiriseLeaves({ mobile: 5, wide: 8 });
+  }
 })();

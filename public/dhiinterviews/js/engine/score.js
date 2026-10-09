@@ -1,7 +1,10 @@
 /* Dhirise · scoring. Pure functions, no DOM, no storage. Needs js/engine/questions.js first.
    DhiScore.score(answers, { seed }) → the whole result. answers = { q1: "q1o4", … } (option ids).
    DhiScore.order(n, seed) → the option ids of question n in this student's screen order.
-   The seed is checks.seed, made on the server (DhiStore.seed()), so the order is the same on every device. */
+   The seed is checks.seed, made on the server (DhiStore.seed()), so the order is the same on every device.
+   DhiScore.ENGINE_VERSION: a whole number. Bump it by hand whenever the output of score() changes for any answers
+   (the locked test convex/score.lock.test.ts fails otherwise). The server (convex/scoring.ts) runs this same file
+   and saves the version with every result (spec 0005). */
 (function (root) {
   "use strict";
   var Q = root.DhiQuestions;
@@ -165,5 +168,5 @@
     };
   }
 
-  root.DhiScore = { score: score, order: order, band: band };
+  root.DhiScore = { ENGINE_VERSION: 1, score: score, order: order };
 })(typeof window !== "undefined" ? window : globalThis);

@@ -41,6 +41,13 @@ describe("the Convex API surface", () => {
     expect(src["students.ts"]).toMatch(/getSignedInUser\(ctx\)/);
   });
 
+  test("covers spec 0005 AC-8 and AC-9: the result functions take no arguments and read who is calling through helpers.ts", () => {
+    for (const block of argBlocks(src["results.ts"])) expect(block.trim(), "results.ts args must be empty").toBe("");
+    expect(src["results.ts"].match(/requireStudent\(ctx\)/g)?.length).toBe(2); // mine, ensure
+    expect(src["results.ts"]).not.toMatch(/internalQuery|internalMutation/); // these two are the student facing surface
+    expect(src["checks.ts"]).toMatch(/makeResult\(ctx, check\)/); // finishing makes the result in the same transaction
+  });
+
   test("covers AC-9: the clean up and anything else that touches many students is internal, not callable from a browser", () => {
     expect(src["purge.ts"]).toMatch(/internalMutation\(/);
     expect(src["purge.ts"]).not.toMatch(/export const \w+ = (mutation|query|action)\(/);

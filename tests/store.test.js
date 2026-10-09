@@ -135,3 +135,34 @@ describe("get, answer and seed", () => {
     expect(store.seed()).toBe("server-seed-123");
   });
 });
+
+describe("result (the saved result kept on the device, spec 0005 AC-10)", () => {
+  const RESULT_KEY = "dhirise.result.v1";
+  const flat = { answered: 18, complete: true, dhiStart: 62, styleKey: "p" };
+  const put = (check, copy) => {
+    if (check) localStorage.setItem(KEY, JSON.stringify(check));
+    if (copy) localStorage.setItem(RESULT_KEY, JSON.stringify(copy));
+  };
+
+  test("covers AC-10: a copy owned by the signed in account, with the check finished, is returned", () => {
+    put(full({ completedAt: "2026-10-09T10:00:00.000Z" }), { v: 1, owner: "u1", result: flat });
+    expect(store.result()).toEqual(flat);
+  });
+
+  test("covers AC-10: no copy, a copy of another account, a wrong version, or an unfinished check gives null", () => {
+    put(full({ completedAt: "2026-10-09T10:00:00.000Z" }));
+    expect(store.result()).toBeNull(); // none on this device
+    put(null, { v: 1, owner: "someone-else", result: flat });
+    expect(store.result()).toBeNull(); // belongs to another account
+    put(null, { v: 2, owner: "u1", result: flat });
+    expect(store.result()).toBeNull(); // not a version this script knows
+    put(full({ completedAt: null }), { v: 1, owner: "u1", result: flat });
+    expect(store.result()).toBeNull(); // the session shows the check unfinished
+  });
+
+  test("covers AC-10: broken stored text never throws", () => {
+    put(full({ completedAt: "2026-10-09T10:00:00.000Z" }));
+    localStorage.setItem(RESULT_KEY, "{not json");
+    expect(store.result()).toBeNull();
+  });
+});

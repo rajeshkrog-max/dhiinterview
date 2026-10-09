@@ -1,5 +1,5 @@
-// The database tables: students, consent, checks and answers (spec 0002), leads and feedback (spec 0003) and the
-// queue that copies them to the team's Google Sheet (spec 0004).
+// The database tables: students, consent, checks and answers (spec 0002), leads and feedback (spec 0003), the
+// queue that copies them to the team's Google Sheet (spec 0004) and the saved results (spec 0005).
 // Every invariant below is checked in code inside the mutations (Convex has no database constraints), and
 // uniqueness holds only because those mutations look rows up by index. Later slices add tables that point at
 // `students` and `checks` by id, so nothing here changes. Nothing may be renamed or removed in the same release
@@ -15,6 +15,9 @@ export const classValidator = v.union(
   v.literal("Class 12"),
   v.literal("College"),
 );
+
+export const styleKeyValidator = v.union(v.literal("v"), v.literal("p"), v.literal("k"));
+export const confidenceValidator = v.union(v.literal("clear"), v.literal("leaning"), v.literal("blended"));
 
 export default defineSchema({
   // One row per Google account. Personal data of minors: never returned by a public function except through `me`.
@@ -62,6 +65,37 @@ export default defineSchema({
     optionId: v.string(),
     answeredAt: v.number(),
   }).index("by_checkId_and_q", ["checkId", "q"]),
+
+  // The scored result of a finished check (spec 0005). One per check, written once at Finish and never edited or
+  // deleted by any function. `detail` is made by the server from fixed code (never from user input) and holds no flags.
+  results: defineTable({
+    checkId: v.id("checks"),
+    studentId: v.id("students"),
+    engineVersion: v.number(), // DhiScore.ENGINE_VERSION when it was scored
+    scoredAt: v.number(),
+    dhiStart: v.number(), // 0 to 100
+    styleKey: styleKeyValidator,
+    confidence: confidenceValidator,
+    detail: v.any(), // areas, state, style percents, styleGap, top, bottom, lowest, indices, subject
+  })
+    .index("by_checkId", ["checkId"])
+    .index("by_studentId", ["studentId"]), // by_studentId is for erasing a student's data (scope row 15)
+
+  // The sensitive flags of a result, kept apart so a normal read of `results` can never hand one out (spec 0005).
+  // One per result, never edited. Only the owner's `results.mine` and `results.ensure` return them.
+  resultFlags: defineTable({
+    resultId: v.id("results"),
+    studentId: v.id("students"),
+    keepsFeelingsInside: v.boolean(),
+    lowCareerClarity: v.boolean(),
+    heavyExpectations: v.boolean(),
+    selfDoubt: v.boolean(),
+    sleepStrain: v.boolean(),
+    lowMood: v.boolean(),
+    lowConsistency: v.boolean(),
+  })
+    .index("by_resultId", ["resultId"])
+    .index("by_studentId", ["studentId"]), // for erasing a student's data (scope row 15)
 
   // What a student gave on the phone step (spec 0003). One per check, the first one kept. Never returned to a browser.
   leads: defineTable({

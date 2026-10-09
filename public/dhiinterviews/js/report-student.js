@@ -1,4 +1,4 @@
-/* Dhirise · the student report. Built from DhiScore.score() and the words in js/engine/reportText.js.
+/* Dhirise · the student report. Built from the saved result (DhiSession.result(), spec 0005) and the words in js/engine/reportText.js.
    Inline SVG only. Numbers count up and charts draw in once, when their card comes into view (instant for reduced motion).
    Week 1 ticks are kept in localStorage "dhirise.path.v1" for this check only. */
 (function () {
@@ -11,9 +11,12 @@
     return;
   }
   if (!DhiStore.requireLead(check)) return;                   /* the phone step comes first (spec 0003) */
-  var r = DhiScore.score(check.answers, { seed: DhiStore.seed() });
+  DhiSession.result().then(build);                            /* the saved result; the page draws only when it arrives */
+
+  /* the whole page, drawn once the result is here (the body below is not indented a level, to keep the change small) */
+  function build(r) {
   var profile = check.profile || {};
-  if (window.DhiSession) DhiSession.markReportSeen();         /* saved on the server, so every device resumes at the report */
+  DhiSession.markReportSeen();                                /* saved on the server, so every device resumes at the report */
   var reduced = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
   var SVGNS = "http://www.w3.org/2000/svg";
   var root = document.getElementById("report");
@@ -142,7 +145,7 @@
       var v = r.indices[k];
       add(grid, add(el("div", "kpi"),
         el("p", "kpi-name", T.indices[k].name),
-        add(el("p", "kpi-val"), counter(v), el("span", "band", T.indices[k].bands[DhiScore.band(v)])),
+        add(el("p", "kpi-val"), counter(v), el("span", "band", T.indices[k].bands[T.band(v)])),
         bar(v)));
     });
     add(c, grid);
@@ -503,4 +506,5 @@
 
   startAnimations();
   if (window.dhiriseLeaves) window.dhiriseLeaves({ mobile: 4, wide: 6 });
+  }
 })();

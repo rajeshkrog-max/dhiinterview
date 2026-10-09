@@ -13,10 +13,18 @@
   var check = DhiStore.get();
   if (!check.completedAt) {
     var missing = DhiStore.firstMissing();
-    location.replace(missing ? DhiStore.urlFor(missing) : DhiStore.urlFor(DhiQuestions.TOTAL));
+    if (missing) { location.replace(DhiStore.urlFor(missing)); return; }
+    /* all 18 are here but this device never heard that Finish worked (it may have timed out): wait for the page's
+       session check to finish (it makes the device copy match the server) before sending the student back to question 18 */
+    DhiSession.ready().then(function () {
+      if (DhiStore.get().completedAt) location.reload(); else location.replace(DhiStore.urlFor(DhiQuestions.TOTAL));
+    });
     return;
   }
-  var r = DhiScore.score(check.answers, { seed: DhiStore.seed() });
+  DhiSession.result().then(build);                          /* the saved result; the page draws only when it arrives (spec 0005) */
+
+  /* the whole page, drawn once the result is here (the body below is not indented a level, to keep the change small) */
+  function build(r) {
   var profile = check.profile || {};
 
   /* reveal: 18 points (one per answer) on the 7-area shape, joined, then the shape glows in the style colour,
@@ -246,4 +254,5 @@
         say(res.code);                                       /* the typed number stays in the field */
       });
   });
+  }
 })();

@@ -1,0 +1,497 @@
+{
+  "note": "Locked scoring output (spec 0005, AC-4). To change scoring: bump DhiScore.ENGINE_VERSION in score.js, then ADD a new version key here with the new output. Never edit an older version's entry.",
+  "seed": "lock-seed-1",
+  "versions": {
+    "1": {
+      "allFirstOption": {
+        "answers": {
+          "q1": "q1o1",
+          "q2": "q2o1",
+          "q3": "q3o1",
+          "q4": "q4o1",
+          "q5": "q5o1",
+          "q6": "q6o1",
+          "q7": "q7o1",
+          "q8": "q8o1",
+          "q9": "q9o1",
+          "q10": "q10o1",
+          "q11": "q11o1",
+          "q12": "q12o1",
+          "q13": "q13o1",
+          "q14": "q14o1",
+          "q15": "q15o1",
+          "q16": "q16o1",
+          "q17": "q17o1",
+          "q18": "q18o1"
+        },
+        "expected": {
+          "answered": 18,
+          "complete": true,
+          "style": {
+            "v": 94,
+            "p": 6,
+            "k": 0
+          },
+          "styleKey": "v",
+          "styleGap": 88,
+          "confidence": "clear",
+          "state": {
+            "calm": 10,
+            "restless": 90,
+            "low": 0
+          },
+          "areas": {
+            "routine": {
+              "score": 17,
+              "band": "Next to grow",
+              "negatives": 3
+            },
+            "emotions": {
+              "score": 31,
+              "band": "Next to grow",
+              "negatives": 3
+            },
+            "drive": {
+              "score": 17,
+              "band": "Next to grow",
+              "negatives": 3
+            },
+            "connection": {
+              "score": 50,
+              "band": "Growing",
+              "negatives": 0
+            },
+            "expression": {
+              "score": 10,
+              "band": "Next to grow",
+              "negatives": 3
+            },
+            "clarity": {
+              "score": 25,
+              "band": "Next to grow",
+              "negatives": 2
+            },
+            "purpose": {
+              "score": 20,
+              "band": "Next to grow",
+              "negatives": 1
+            }
+          },
+          "top": [
+            {
+              "area": "connection",
+              "score": 50,
+              "band": "Growing",
+              "said": {
+                "q": 10,
+                "question": "In a group study, you are usually the one who…",
+                "optionId": "q10o1",
+                "text": "Brings new ideas and keeps the talk going.",
+                "value": 1
+              }
+            },
+            {
+              "area": "emotions",
+              "score": 31,
+              "band": "Next to grow",
+              "said": {
+                "q": 11,
+                "question": "On a low day, where do you take your feelings?",
+                "optionId": "q11o1",
+                "text": "To many people, briefly. Then I move on.",
+                "value": 0
+              }
+            },
+            {
+              "area": "clarity",
+              "score": 25,
+              "band": "Next to grow",
+              "said": {
+                "q": 9,
+                "question": "A difficult logic problem sits in front of you. It feels like…",
+                "optionId": "q9o1",
+                "text": "Exciting at first, then I jump to something else.",
+                "value": 0
+              }
+            }
+          ],
+          "bottom": [
+            {
+              "area": "expression",
+              "score": 10,
+              "band": "Next to grow",
+              "said": {
+                "q": 6,
+                "question": "Forty minutes into a lecture, your mind is usually…",
+                "optionId": "q6o1",
+                "text": "Wandering through ten other thoughts.",
+                "value": -1
+              }
+            },
+            {
+              "area": "routine",
+              "score": 17,
+              "band": "Next to grow",
+              "said": {
+                "q": 2,
+                "question": "Deep in study. A meal gets skipped. What happens next?",
+                "optionId": "q2o1",
+                "text": "I forget to eat, then feel shaky or far away.",
+                "value": -2
+              }
+            }
+          ],
+          "lowest": "expression",
+          "indices": {
+            "studyReadiness": 15,
+            "emotionalBalance": 34,
+            "focusEnergy": 14,
+            "direction": 23
+          },
+          "dhiStart": 22,
+          "subject": {
+            "heavy": "memory",
+            "style": "v",
+            "key": "memory-v",
+            "optionId": "q15o1"
+          },
+          "flags": {
+            "keepsFeelingsInside": false,
+            "lowCareerClarity": true,
+            "heavyExpectations": true,
+            "selfDoubt": false,
+            "sleepStrain": true,
+            "lowMood": false,
+            "lowConsistency": false
+          }
+        }
+      },
+      "mixed": {
+        "answers": {
+          "q1": "q1o4",
+          "q2": "q2o3",
+          "q3": "q3o2",
+          "q4": "q4o1",
+          "q5": "q5o4",
+          "q6": "q6o3",
+          "q7": "q7o2",
+          "q8": "q8o1",
+          "q9": "q9o4",
+          "q10": "q10o3",
+          "q11": "q11o2",
+          "q12": "q12o1",
+          "q13": "q13o4",
+          "q14": "q14o3",
+          "q15": "q15o2",
+          "q16": "q16o1",
+          "q17": "q17o4",
+          "q18": "q18o3"
+        },
+        "expected": {
+          "answered": 18,
+          "complete": true,
+          "style": {
+            "v": 42,
+            "p": 23,
+            "k": 35
+          },
+          "styleKey": "v",
+          "styleGap": 7,
+          "confidence": "leaning",
+          "state": {
+            "calm": 44,
+            "restless": 46,
+            "low": 10
+          },
+          "areas": {
+            "routine": {
+              "score": 33,
+              "band": "Next to grow",
+              "negatives": 3
+            },
+            "emotions": {
+              "score": 50,
+              "band": "Growing",
+              "negatives": 2
+            },
+            "drive": {
+              "score": 67,
+              "band": "Growing",
+              "negatives": 1
+            },
+            "connection": {
+              "score": 50,
+              "band": "Growing",
+              "negatives": 1
+            },
+            "expression": {
+              "score": 40,
+              "band": "Next to grow",
+              "negatives": 2
+            },
+            "clarity": {
+              "score": 25,
+              "band": "Next to grow",
+              "negatives": 2
+            },
+            "purpose": {
+              "score": 20,
+              "band": "Next to grow",
+              "negatives": 2
+            }
+          },
+          "top": [
+            {
+              "area": "drive",
+              "score": 67,
+              "band": "Growing",
+              "said": {
+                "q": 7,
+                "question": "The exam is 30 days away. Left to yourself, you would…",
+                "optionId": "q7o2",
+                "text": "Make a timetable on day one and track every chapter.",
+                "value": 2
+              }
+            },
+            {
+              "area": "connection",
+              "score": 50,
+              "band": "Growing",
+              "said": {
+                "q": 10,
+                "question": "In a group study, you are usually the one who…",
+                "optionId": "q10o3",
+                "text": "Listens, supports, and keeps the mood easy.",
+                "value": 2
+              }
+            },
+            {
+              "area": "emotions",
+              "score": 50,
+              "band": "Growing",
+              "said": {
+                "q": 5,
+                "question": "Which weather feels most like your inner mood these days?",
+                "optionId": "q5o4",
+                "text": "A clear morning sky, calm and open.",
+                "value": 2
+              }
+            }
+          ],
+          "bottom": [
+            {
+              "area": "purpose",
+              "score": 20,
+              "band": "Next to grow",
+              "said": {
+                "q": 14,
+                "question": "Someone asks, “What do you want to become?” Inside, you feel…",
+                "optionId": "q14o3",
+                "text": "Unsure. I may go with what family suggests.",
+                "value": -1
+              }
+            },
+            {
+              "area": "clarity",
+              "score": 25,
+              "band": "Next to grow",
+              "said": {
+                "q": 14,
+                "question": "Someone asks, “What do you want to become?” Inside, you feel…",
+                "optionId": "q14o3",
+                "text": "Unsure. I may go with what family suggests.",
+                "value": -2
+              }
+            }
+          ],
+          "lowest": "purpose",
+          "indices": {
+            "studyReadiness": 47,
+            "emotionalBalance": 40,
+            "focusEnergy": 58,
+            "direction": 23
+          },
+          "dhiStart": 42,
+          "subject": {
+            "heavy": "writing",
+            "style": "v",
+            "key": "writing-v",
+            "optionId": "q15o2"
+          },
+          "flags": {
+            "keepsFeelingsInside": true,
+            "lowCareerClarity": true,
+            "heavyExpectations": true,
+            "selfDoubt": false,
+            "sleepStrain": true,
+            "lowMood": false,
+            "lowConsistency": false
+          }
+        }
+      },
+      "everyFlag": {
+        "answers": {
+          "q14": "q14o3",
+          "q1": "q1o2",
+          "q2": "q2o1",
+          "q3": "q3o1",
+          "q4": "q4o3",
+          "q5": "q5o2",
+          "q6": "q6o3",
+          "q7": "q7o4",
+          "q8": "q8o4",
+          "q9": "q9o2",
+          "q10": "q10o3",
+          "q11": "q11o2",
+          "q12": "q12o1",
+          "q13": "q13o2",
+          "q15": "q15o3",
+          "q16": "q16o1",
+          "q17": "q17o3",
+          "q18": "q18o2"
+        },
+        "expected": {
+          "answered": 18,
+          "complete": true,
+          "style": {
+            "v": 31,
+            "p": 31,
+            "k": 38
+          },
+          "styleKey": "k",
+          "styleGap": 7,
+          "confidence": "leaning",
+          "state": {
+            "calm": 36,
+            "restless": 38,
+            "low": 26
+          },
+          "areas": {
+            "routine": {
+              "score": 17,
+              "band": "Next to grow",
+              "negatives": 3
+            },
+            "emotions": {
+              "score": 19,
+              "band": "Next to grow",
+              "negatives": 3
+            },
+            "drive": {
+              "score": 92,
+              "band": "Strong",
+              "negatives": 0
+            },
+            "connection": {
+              "score": 50,
+              "band": "Growing",
+              "negatives": 1
+            },
+            "expression": {
+              "score": 20,
+              "band": "Next to grow",
+              "negatives": 2
+            },
+            "clarity": {
+              "score": 25,
+              "band": "Next to grow",
+              "negatives": 2
+            },
+            "purpose": {
+              "score": 20,
+              "band": "Next to grow",
+              "negatives": 1
+            }
+          },
+          "top": [
+            {
+              "area": "drive",
+              "score": 92,
+              "band": "Strong",
+              "said": {
+                "q": 7,
+                "question": "The exam is 30 days away. Left to yourself, you would…",
+                "optionId": "q7o4",
+                "text": "Do a little daily, with planned revision rounds.",
+                "value": 2
+              }
+            },
+            {
+              "area": "connection",
+              "score": 50,
+              "band": "Growing",
+              "said": {
+                "q": 10,
+                "question": "In a group study, you are usually the one who…",
+                "optionId": "q10o3",
+                "text": "Listens, supports, and keeps the mood easy.",
+                "value": 2
+              }
+            },
+            {
+              "area": "clarity",
+              "score": 25,
+              "band": "Next to grow",
+              "said": {
+                "q": 9,
+                "question": "A difficult logic problem sits in front of you. It feels like…",
+                "optionId": "q9o2",
+                "text": "A challenge I must beat.",
+                "value": 1
+              }
+            }
+          ],
+          "bottom": [
+            {
+              "area": "routine",
+              "score": 17,
+              "band": "Next to grow",
+              "said": {
+                "q": 2,
+                "question": "Deep in study. A meal gets skipped. What happens next?",
+                "optionId": "q2o1",
+                "text": "I forget to eat, then feel shaky or far away.",
+                "value": -2
+              }
+            },
+            {
+              "area": "emotions",
+              "score": 19,
+              "band": "Next to grow",
+              "said": {
+                "q": 4,
+                "question": "A result comes back lower than you hoped. The first wave inside you is…",
+                "optionId": "q4o3",
+                "text": "A quiet sadness that stays for days.",
+                "value": -2
+              }
+            }
+          ],
+          "lowest": "routine",
+          "indices": {
+            "studyReadiness": 43,
+            "emotionalBalance": 30,
+            "focusEnergy": 70,
+            "direction": 23
+          },
+          "dhiStart": 42,
+          "subject": {
+            "heavy": "numbers",
+            "style": "k",
+            "key": "numbers-k",
+            "optionId": "q15o3"
+          },
+          "flags": {
+            "keepsFeelingsInside": true,
+            "lowCareerClarity": true,
+            "heavyExpectations": true,
+            "selfDoubt": true,
+            "sleepStrain": true,
+            "lowMood": true,
+            "lowConsistency": true
+          }
+        }
+      }
+    }
+  }
+}

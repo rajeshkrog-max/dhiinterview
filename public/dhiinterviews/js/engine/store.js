@@ -2,12 +2,15 @@
    for the network. localStorage "dhirise.session.v1" =
    { v:1, owner, profile:{name, age, class}, seed, startedAt, completedAt, reportSeenAt, leadSavedAt, feedbackSavedAt,
      answers:{ qN: optionId } }.
+   The saved result of a finished check is kept beside it in "dhirise.result.v1" = { v:1, owner, result } (spec 0005);
+   DhiStore.result() reads it at once and returns null when there is none. The pages get the result from
+   DhiSession.result() (a promise), which fills that copy.
    The server (Convex) is the truth: src/lib/session.ts fills this copy at sign in and sends each answer in the
    background (DhiSession.queueAnswer). Pages only read it here. Needs nothing loaded first; the page guard
    (window.DhiSession) has already let the page through. */
 (function (root) {
   "use strict";
-  var KEY = "dhirise.session.v1", TOTAL = 18;
+  var KEY = "dhirise.session.v1", RESULT_KEY = "dhirise.result.v1", TOTAL = 18;
 
   function readJSON(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
   function write(s) { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) {} return s; }
@@ -17,6 +20,14 @@
   function get() {
     var s = readJSON(KEY);
     return s && s.v === 1 && s.answers && typeof s.answers === "object" ? s : empty();
+  }
+  /* the saved result on this device, as the flat object the pages use: only while it belongs to this account and the
+     check is finished; otherwise null. Never asks the server (that is DhiSession.result()). js/api.js `styleOf` repeats
+     these owner and finished checks because the challenge pages do not load this file: change them together. */
+  function result() {
+    var c = get(), s = readJSON(RESULT_KEY);
+    if (!s || s.v !== 1 || !s.result || !c.owner || s.owner !== c.owner || !c.completedAt) return null;
+    return s.result;
   }
   /* keep the answer on the device now; the sync queue sends it to the server */
   function answer(n, optionId) {
@@ -57,5 +68,5 @@
     return false;
   }
 
-  root.DhiStore = { KEY: KEY, get: get, answer: answer, firstMissing: firstMissing, urlFor: urlFor, seed: seed, resumeTarget: resumeTarget, requireLead: requireLead };
+  root.DhiStore = { KEY: KEY, get: get, result: result, answer: answer, firstMissing: firstMissing, urlFor: urlFor, seed: seed, resumeTarget: resumeTarget, requireLead: requireLead };
 })(typeof window !== "undefined" ? window : globalThis);

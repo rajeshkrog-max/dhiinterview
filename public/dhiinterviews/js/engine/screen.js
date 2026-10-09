@@ -1,9 +1,21 @@
 /* Dhirise · fills one question screen from js/engine/questions.js and hands it to the shared screen (js/question.js).
    Options are shown in this student's shuffled order; the screen still works in positions 1–4,
    which are mapped to option ids here, so only ids are stored. Q18's Finish waits until all 18 answers are confirmed on the
-   server (DhiSession.finish), then opens done.html. Needs js/engine/store.js and the page guard (window.DhiSession). */
+   server (DhiSession.finish), then opens done.html. A scoring_failed answer from the server shows a kind "try again" line. Needs js/engine/store.js and the page guard (window.DhiSession). */
 (function () {
   "use strict";
+  /* a small kind line under the Finish button; empty text clears it */
+  function finishNote(btn, text) {
+    var p = document.getElementById("finishNote");
+    if (!p) {
+      p = document.createElement("p");
+      p.id = "finishNote";
+      p.setAttribute("role", "status");
+      p.style.cssText = "margin:8px 0 0;text-align:center;font-size:14px;line-height:1.4";
+      btn.parentNode.insertBefore(p, btn.nextSibling);
+    }
+    p.textContent = text;
+  }
   window.dhiriseScreen = function (n, back) {
     var q = DhiQuestions.question(n);
     var ids = DhiScore.order(n, DhiStore.seed());
@@ -38,13 +50,16 @@
       next: n < DhiQuestions.TOTAL ? DhiStore.urlFor(n + 1) : function (nextBtn) {
         var missing = DhiStore.firstMissing();             /* Finish: any skipped question first */
         if (missing) { location.href = DhiStore.urlFor(missing); return; }
-        nextBtn.disabled = true; nextBtn.textContent = "Saving…";
+        nextBtn.disabled = true; nextBtn.textContent = "Saving…"; finishNote(nextBtn, "");
         DhiSession.finish().then(function (r) {
           if (r.ok) {
             var go = function () { location.href = "done.html"; };
             if (window.DhiMusic) DhiMusic.finish(go); else go();   /* the music fades out first */
           } else if (r.code === "answers_missing") {       /* the server is missing one: send them back to it */
             location.href = DhiStore.urlFor(DhiStore.firstMissing() || 1);
+          } else if (r.code === "scoring_failed") {        /* the server could not make the result: nothing was finished, every answer is kept (spec 0005) */
+            nextBtn.disabled = false; nextBtn.textContent = "Try again";
+            finishNote(nextBtn, "We could not finish just now, but your answers are safe. Please try again in a moment.");
           } else {                                         /* offline or answers still waiting to be sent */
             nextBtn.disabled = false; nextBtn.textContent = "Connect to finish";
           }

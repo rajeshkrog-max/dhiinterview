@@ -4,6 +4,12 @@
    Arrays of two are variants: the report picks one per student (seeded), so two students rarely read the same page.
    House rules: warm, specific, no labels about ability, no medical words, no traditional-medicine terms. */
 window.DhiReportText = {
+  /* REPORT_VERSION: a whole number. Bump it by hand whenever the report's words or layout change; scope row 22 stores
+     it with the saved report copy (spec 0005). It is not stored on the result. */
+  VERSION: 1,
+  /* the word for an area or index score: 70 and over, 45 and over, else the rest (the same cut points score.js uses
+     to name an area's band) */
+  band: function (x) { return x >= 70 ? "Strong" : x >= 45 ? "Growing" : "Next to grow"; },
   title: "{name}'s Mind & Study Profile",
   startLabel: "Dhi starting score",
   startLine: "This is where you start. In Dhi it grows with every tick, hour and module.",

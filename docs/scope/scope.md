@@ -5,6 +5,8 @@ Turn the DhiRise student funnel (a finished frontend that keeps everything in th
 **Build approach:** Tracer Bullet (vertical slices, each built end to end through every layer, working). Prove one thin real thread first (sign in, save an answer, read it back), then thicken one strand at a time. (basis: tracer bullet practice, a thin end to end path first)
 **Workflow:** GA (after develop: `/check verify`, `/test`, a fresh model `/check review`, then `/document`). The project default level of rigor, chosen because the app holds sign in and personal data of minors. `/architect` is the recommended first stop for a feature with a real decision, but skippable when you already know the build. Any feature can carry its own tag (e.g. `· Beta`) to do more or less. (basis: your `AGENTS.md` rules on sensitive data and parent consent)
 
+**Data for now:** the challenge side runs on demo rows only (leaderboard, referral counts, admin lists). Sign in, checks, leads, reports and the Sheet copy stay real, as built. Rows 10 to 13 (live referrals and leaderboard) stay planned and are not part of the current pass; the demo rows get replaced there. (your call, 2026-10-09)
+
 _These are recommendations to keep your build orderly, not requirements. Skip anything that does not fit: if you already know how to build a feature, use `/develop` and skip `/architect`. You decide when a feature is `done`._
 
 ## At a glance
@@ -16,12 +18,19 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 1 | Stack & architecture | Foundation | in-progress |
 | 2 | Data model | Foundation | planned |
 | 3 | Coding standards & tooling | Foundation | planned |
+| 19 | Live smoke test and fixes | Prototype pass | planned |
+| 20 | Site layout, root address and 404 | Prototype pass | planned |
+| 21 | About page | Prototype pass | planned |
+| 18 | Privacy page and grievance contact | Prototype pass | planned |
+| 24 | Leaderboard on every screen size | Prototype pass | planned |
 | 4 | Real sign in and saved check | Slice 1 | in-progress |
 | 5 | Leads and feedback saved | Slice 2 | in-progress |
-| 6 | Results and report from saved data | Slice 2 | planned |
+| 6 | Results and report from saved data | Slice 2 | done |
 | 7 | Sheet copy | Slice 3 | in-progress |
 | 8 | Product analytics with consent | Slice 3 | planned |
 | 9 | Error monitoring and alerts | Slice 3 | planned |
+| 22 | Report copy saved when seen, with Download | Report copies | planned |
+| 23 | Team link to the saved report, in the admin view and the Sheet | Report copies | planned |
 | 10 | Live referral codes and tracking | Slice 4 | planned |
 | 11 | Challenge join with parent consent | Slice 4 | planned |
 | 12 | Live leaderboard | Slice 4 | planned |
@@ -30,7 +39,6 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 15 | Data export and deletion | Slice 5 | planned |
 | 16 | Share previews and SEO | Launch readiness | planned |
 | 17 | Accessibility pass | Launch readiness | planned |
-| 18 | Privacy page and grievance contact | Launch readiness | planned |
 
 ## Already built (for context)
 
@@ -68,6 +76,35 @@ Refresh `AGENTS.md` for the chosen stack, then add lint, format, type checks and
 - [ ] Install the tooling: `/develop tooling`
 - [ ] Check it runs clean: `/test`
 
+## Prototype pass: make it work and finish the public pages
+Added 2026-10-09. The site answers on the live address today (`/` already redirects to the landing page, `/api/health` is ok), but it never became a prototype you can walk through end to end. This pass checks it live, fixes it, and adds the public pages. Rows 19 and 20 come first; 21, 18 and 24 follow once row 20's shared page frame exists (24 does not need it).
+
+### 19. Live smoke test and fixes · Alpha
+Walk the whole student flow on the live address (sign in, form, 18 questions, done, who, report, challenge, leaderboard, terms) as a fresh student and on a second device, write down everything that fails, and fix it. Also closes what rows 4, 5 and 7 left open: the production check of AC-14 and their unticked test boxes.
+**Done when:** a fresh student can go from the landing page to the report on the live address with no error, a second device resumes at the right place, a lead and a feedback note reach the Sheet, and the open production check from spec 0002 is ticked.
+- [ ] Check the live site and list what fails: `/check verify live prototype`
+- [ ] Fix what fails: `/debug`
+
+### 20. Site layout, root address and 404 · needs a decision
+Settle how the one domain is organised: `/` sends visitors to the DhiRise interview landing page now, and stays a reserved slot so a different product (an invitation style page) can take over the root later without moving anything under `/dhiinterviews`. A shared page frame (header, footer, fonts, colours) so 404, About and Privacy look like the funnel. Any unknown address on the domain shows a friendly 404.
+**Done when:** `/` and `/dhiinterviews` open the landing page; any unknown address shows the styled 404 with a link home (and answers with a 404 status); changing what the root does is a one place change that leaves `/dhiinterviews` untouched; About, Privacy and 404 all use the same frame.
+- [ ] Design it (spec): `/architect site layout, root address and 404`
+
+### 21. About page · Alpha
+A short About page in the shared frame: what DhiRise is, who it is for, and who is behind it, in the same kind and plain words as the funnel. You will need to supply or approve the wording; a draft can be written for you to edit.
+**Done when:** the About page opens at its own address in the shared frame, is linked from the landing page footer, and reads well on phone and desktop.
+- [ ] Build it: `/develop about page` (after row 20)
+
+### 18. Privacy page and grievance contact · from spec 0001
+A plain language privacy page for students and parents, written from the consent text in `BACKEND.md`, with a named grievance contact, in the shared frame from row 20. Google's sign in consent screen needs its address to leave test mode (which caps users at 100). (basis: India's data protection law, a named practice)
+**Done when:** the page is live on the site's own address in the shared frame, is linked from the landing consent and from Google's consent screen, and says where student data is stored and who to contact.
+- [ ] Build it: `/develop privacy page and grievance contact` (after row 20)
+
+### 24. Leaderboard on every screen size · Beta
+The leaderboard only has a phone layout today (no width breakpoints in `leaderboard.css`). Make the podium, the list and the sticky "you" card work on phone, tablet and desktop. Stays on demo rows.
+**Done when:** at phone, tablet and desktop widths the podium and list use the space well, nothing scrolls sideways or looks stretched, the "you" card still works, and motion respects the reduced motion setting.
+- [ ] Build it: `/develop leaderboard on every screen size`
+
 ## Slice 1: the thinnest real thread
 
 ### 4. Real sign in and saved check · in-progress
@@ -78,7 +115,7 @@ A student signs in with Google, their name, age, class and consent are stored, a
   - [x] M1 The thin thread: tables, `me`, `createProfile`, `saveAnswers`, the browser bridge and guard, one question page saving and resuming on a second browser (AC-1, 2, 3, 4, 5, 6, 7, 9, 16)
   - [x] M2 The real landing page and the full check: Google button with notice, the form states, every page on the guard, offline queue, sign in problems (AC-1, 2, 3, 4, 5, 7, 12, 15)
   - [ ] M3 Safety and clean up: sign out and cache wipe, import of old browser answers, the purge cron, production refuses test sign in (AC-8, 10, 11, 14) · built; the production check of AC-14 is still open (spec task 13)
-  - [ ] M4 Report PDF, after row 6: file table, upload and download route, the PDF made in the browser (AC-13)
+  - [ ] M4 Report PDF, after row 6: file table, upload and download route, the PDF made in the browser (AC-13) · now planned as row 22
 - [ ] Verify it: `/check verify real sign in and saved check`
 - [ ] Test it: `/test real sign in and saved check`
 - [ ] Review it (fresh model): `/check review real sign in and saved check`
@@ -101,10 +138,19 @@ The mobile number and WhatsApp opt in from `done.html`, and the report feedback,
 - [ ] Document it: `/document leads and feedback saved`
 Spec [0003](../specs/0003-leads-and-feedback-saved/index.md) · code in `convex/` (leads, feedback, feedbackRules, limits, consentText, schema, students), `src/lib/session.ts`, `src/pages/dhiinterviews/done.astro`, `public/dhiinterviews/js/done.js`, `js/report-student.js`, `js/who.js`, `js/engine/store.js`
 
-### 6. Results and report from saved data · needs a decision
-Keep the scored result with the version of the scoring that made it, and load the report from saved data, so it looks the same on any device and later changes to scoring do not rewrite old results.
+### 6. Results and report from saved data · done
+Keep the scored result with the version of the scoring that made it, and load the report from saved data, so it looks the same on any device and later changes to scoring do not rewrite old results. The saved report copy and the Download button are row 22, not this row.
 **Done when:** the report opens from saved data on a second device with the same score, style and flags; the scoring version is stored with each result.
-- [ ] Design it (spec): `/architect results and report from saved data`
+- [x] Design it (spec): `/architect results and report from saved data`
+- [x] Build it: `/develop results and report from saved data`
+  - [x] M1 The thin thread: prove Convex can run `score.js`, the `results` and `resultFlags` tables, `complete` saving the result, `mine` and `ensure`, the report reading it on a second browser (AC-1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 13, 14)
+  - [x] M2 Every other screen and the Finish message: done, who, card and the style label read the saved result, device copy wipe, the try again message, `REPORT_VERSION` (AC-3, 6, 7, 10, 12, 13)
+  - [x] M3 Lock it and prove it: the locked scoring test, concurrency, auth and flag isolation tests, a check on an older student (AC-1, 4, 5, 7, 8, 9, 10, 11, 13, 14) (built and passing; the older student check on dev is done, see `verify.md`)
+- [x] Verify it: `/check verify results and report from saved data`
+- [x] Test it: `/test results and report from saved data`
+- [x] Review it (fresh model): `/check review results and report from saved data`
+- [x] Document it: `/document results and report from saved data`
+Spec [0005](../specs/0005-results-and-report-from-saved-data/index.md) · code in `convex/` (schema, checks, results, resultsCore, scoring, score.lock.test), `src/lib/session.ts`, `public/dhiinterviews/js/` (report-student, done, who, card, api), `public/dhiinterviews/js/engine/` (score, store, reportText, screen), `tests/fixtures/score-lock.json`, `e2e/results.spec.ts`
 
 ## Slice 3: team copy and tracking
 
@@ -133,6 +179,19 @@ Know when sign in, saving or the sheet copy breaks, before students tell you.
 **Done when:** a forced failure in sign in, saving and the sheet copy each raises an alert to the team; student personal data is kept out of error reports.
 - [ ] Design it (spec): `/architect error monitoring and alerts`
 
+## Report copies: saved when seen, linked for the team
+Added 2026-10-09. Needs row 6 (saved results with a report version) first. Row 22 is the same work as milestone 4 of row 4 (spec 0002, AC-13), now with its own row so it is not lost.
+
+### 22. Report copy saved when seen, with Download · needs a decision
+When a student opens their report, a frozen copy of it is saved once, looking exactly as the student saw it (replaced only when a newer report version exists). The report gets a Download button that gives the same report as a PDF. Saving never blocks or slows the report.
+**Done when:** opening the report saves one copy even if the student never taps Download; reopening does not make duplicates; the Download button gives a PDF of that same report; a failed save never stops the report from showing; only the student and signed in team members can fetch a copy.
+- [ ] Design it (spec): `/architect report copy saved when seen, with download` (builds on spec [0002](../specs/0002-google-sign-in-and-saved-check/index.md) AC-13)
+
+### 23. Team link to the saved report, in the admin view and the Sheet · needs a decision
+A private team page (named Google accounts only, as you chose) lists students whose report was seen, each with a link that opens the frozen copy in the same look. The same link goes into the Sheet row for that student, filled in once the report is seen. This starts the team sign in that row 14 widens later.
+**Done when:** a signed in team member opens a student's saved report from the admin list and from the Sheet link; a signed out visitor or a non team account is refused; a student who has not seen their report shows an empty link; the Sheet link appears shortly after the report is first seen.
+- [ ] Design it (spec): `/architect team link to the saved report` (after rows 22, 7)
+
 ## Slice 4: the challenge goes live
 
 ### 10. Live referral codes and tracking · needs a decision
@@ -159,7 +218,7 @@ A private screen to review the top 10 referrers by hand (their valid and pending
 
 ### 14. Team admin view · needs a decision
 A private screen for the team to see leads, feedback and referral counts without opening the sheet, with access limited to named team members.
-**Done when:** only signed in team members can open it; it lists leads, feedback and referral totals; phone numbers are shown only to the roles that need them.
+**Done when:** only signed in team members can open it; it lists leads, feedback and referral totals; phone numbers are shown only to the roles that need them. (Row 23 builds the team sign in and the report list first; this row widens it.)
 - [ ] Design it (spec): `/architect team admin view`
 
 ### 15. Data export and deletion · needs a decision
@@ -179,17 +238,13 @@ Check keyboard use, focus, contrast and reduced motion across the funnel and the
 **Done when:** every screen can be used with a keyboard alone, text meets contrast, focus is visible, and motion respects the reduced motion setting.
 - [ ] Build it: `/develop accessibility pass`
 
-### 18. Privacy page and grievance contact · from spec 0001
-A plain language privacy page for students and parents, written from the consent text in `BACKEND.md`, with a named grievance contact. Google's sign in consent screen needs its address to leave test mode (which caps users at 100). (basis: India's data protection law, a named practice)
-**Done when:** the page is live on the site's own address, is linked from the landing consent and from Google's consent screen, and says where student data is stored and who to contact.
-- [ ] Build it: `/develop privacy page and grievance contact`
-
 ## Deferred
 Out of scope for this pass, kept so the plan stays honest.
 - **WhatsApp welcome message**: send a welcome to students who opt in, through the business messaging service · needs a decision
 - **Two way sheet sync**: edits in the sheet flowing back to the database · needs a decision
 - **Real peer percentages**: replace the seeded "X% of students chose this" numbers with real totals · needs a decision
 - **Regional languages**: the funnel in Hindi and other languages · needs a decision
+- **Deliberate rescore tool**: add a new result for a student under newer scoring while keeping the old one (from spec 0005) · needs a decision
 - **Retire the legacy interviewer tool**: remove `index.html`, `panel.html`, `report.html`, `result.html`, their scripts and `backup-before-parent-report/`
 
 ## Legend

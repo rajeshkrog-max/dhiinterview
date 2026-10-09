@@ -3,6 +3,7 @@
 import { v } from "convex/values";
 import { mutation } from "./_generated/server";
 import { TOTAL_QUESTIONS, answersOf, fail, optionBelongsTo, requireStudent, validQuestion } from "./helpers";
+import { makeResult } from "./resultsCore";
 
 // Saves one or more answers. All or nothing: one bad answer refuses the whole batch and writes nothing.
 // `answeredAt` is the device time, cut down to the server's now. The same option again is a no op, and an
@@ -37,15 +38,21 @@ export const saveAnswers = mutation({
   },
 });
 
-// Finishes the check once all 18 answers are on the server. Called again it returns the same time.
+// Finishes the check once all 18 answers are on the server, and works out its result in the same step (spec 0005):
+// either both happen or neither does. Called again it returns the same time, and makes the result if it is missing
+// (a Finish from before results existed). A scoring failure leaves the check unfinished, every answer still saved.
 export const complete = mutation({
   args: {},
   returns: v.object({ completedAt: v.number() }),
   handler: async (ctx) => {
     const { check } = await requireStudent(ctx);
-    if (check.completedAt !== undefined) return { completedAt: check.completedAt };
+    if (check.completedAt !== undefined) {
+      await makeResult(ctx, check);
+      return { completedAt: check.completedAt };
+    }
     const rows = await answersOf(ctx, check._id);
     if (new Set(rows.map((r) => r.q)).size < TOTAL_QUESTIONS) fail("answers_missing");
+    await makeResult(ctx, check);
     const completedAt = Date.now();
     await ctx.db.patch("checks", check._id, { completedAt });
     return { completedAt };

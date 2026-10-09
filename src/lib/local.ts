@@ -2,6 +2,8 @@
 // The server is the truth; these are a fast local copy so the quiz never waits for the network.
 //
 //   dhirise.session.v1        the cached summary of the signed in student's check (read by js/engine/store.js)
+//   dhirise.result.v1         the saved result of the finished check, { v:1, owner, result } (spec 0005); written only
+//                             after the server answered, read only while its owner is the signed in account
 //   dhirise.owner.v1          the Better Auth user id whose data this device holds
 //   dhirise.sync.v1.<id>      answers not yet confirmed by the server, one entry per question
 //   dhirise.check.v1          the OLD stub's check (before sign in existed); only read for the one time import
@@ -9,6 +11,7 @@
 //   dhirise.music.*           the music setting, which survives everything
 
 export const SESSION_KEY = "dhirise.session.v1";
+export const RESULT_KEY = "dhirise.result.v1";
 export const OWNER_KEY = "dhirise.owner.v1";
 export const OLD_CHECK_KEY = "dhirise.check.v1";
 export const REF_KEY = "dhirise.ref.v1";
@@ -47,7 +50,7 @@ export function readString(key: string): string | null {
   }
 }
 
-// Clears every "dhirise." key except the music setting and a referral code waiting for the Google trip
+// Clears every "dhirise." key (so the result copy goes too) except the music setting and a referral code waiting for the Google trip
 // (a referral code is not about any student). Used when a different account signs in and on "Not you".
 export function wipeStudentData(): void {
   for (const store of [safe(() => localStorage), safe(() => sessionStorage)]) {

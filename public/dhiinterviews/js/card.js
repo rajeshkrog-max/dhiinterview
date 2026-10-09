@@ -13,7 +13,10 @@
   if (!root || !window.DhiStore || !window.DhiIdentity) return;
   var check = DhiStore.get();
   if (!check.completedAt) return;
-  var r = DhiScore.score(check.answers, { seed: DhiStore.seed() });
+  DhiSession.result().then(build);                          /* the saved result; the card draws only when it arrives (spec 0005) */
+
+  /* the whole card, drawn once the result is here (the body below is not indented a level, to keep the change small) */
+  function build(r) {
   var profile = check.profile || {};
   var cfg = window.DHI_FUNNEL || {};
   var reduced = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -213,4 +216,5 @@
       ex.story().then(function (blob) { saveStory(n, blob); }).catch(function () {});
     });
   });
+  }
 })();

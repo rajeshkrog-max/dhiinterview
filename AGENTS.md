@@ -4,31 +4,33 @@ A mobile first self check for students (Class 8 to college, India) and the marke
 
 ## Stack
 
-- **Language / Runtime**: plain HTML, CSS and JavaScript (ES5 style, runs in the browser). No framework, no build step, no backend yet.
-- **Framework**: none
+- **Language / Runtime**: TypeScript (strict) for the backend and the browser bridge, Node 22. Page scripts stay plain JavaScript (ES5 style, runs in the browser).
+- **Framework**: Astro 7 (static output, no server adapter). Backend: Convex. Sign in: Better Auth (Google only). Hosting: Cloudflare Pages. Source of truth: spec `docs/specs/0001-adopt-astro-convex-cloudflare-stack/`.
 - **Key dependencies**: `js/vendor/html2pdf.bundle.min.js` (legacy report only), Google Apps Script receiver in `tools/lead-sheet.gs`, Python with Pillow for image prep scripts in `tools/`
-- **Package manager**: none (no `package.json`)
-- **Storage**: browser `localStorage`, keys start with `dhirise.` and end with a version, e.g. `dhirise.check.v1`
+- **Package manager**: pnpm
+- **Storage**: Convex is the truth. The browser keeps a device copy in `localStorage` (keys start with `dhirise.` and end with a version, e.g. `dhirise.session.v1`, `dhirise.result.v1`); the list is in `src/lib/local.ts`.
 
 ## Build approach
 
-<TBD, set by /scope>
+Tracer Bullet (vertical slices, each built end to end through every layer, working). Prove one thin real thread first, then thicken one strand at a time. (from the scope header, `docs/scope/scope.md`)
 
 ## Commands
 
 ```bash
 # Install
-# nothing to install
+pnpm install
 
-# Dev server (port 8081; 8080 is taken on the main dev machine)
-npx --yes serve -l 8081 --no-clean-urls .      # or: python -m http.server 8081
-# then open http://localhost:8081/landing.html
+# Dev server (Astro, port 4321) and the Convex dev deployment (writes .env.local)
+pnpm dev                       # then open http://localhost:4321/dhiinterviews/landing.html
+pnpm exec convex dev           # or `convex dev --once` to push once and typecheck
 
 # Build
-# no build step
+pnpm build                     # static site into dist/
 
 # Test
-# no test runner; js/engine/score.js is pure and runs in Node. Manual scenarios: BACKEND.md section 15
+pnpm test                      # vitest: convex suites (convex/*.test.ts) and the browser scripts (tests/)
+pnpm test:e2e                  # Playwright, against the local site and the Convex DEV deployment
+pnpm exec tsc --noEmit         # typecheck
 ```
 
 ## Specs
@@ -37,7 +39,7 @@ Stored in `docs/specs/`. Format: `docs/specs/NNNN-title.md`. Handover docs live 
 
 ## Rules
 
-- Each script is an IIFE that hangs one global on `window` (`DhiScore`, `DhiQuestions`, `DHI_FUNNEL`, `DHI_CHALLENGE`). Pages load them with plain `<script>` tags, so the order matters: config, then `js/api.js`, then `js/engine/*`, then the page script.
+- Each script is an IIFE that hangs one global on `window` (`DhiScore`, `DhiQuestions`, `DHI_FUNNEL`, `DHI_CHALLENGE`). Pages load them as `<script type="text/dhi-deferred">` tags (started in order by the page guard in `src/lib/session.ts`), so the order matters: config, then `js/api.js`, then `js/engine/*`, then the page script.
 - Start each file with a header comment that says what it owns and what it needs loaded first.
 - Challenge data is read and written only through `js/api.js` (a localStorage mock today). Keep its `// BACKEND:` notes accurate when you change it.
 - Store answers as option ids (`q4o2`), never screen positions. Options are shuffled per student.
@@ -53,8 +55,10 @@ None installed. Skipped for now; candidates to review later: none needed for pla
 
 ## Context files
 
-- [js/engine/AGENTS.md](js/engine/AGENTS.md) (questions, scoring, answer store, report and story text)
+- [public/dhiinterviews/js/engine/AGENTS.md](public/dhiinterviews/js/engine/AGENTS.md) (questions, scoring, answer store, report and story text)
 - [tools/AGENTS.md](tools/AGENTS.md) (Google Sheet lead receiver and image prep scripts)
+- [convex/AGENTS.md](convex/AGENTS.md) (the Convex backend: tables, sign in, checks, results, leads, Sheet copy)
+- [src/AGENTS.md](src/AGENTS.md) (Astro pages, the page guard and the browser bridge `DhiSession`)
 
 _Drafted by /audit from the repo, worth a quick human pass. Edit freely: once a line stops matching this draft, later runs treat it as curated and will flag rather than overwrite it._
 
