@@ -29,3 +29,6 @@ dist/
 test-results/
 playwright-report/
 .playwright-mcp/
+
+# local Cloudflare Pages dev cache (wrangler pages dev)
+.wrangler/

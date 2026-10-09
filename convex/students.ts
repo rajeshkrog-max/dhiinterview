@@ -2,7 +2,7 @@
 // consent and their one check, once. Every function acts only on the signed in student (see helpers.ts).
 import { v } from "convex/values";
 import { env, mutation, query } from "./_generated/server";
-import { CONSENT_KINDS, CONSENT_TEXTS, consentHash } from "./consentText";
+import { CONSENT_KINDS, CONSENT_TEXTS, CONSENT_VERSION, consentHash } from "./consentText";
 import { classValidator } from "./schema";
 import { MAX_NAME, ADULT_AGE, answersOf, cleanName, fail, getSignedInUser, requireSignedIn, validAge } from "./helpers";
 
@@ -84,8 +84,10 @@ export const createProfile = mutation({
     if (!name || !validAge(args.age)) fail("invalid_input");
     if (args.age < ADULT_AGE && !args.guardianPresent) fail("guardian_required");
 
-    // Only a landing version counts here: the phone text cannot stand in for it (spec 0003, AC-14).
-    const text = CONSENT_KINDS[args.consent.version] === "landing" ? CONSENT_TEXTS[args.consent.version] : undefined;
+    // Only the current landing version counts for a new student: an older text (saved rows still point at it) may lack a line the
+    // current one has, such as the team access line of v3 (spec 0008, AC-11), and a stale page reloads on consent_text_changed.
+    // The phone text cannot stand in for it either (spec 0003, AC-14).
+    const text = args.consent.version === CONSENT_VERSION && CONSENT_KINDS[args.consent.version] === "landing" ? CONSENT_TEXTS[args.consent.version] : undefined;
     if (text === undefined) fail("consent_text_changed");
     const hash = await consentHash(text);
     if (args.consent.hash !== hash) fail("consent_text_changed");

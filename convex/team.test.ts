@@ -90,8 +90,14 @@ describe("the pure rules", () => {
     expect(mayEnterTeam(a, "", "true")).toBe(false);
     expect(mayEnterTeam({ ...a, emailVerified: false }, "a@x.com", undefined)).toBe(false);
     expect(mayEnterTeam({ ...a, emailVerified: false }, "a@x.com", "false")).toBe(false);
-    expect(mayEnterTeam({ ...a, emailVerified: false }, "a@x.com", "true")).toBe(true);
-    expect(mayEnterTeam({ ...a, emailVerified: false }, "b@x.com", "true")).toBe(false); // the dev exception skips only the verified check
+    const fake = { email: "team.e2e@example.com", emailVerified: false };
+    expect(mayEnterTeam(fake, "team.e2e@example.com", "true")).toBe(true); // a fake test address, test sign in on (dev)
+    expect(mayEnterTeam(fake, "team.e2e@example.com", undefined)).toBe(false); // test sign in off (production)
+    expect(mayEnterTeam({ ...a, emailVerified: false }, "a@x.com", "true")).toBe(false); // a real looking address must still be verified, even on dev
+    expect(mayEnterTeam({ email: "me@gmail.com", emailVerified: false }, "me@gmail.com", "true")).toBe(false);
+    expect(mayEnterTeam({ email: "me@gmail.com", emailVerified: true }, "me@gmail.com", "true")).toBe(true);
+    expect(mayEnterTeam({ email: "me@notexample.com", emailVerified: false }, "me@notexample.com", "true")).toBe(false); // only the @example.com domain
+    expect(mayEnterTeam({ email: "x@example.com", emailVerified: false }, "y@example.com", "true")).toBe(false); // the exception never skips the list
   });
 
   test("covers AC-2: spaces around a code are ignored, and an empty, long or odd code is not a code", () => {
@@ -191,6 +197,19 @@ describe("the team check", () => {
     expect((await unverified.as.fetch(reportPath(studentId))).status).toBe(200);
     const notListed = await signInAs(t, { email: "stranger@example.com", emailVerified: false });
     expect((await notListed.as.fetch(listPath())).status).toBe(403); // the dev exception never skips the list
+  });
+
+  test("covers AC-4: on dev a real looking address on the list still has to be verified by Google, so the open test sign in cannot reach reports", async () => {
+    const t = makeBackend();
+    const { studentId } = await readyStudent(t);
+    process.env.TEST_SIGNIN_ENABLED = "true";
+    process.env.TEAM_EMAILS = "real.person@gmail.com, other.real@gmail.com";
+    const unverified = await teamMember(t, "real.person@gmail.com", false);
+    expect((await unverified.as.fetch(listPath())).status).toBe(403);
+    expect((await unverified.as.fetch(reportPath(studentId))).status).toBe(403);
+    const verified = await teamMember(t, "other.real@gmail.com", true);
+    expect((await verified.as.fetch(listPath())).status).toBe(200);
+    expect(await views(t)).toHaveLength(0);
   });
 
   test("covers AC-9: the team routes answer private, no-store, in every case", async () => {

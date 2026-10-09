@@ -1,0 +1,48 @@
+# Review, feat/report-copy-and-privacy (spec 0008 only: team link to the saved report), 2026-10-09
+
+**Reviewed by**: claude-opus-5-5 (author on: not stated)
+**Scope**: 33 files, branch vs main, narrowed to `git diff a3a13be` (feature commit a9fad7e plus the working tree) and the untracked `tests/team-surface.test.js`. The two earlier features on the branch (b71e930, a3a13be) were not reviewed.
+**Verdict**: Approve with nits
+
+## Summary
+The change gives named Google accounts (`TEAM_EMAILS`) a list of students whose saved PDF is ready and a viewer that serves the stored file, records every served open in `reportViews`, limits opens to 200 an hour, fills column N of the Leads tab with the team link, and moves the consent text to v3 with a matching privacy page line. The authorization path is sound: every route checks the session, the email list and the verified flag inside the internal function on every request; the audit row is written only after the stored file is confirmed and the limit is taken; refusals return results so nothing rolls back the count; the client builds no free return address and puts student text on the page only through `textContent`. Tests are unusually thorough and mostly prove behavior. The findings are all minor: a dev only bypass that is broader than it needs to be, list paging that can skip or repeat rows while copies are being replaced, a bad cursor rule proven only in the test harness, and new consents still accepted under v1 and v2.
+
+## Minor
+
+### 🟡 The dev exception lets anyone in with any listed email, and the test password ships in the bundle, `convex/teamCore.ts:28`
+**Problem**: When `TEST_SIGNIN_ENABLED` is `"true"`, `mayEnterTeam` skips the verified check for any email on the list. On that deployment email and password sign up is open, so anyone who reaches the site can sign up with a listed address that has no account yet, unverified, and pass the gate. The fixed password for `team.e2e@example.com` (`src/lib/team.ts:91`) is in the public JavaScript, so anyone can also sign in as the e2e team account on dev. `verify.md` tells the owner to run `convex env set TEAM_EMAILS "you@gmail.com"` on the deployment being checked, which on dev puts a real address under this rule.
+**Why it matters**: Production is safe while `TEST_SIGNIN_ENABLED` stays unset there. But dev and any preview that points at dev hold every report made there, including those of real people who tried the funnel on dev with their own Google account (names, classes, the PDF). A dev deployment is reachable from the internet.
+**Suggested fix**: Narrow the exception to the fake test addresses only, for example skip the verified check only when the email ends in `@example.com` (or equals one fixed test address), and keep requiring `emailVerified` for every other listed address even on dev. Add one case to `team.test.ts` for an unverified real looking address with the flag on.
+
+### 🟡 Load more can skip or repeat students while copies are being replaced, `convex/team.ts:74`
+**Problem**: The list pages through `reportFiles.by_readyAt` in descending order, and `reportCopy.attach` moves `readyAt` to now every time a copy is replaced. A row that is replaced between two Load more clicks jumps to the top of the index: it is missed by the later pages if it was below the cursor, or shown twice if it was already shown. A `REPORT_VERSION` bump replaces every copy over days, which also reorders the whole list by regeneration time rather than by when the student finished.
+**Why it matters**: A team member paging through the list can silently miss a student. The reference code box still finds them, so this is an annoyance, not data loss.
+**Suggested fix**: Either accept and say so in the spec (it already names `readyAt` as "the date the copy was made"), or order by a field that does not move on replacement (for example the first ready time, kept in a new optional field set only when `old === undefined` in `attach`). At minimum, have the page drop a `studentId` it has already drawn.
+
+### 🟡 The 400 for a bad cursor is proven only against convex-test's cursor format, `convex/team.ts:79`
+**Problem**: `list` turns a failed `paginate` into `bad_request` with a `try`/`catch`. The test (`convex/team.test.ts:302`) passes `"garbage"`, but convex-test's cursors are not the production backend's opaque cursors, so the test shows that convex-test throws, not that the real backend throws a catchable error for the same input (or refuses a tampered but well formed cursor). `verify.md` has no live step for a bad cursor.
+**Why it matters**: If the real backend fails differently, a stale or edited `next` gives the team a 500 and "Something went wrong" instead of "That request was not valid. Please reload the page." Low impact, but AC-1 promises the 400.
+**Suggested fix**: Add one live check to `verify.md`: `curl` the list route on dev with a team token and `cursor=garbage`, expect 400 `{"code":"bad_request"}`.
+
+### 🟡 A new student can still agree under v1 or v2, which do not mention team access, `convex/consentText.ts:52`
+**Problem**: `CONSENT_TEXTS` and `CONSENT_KINDS` now list v2 next to v1 and v3, and `students.createProfile` (`convex/students.ts:88`) accepts any `landing` version whose fingerprint matches. A landing page loaded before the deploy (an open tab, a cached page) still sends v2 and a new consent row is saved as v2.
+**Why it matters**: AC-11 says the team access line is part of what a student agrees to before this goes live; a new student, possibly a minor, can still be recorded as agreeing to text that does not say the team can open their report. The pattern predates this change (v1 stayed accepted after v2), but this feature is the one where the added line is about who can see a minor's report.
+**Suggested fix**: Keep the old texts in `CONSENT_TEXTS` for reading saved rows, but accept only `CONSENT_VERSION` for a new landing consent; `consent_text_changed` already exists and the landing page already handles it by reloading. Add a test that a v2 consent on a new profile is refused.
+
+## Nits
+- ⚪ `convex/team.ts:30`, AC-5 says a refusal logs "the team email and the reason"; for `not_team` the code logs no email on purpose (it may be a student's). The code is the safer rule, so update AC-5 to match.
+- ⚪ `src/lib/team.ts:251`, if a whole page of 50 rows maps to erased students the page says "No saved reports yet." while Load more is still shown. Rare until erasure (row 15) exists; word it as "Nothing on this page" or load the next page.
+- ⚪ `src/lib/team.ts:119`, a session that exists but whose token call is refused is reported as "We could not reach DhiRise", not as a sign in that ended.
+- ⚪ `src/lib/team.ts:283`, the blob address is never revoked; harmless on a single view page, but a `URL.revokeObjectURL` on `pagehide` is free.
+- ⚪ `convex/team.test.ts:461`, the delete scan matches only the `db.delete("reportViews", id)` form; a `db.delete(view._id)` inside `team.ts` would pass. The second scan (only `schema.ts` and `team.ts` name the table) covers other files, so this only matters within `team.ts`.
+- ⚪ `tests/team-surface.test.js:131`, several checks pin exact source text (`name.textContent = r.name`, two `new Response(` calls). They will fail on harmless refactors; the e2e HTML name test already proves the behavior.
+
+## Strengths
+- The gate is in the right place and order: the internal function reads the session, the list (fresh from the env on every call) and the verified flag before any `ctx.db` read, and a source test enforces that ordering. Everything behind the routes is internal.
+- `openFile` gets the audit and limit invariants right: student, file row and stored file are confirmed before `rateLimiter.limit`, the row is inserted only after the limit allows it, and every refusal is a returned result so the count is never rolled back. Convex's serializable mutations cover the concurrency case.
+- Client side safety is careful: the return address after Google is a fixed path plus `s` only when it matches the code pattern (with an e2e test of hostile values), names go in only through `textContent`, ids through `encodeURIComponent`, the `%PDF-` check happens before a blob is made, and the CSP is strict with no inline script.
+- The forwarder passes only `Authorization` and the query string, refuses non GET, caps the query length and forces `private, no-store`, with tests for each.
+- The Sheet change is small and safe: column N is computed where the row is built, so a lead saved after the copy gets the link and the daily check will also pick up the changed fingerprint; the first copy queues the lead once and a replacement does not.
+
+## Test coverage
+Strong. `convex/team.test.ts` covers the gate (signed out, student, stranger, unset list, case and spaces, removal on the next request, the verified rule and its dev exception), the list (order, paging, ready rules, erased students, every kind of bad code, bad cursor, HTML names), the open (exact bytes, headers, one row per serve, missing file, all not ready cases, the 201st open, the per member limit, the window reset) and the log lines. `convex/teamSheet.test.ts` covers column N end to end through the real copy job and refill. `tests/team-surface.test.js` pins the headers and the forwarder; `e2e/team.spec.ts` covers both pages, including the return address and an HTML name. Gaps: the bad cursor rule against the real backend (see above), a test that a new profile cannot consent under an old version, a dev exception test for a non test address, and the live Sheet clickable check (already listed as owed). The CSP and the PDF inside the page are checked live in `verify.md` (wrangler pages dev), not in an automated test.

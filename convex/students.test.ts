@@ -1,6 +1,7 @@
 // me and createProfile (spec 0002). Each test names the acceptance criterion it covers.
 import { describe, expect, test } from "vitest";
 import { api } from "./_generated/api";
+import { CONSENT_TEXTS, consentHash } from "./consentText";
 import { makeBackend, profileInput, signInAs } from "../tests/convexTestUtils";
 
 // "ok", or the defined error code (error.data.code), or "error:<start of the message>" for anything else.
@@ -134,6 +135,19 @@ describe("students.createProfile", () => {
     expect(await code(as.mutation(api.students.createProfile, { ...good, consent: { ...good.consent, hash: "abc" } }))).toBe("consent_text_changed");
     expect(await code(as.mutation(api.students.createProfile, { ...good, consent: { ...good.consent, version: "v99" } }))).toBe("consent_text_changed");
     expect((await counts(t)).students).toBe(0);
+  });
+
+  test("covers spec 0008 AC-11: a new student cannot agree under an older text (v1 or v2), even with its right fingerprint; the stale page must reload", async () => {
+    const t = makeBackend();
+    const { as } = await signInAs(t);
+    const good = await profileInput();
+    for (const version of ["v1", "v2"]) {
+      const old = { version, hash: await consentHash(CONSENT_TEXTS[version]) };
+      expect(await code(as.mutation(api.students.createProfile, { ...good, consent: old })), version).toBe("consent_text_changed");
+    }
+    expect((await counts(t)).students).toBe(0);
+    expect(await code(as.mutation(api.students.createProfile, good))).toBe("ok"); // the current text still works
+    expect((await counts(t)).students).toBe(1);
   });
 
   test("covers AC-6: an empty name, a blank name and a name over 60 characters are refused", async () => {

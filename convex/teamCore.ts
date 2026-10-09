@@ -20,12 +20,18 @@ export function parseTeamEmails(raw: string | undefined): string[] {
 
 export type TeamAccount = { email: string; emailVerified: boolean };
 
-// May this signed in account use the team routes? The email must be on the list AND (Google verified it, OR the fake test
-// sign in is switched on, which is dev and preview only). `email` is compared lowercase.
+// The fake test sign in makes accounts whose email Google never verified. Only addresses at this domain (the browser tests use
+// team.e2e@example.com) may skip the verified check on a deployment that has the test sign in on, so a real looking address on the
+// list still has to be verified by Google, even on dev, where the test sign in is open to anyone who reaches the site.
+export const TEST_EMAIL_DOMAIN = "@example.com";
+
+// May this signed in account use the team routes? The email must be on the list AND (Google verified it, OR the fake test sign in
+// is switched on, which is dev and preview only, AND the address is a fake test address). `email` is compared lowercase.
 export function mayEnterTeam(account: TeamAccount, teamEmails: string | undefined, testSignIn: string | undefined): boolean {
   const email = account.email.trim().toLowerCase();
   if (!email || !parseTeamEmails(teamEmails).includes(email)) return false;
-  return account.emailVerified || testSignIn === "true";
+  if (account.emailVerified) return true;
+  return testSignIn === "true" && email.endsWith(TEST_EMAIL_DOMAIN);
 }
 
 // The text a person typed in the reference code box: spaces around a pasted code are ignored. Null when it can never be a code.

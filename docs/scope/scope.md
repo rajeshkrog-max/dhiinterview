@@ -210,8 +210,8 @@ A private team page (named Google accounts only, as you chose) lists students wh
   - [x] M4 The notice: privacy page sentence and consent text v3, after you approve the words (AC-11)
   - [ ] M5 Proof: tests for the gate, limit and audit, browser tests, a live check that the Sheet cell is clickable (AC-1 to 10)
 - [ ] Verify it: `/check verify team link to the saved report`
-- [ ] Test it: `/test team link to the saved report`
-- [ ] Review it (fresh model): `/check review team link to the saved report`
+- [x] Test it: `/test team link to the saved report`
+- [x] Review it (fresh model): `/check review team link to the saved report`
 - [ ] Document it: `/document team link to the saved report`
 Code in `convex/team*.ts`, `functions/api/team`, `src/lib/team.ts`, `src/pages/dhiinterviews/team*.astro`, `public/dhiinterviews/css/team.css` and `convex/sheetRows*.ts` · Spec [0008](../specs/0008-team-link-to-saved-report/index.md) · needs the `TEAM_EMAILS` setting on each deployment (the consent v3 wording is approved and built) · M5 still owes the live check that the Sheet cell is clickable, because dev has no Sheet
 
