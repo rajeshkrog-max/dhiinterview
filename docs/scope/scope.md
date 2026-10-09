@@ -245,7 +245,7 @@ The report copy (row 22) sends a student's report data to Cloudflare Browser Run
 **Done when:** the consent text and the privacy page (row 18) name Cloudflare Browser Run as a service that handles report data, a new consent text version is live, and it ships before real students open the report copy.
 _Reconciled 2026-10-09: built. Consent v2 names Cloudflare Browser Run (v1 frozen), the privacy page names it in section 3, and the current consent is now v3 (it also names the team access, row 23; v1 and v2 stay frozen, and new students can only agree under the current text). Only shipping to production is left, in row 26._
 - [x] Design it (spec): skipped on purpose, you approved the wording in chat and it was built inside specs [0006](../specs/0006-report-copy-saved-when-seen/index.md), [0007](../specs/0007-privacy-page-and-grievance-contact.md) and [0008](../specs/0008-team-link-to-saved-report/index.md)
-- [ ] Ship it to production: part of row 26
+- [x] Ship it to production: done in row 26 (consent v3 and the privacy page are live on dhirise.com)
 
 ### 28. Team list keeps its order when copies are replaced · needs a decision · from the review of spec 0008
 The team list pages by the time a copy was made, and that time moves when a copy is replaced (a report version change replaces every copy over days), so Load more can skip or repeat a student. Also the spec's AC-4 still says the fake test sign in skips Google's verified check on dev, but the code now allows that only for fake `@example.com` addresses.
@@ -258,7 +258,7 @@ The team list pages by the time a copy was made, and that time moves when a copy
 Rows 4, 7, 22, 23 and 25 are built and checked on dev but each waits on production: settings, a real Sheet, a real report copy and the Google consent screen. Deploy Convex first, then Pages, set what each row needs, and run the checks dev could not show. Launch is planned for 30 October.
 **Done when:** production runs the current code and settings (`TEAM_EMAILS`, the report copy settings, the Sheet settings, consent v3); `sheetAdmin:refill` has run once; the team link in column N is clickable in the real Sheet; a real report copy is made and the team opens it; the open production checks of rows 4 (AC-14), 7, 22 and 23 are ticked.
 Owner decisions this row needs (from the specs' follow ups): move Google's consent screen from Testing to Production, and add each team member as a test user until then · Cloudflare Workers Paid (about 5 dollars a month) or accept 40 to 75 report copies a day · the paid Convex plan, backups and export · who owns the Sheet and who may see it · a named grievance contact on the privacy page · the legal check on a guardian tick and a required phone number for under 18s under the Data Protection Act · which Convex region, recorded in the privacy page.
-- [ ] Deploy and set production settings: `pnpm run deploy:pages` (you, with the settings above)
+- [x] Deploy and set production settings: `pnpm run deploy:pages` (done 2026-10-09: Convex production `abundant-caiman-975` and the Pages project `dhirise`, from commit 302b5ea; `TEAM_EMAILS` set to `subs.dhi@gmail.com`; still to do by you: the Google owner items above, and `sheetAdmin:refill` once for the Sheet links, which I did not run because it writes to the real Sheet)
 - [ ] Check it live: `/check verify ship what is built to production`
 
 ## Slice 4: the challenge goes live
