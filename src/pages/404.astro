@@ -1,0 +1,16 @@
+---
+// The page for an address that does not exist (spec 0009). It builds to 404.html at the site root, where Cloudflare Pages looks up
+// the folder tree for the closest 404.html and serves it with status 404, so it covers /dhiinterviews/* too. It sits outside
+// /dhiinterviews because the site root is meant to be handed to another product later. Every address in it is absolute, because it
+// can be served at any depth. The words are approved by the owner. No script. Addresses served by a Pages Function (/api/team,
+// /api/auth, /api/files, /api/render) are not answered by this page.
+import Frame from "../layouts/Frame.astro";
+import { HOME_PATH } from "../lib/frame";
+---
+<Frame title="Page not found" description="We could not find that page. Go back to DhiRise." noindex>
+  <section class="fr-card fr-center">
+    <h1>We could not find that page</h1>
+    <p>The address may have a typo, or the page may have moved. If a friend sent you this link, ask them to share it again.</p>
+    <a class="fr-btn" href={HOME_PATH}>Go to DhiRise</a>
+  </section>
+</Frame>

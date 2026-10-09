@@ -132,7 +132,7 @@ test.describe("the list (AC-1, AC-2, AC-10)", () => {
     await expect(page.locator("#rows li").nth(1).locator(".tt-meta")).toContainText("Class 10");
     expect(await overflow(page)).toBeLessThanOrEqual(0); // a very long name wraps, nothing scrolls sideways
     // no phone, email, score or flag on the page
-    await expect(page.locator("body")).not.toContainText(/@|phone|score|flag/i);
+    await expect(page.locator(".tt")).not.toContainText(/@|phone|score|flag/i); // the list itself (the frame footer shows the privacy contact)
     await ctx.close();
   });
 

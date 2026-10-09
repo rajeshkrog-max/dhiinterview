@@ -14,7 +14,8 @@
     "deploy:pages": "convex deploy --cmd-url-env-var-name PUBLIC_CONVEX_URL --cmd \"pnpm build\" && wrangler pages deploy dist --project-name dhirise --branch main",
     "preview:pages": "pnpm build && wrangler pages dev dist",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "verify:pages": "node scripts/verify-pages.mjs"
   },
   "dependencies": {
     "@convex-dev/better-auth": "^0.12.5",

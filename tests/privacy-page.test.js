@@ -17,7 +17,9 @@ describe("privacy page", () => {
   });
 
   test("covers AC-3: the contact address comes from the consent text, so the two cannot differ", () => {
-    expect(page).toContain("convex/consentText");
+    expect(page).toContain("PRIVACY_CONTACT");
+    expect(page).toMatch(/from "\.\.\/\.\.\/lib\/frame"/); // the page takes the address from the frame's constants...
+    expect(read("src/lib/frame.ts")).toContain("convex/consentText"); // ...which read it from the consent text (spec 0009)
     const fromConsent = /([a-z0-9._-]+@[a-z0-9.-]+\.[a-z]{2,})/i.exec(CONSENT_LINES.join(" "))?.[1];
     expect(fromConsent).toBe("privacy@dhirise.com");
     expect(words).not.toMatch(/[a-z0-9._-]+@[a-z0-9.-]+\.[a-z]{2,}/i); // no address typed into the words; it is filled in from the consent text

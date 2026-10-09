@@ -1,4 +1,11 @@
-# Cloudflare Pages redirects. The main address will later be a separate dashboard app, so these are temporary (302).
+# Cloudflare Pages redirects (spec 0009).
+#
+# THE ROOT ADDRESS. The line below is the ONLY place that decides what `/` does. To give the main address to another product,
+# change or replace this one line (or put a page or a function at `/`). Nothing under /dhiinterviews treats `/` as its home, so
+# nothing else moves. Keep it a temporary (302) redirect, and note that Pages keeps the query string (`/?ref=ABC123` arrives intact;
+# `pnpm verify:pages` checks it).
 / /dhiinterviews/landing 302
+
+# The funnel's own short addresses (these stay whatever the root becomes).
 /dhiinterviews /dhiinterviews/landing 302
 /dhiinterviews/ /dhiinterviews/landing 302

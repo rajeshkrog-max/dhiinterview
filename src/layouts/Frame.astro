@@ -1,0 +1,62 @@
+---
+// The shared page frame (spec 0009): the shell of every page that is not a funnel screen (404, privacy, terms, the two team
+// pages). A glass pill header with the logo, the page in <main>, a glass footer bar. It holds no script, no inline handler and no
+// outside address, so the team pages' strict content security policy needs no change. Every address is absolute, because a 404
+// can be served at any depth.
+//   props: title (shown as "DhiRise · <title>"), description, noindex (adds the robots meta tag), back ({ href, label } for a
+//          back link in the header), wide (760px instead of 680px), page (written as data-page on <body>)
+//   slots: default (the page, inside <main>), head (extra tags in <head>, for example a page's own stylesheet)
+import { FOOTER_LINKS, HOME_PATH, PRIVACY_CONTACT } from "../lib/frame";
+
+interface Props {
+  title: string;
+  description: string;
+  noindex?: boolean;
+  back?: { href: string; label: string };
+  wide?: boolean;
+  page?: string;
+}
+const { title, description, noindex = false, back, wide = false, page } = Astro.props;
+const year = new Date().getFullYear();
+---
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0c18">
+{noindex && <meta name="robots" content="noindex, nofollow">}
+<title>{`DhiRise · ${title}`}</title>
+<meta name="description" content={description}>
+<link rel="icon" href="/dhiinterviews/assets/dhirise-favicon-64.png" type="image/png">
+<link rel="stylesheet" href="/dhiinterviews/css/frame.css">
+<slot name="head" />
+</head>
+<body class={wide ? "fr-wide" : undefined} data-page={page}>
+<header class="fr-top">
+  <div class="fr-bar fr-glass">
+    <a class="fr-brand" href={HOME_PATH}>
+      <img src="/dhiinterviews/assets/dhirise-logo-64.png" width="32" height="32" alt="DhiRise">
+      <span>DhiRise</span>
+    </a>
+    {back && <a class="fr-back" href={back.href}>{back.label}</a>}
+  </div>
+</header>
+
+<main class="fr-main">
+  <slot />
+</main>
+
+<footer class="fr-foot">
+  <div class="fr-foot-bar fr-glass">
+    <nav aria-label="DhiRise pages">
+      <ul class="fr-links">
+        {FOOTER_LINKS.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+      </ul>
+    </nav>
+    <p class="fr-contact">Privacy questions: <a href={`mailto:${PRIVACY_CONTACT}`}>{PRIVACY_CONTACT}</a></p>
+    <p class="fr-copy">{`© ${year} DhiRise`}</p>
+  </div>
+</footer>
+</body>
+</html>

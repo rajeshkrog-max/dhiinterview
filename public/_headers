@@ -37,3 +37,8 @@
   X-Robots-Tag: noindex
   Cache-Control: private, no-store
   Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-src blob:; object-src blob:; base-uri 'none'; form-action 'self'
+
+# The hosted fonts (spec 0009). Every file name carries a version (mukta-400.v1.woff2), so a changed font gets a new name (v2)
+# and never reaches a visitor as a stale cached file. Never replace a font file in place.
+/dhiinterviews/fonts/*
+  Cache-Control: public, max-age=31536000, immutable

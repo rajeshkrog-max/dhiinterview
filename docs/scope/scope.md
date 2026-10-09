@@ -94,17 +94,17 @@ Walk the whole student flow on the live address (sign in, form, 18 questions, do
 Settle how the one domain is organised: `/` sends visitors to the DhiRise interview landing page now, and stays a reserved slot so a different product (an invitation style page) can take over the root later without moving anything under `/dhiinterviews`. A shared page frame (header, footer, fonts, colours) so 404, About and Privacy look like the funnel. Any unknown address on the domain shows a friendly 404.
 **Done when:** `/` and `/dhiinterviews` open the landing page; any unknown address shows the styled 404 with a link home (and answers with a 404 status); the two team pages (row 23) move into the frame without breaking the Sheet link `/dhiinterviews/team-report.html?s=`; changing what the root does is a one place change that leaves `/dhiinterviews` untouched; About, Privacy and 404 all use the same frame.
 - [x] Design it (spec): `/architect site layout, root address and 404`
-- [ ] Build it: `/develop site layout, root address and 404`
-  - [ ] M1 The thin thread: the shared frame (layout, stylesheet, hosted Mukta fonts, 64px logo) and the root 404 page, proved on the built site (AC-3, 4, 5, 6, 9, 10)
-  - [ ] M2 The root address: one commented `/` redirect line, query string kept, the `verify:pages` script (AC-1, 2)
-  - [ ] M3 Privacy and terms in the frame, old stylesheet, Google Fonts links and logo handler removed (AC-5, 8, 10, 11)
-  - [ ] M4 The two team pages in the frame, their strict policy and tests kept (AC-7, 9, 11) (last move, droppable if risky)
-  - [ ] M5 Proof: source scans, contrast and layout tests, the live check on the built site with the real headers and the old links (AC-1 to 11)
+- [x] Build it: `/develop site layout, root address and 404`
+  - [x] M1 The thin thread: the shared frame (layout, stylesheet, hosted Mukta fonts, 64px logo) and the root 404 page, proved on the built site (AC-3, 4, 5, 6, 9, 10)
+  - [x] M2 The root address: one commented `/` redirect line, query string kept, the `verify:pages` script (AC-1, 2)
+  - [x] M3 Privacy and terms in the frame, old stylesheet, Google Fonts links and logo handler removed (AC-5, 8, 10, 11)
+  - [x] M4 The two team pages in the frame, their strict policy and tests kept (AC-7, 9, 11) (last move, droppable if risky)
+  - [x] M5 Proof: source scans, contrast and layout tests, the live check on the built site with the real headers and the old links (AC-1 to 11)
 - [ ] Verify it: `/check verify site layout, root address and 404`
 - [ ] Test it: `/test site layout, root address and 404`
 - [ ] Review it (fresh model): `/check review site layout, root address and 404`
 - [ ] Document it: `/document site layout, root address and 404`
-Spec [0009](../specs/0009-site-frame-root-and-404/index.md) · the 404 words and the footer content are approved; About joins the footer in row 21
+Code in `src/layouts/Frame.astro`, `src/lib/frame.ts`, `src/pages/404.astro`, `src/pages/dhiinterviews/` (privacy, terms, team, team-report), `public/dhiinterviews/css/frame.css` and `team.css`, `public/dhiinterviews/fonts/`, `public/_redirects`, `scripts/verify-pages.mjs` · Spec [0009](../specs/0009-site-frame-root-and-404/index.md) · the 404 words and the footer content are approved; About joins the footer in row 21 (add its entry to `FOOTER_LINKS`)
 
 ### 21. About page · Alpha
 A short About page in the shared frame: what DhiRise is, who it is for, and who is behind it, in the same kind and plain words as the funnel. You will need to supply or approve the wording; a draft can be written for you to edit.
