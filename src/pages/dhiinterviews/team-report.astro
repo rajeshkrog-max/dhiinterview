@@ -10,7 +10,7 @@ import Frame from "../../layouts/Frame.astro";
   <link slot="head" rel="stylesheet" href="/dhiinterviews/css/team.css">
   <div class="tt">
     <div class="tt-bar">
-      <h1>DhiRise team: saved report</h1>
+      <h1>Saved report</h1>
       <button type="button" class="tt-btn" id="signOut" hidden>Sign out</button>
     </div>
 
@@ -22,12 +22,14 @@ import Frame from "../../layouts/Frame.astro";
     </section>
 
     <section id="viewerBox" hidden>
-      <div class="tt-actions">
+      <div class="tt-toolbar">
+        <a class="tt-btn" href="team.html">← All saved reports</a>
+        <span class="tt-spacer"></span>
+        <a class="tt-btn" id="fullscreen" target="_blank" rel="noopener">Open full screen</a>
         <button type="button" class="tt-btn main" id="download">Download</button>
-        <a class="tt-btn" href="team.html">All saved reports</a>
       </div>
-      <p class="tt-note">If the report does not show on your phone, tap Download.</p>
       <iframe class="tt-pdf" id="pdf" title="Saved report"></iframe>
+      <p class="tt-hint">If the report does not show on your phone, tap Download.</p>
     </section>
 
     <section id="backBox" hidden>

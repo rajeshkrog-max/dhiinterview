@@ -21,4 +21,17 @@
 .tt-name{font-weight:600;overflow-wrap:anywhere}
 .tt-meta{color:var(--muted);font-size:16px}
 .tt-actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
-.tt-pdf{display:block;width:100%;height:calc(100vh - 320px);height:calc(100dvh - 320px);min-height:420px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.tt-pdf{display:block;width:100%;height:calc(100vh - 300px);height:calc(100dvh - 300px);min-height:520px;border:1px solid var(--line);border-radius:12px;background:#fff}
+
+/* the report page: wider, a slim title bar, one toolbar row, and the PDF takes the rest of the window */
+body[data-page="report"]{--w:920px}
+body[data-page="report"] .tt h1{font-size:20px}
+body[data-page="report"] .tt-bar{margin-bottom:12px}
+.tt-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 12px}
+.tt-spacer{flex:1 1 auto}
+.tt-hint{margin:10px 0 0;color:var(--muted)}
+@media (max-width:600px){
+  .tt-pdf{height:calc(100vh - 340px);height:calc(100dvh - 340px);min-height:420px}
+  .tt-spacer{display:none}
+  .tt-toolbar .tt-btn{flex:1 1 auto}
+}

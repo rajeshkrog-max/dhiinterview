@@ -14,6 +14,7 @@ const LIST_PAGE = "/dhiinterviews/team.html";
 const REPORT_PAGE = "/dhiinterviews/team-report.html";
 const CODE = /^[A-Za-z0-9]{1,64}$/; // what a reference code looks like; anything else is not kept in the return address
 const PDF_MAGIC = "%PDF-";
+const PDF_VIEW = "#view=FitH&navpanes=0"; // how the embedded PDF opens: fit to width, no thumbnail sidebar
 
 type Row = { studentId: string; name: string; class: string; madeAt: number };
 type Who = { kind: "token"; token: string } | { kind: "signedOut" } | { kind: "offline" };
@@ -281,7 +282,11 @@ function startViewer(): void {
     }
     const name = /filename="([A-Za-z0-9._-]{1,80})"/.exec(res.headers.get("content-disposition") ?? "")?.[1] ?? "DhiRise-report.pdf";
     const href = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
-    ($("pdf") as HTMLIFrameElement).src = href;
+    // The viewer opens fit to the page width with its thumbnail sidebar closed, so the report gets the whole window.
+    // (Chrome and Edge read these open parameters from the address; other browsers show their own default view.)
+    ($("pdf") as HTMLIFrameElement).src = href + PDF_VIEW;
+    const full = $<HTMLAnchorElement>("fullscreen");
+    if (full) full.href = href + "#view=FitH"; // its own tab, in the browser's full PDF viewer
     $("download")?.addEventListener("click", () => {
       const a = document.createElement("a");
       a.href = href;

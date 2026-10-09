@@ -229,6 +229,34 @@ test.describe("the viewer (AC-3, AC-6, AC-7, AC-10)", () => {
     expect(await overflow(page)).toBeLessThanOrEqual(0);
   });
 
+  test("covers AC-3: the report fills the window (fit to width, no thumbnail sidebar), with one toolbar row and an Open full screen link", async ({ page }) => {
+    await signInAsTeam(page, VIEW + "?s=abc123");
+    await page.route("**/api/team/report*", (route) =>
+      route.fulfill({ status: 200, headers: { "content-type": "application/pdf", "content-disposition": 'inline; filename="DhiRise-report-Asha.pdf"' }, body: PDF }),
+    );
+    for (const [width, height] of [[1280, 800], [820, 1100], [390, 844]] as const) {
+      await page.setViewportSize({ width, height });
+      await page.goto(VIEW + "?s=abc123");
+      await expect(page.locator("#viewerBox")).toBeVisible();
+      // the embedded PDF opens fit to width with the thumbnail sidebar closed, and is as tall as most of the window
+      await expect(page.locator("#pdf")).toHaveAttribute("src", /^blob:.*#view=FitH&navpanes=0$/);
+      const box = (await page.locator("#pdf").boundingBox())!;
+      expect(box.height, `${width}px wide: the PDF is most of the window`).toBeGreaterThanOrEqual(Math.min(height * 0.5, 520));
+      expect(box.width, `${width}px wide: the PDF uses the page width`).toBeGreaterThanOrEqual(Math.min(width - 40, 880) - 2);
+      // the toolbar sits above the PDF, and the title bar is slim
+      const bar = (await page.locator(".tt-toolbar").boundingBox())!;
+      expect(bar.y + bar.height).toBeLessThanOrEqual(box.y + 1);
+      expect(box.y, `${width}px wide: the PDF starts near the top of the window`).toBeLessThanOrEqual(300);
+      expect(await overflow(page)).toBeLessThanOrEqual(0);
+    }
+    // Open full screen: its own tab, the same blob address, fit to width
+    const full = page.locator("#fullscreen");
+    await expect(full).toHaveText("Open full screen");
+    await expect(full).toHaveAttribute("target", "_blank");
+    await expect(full).toHaveAttribute("rel", "noopener");
+    await expect(full).toHaveAttribute("href", /^blob:.*#view=FitH$/);
+  });
+
   test("covers AC-3: bytes that do not start with %PDF- are never shown", async ({ page }) => {
     await signInAsTeam(page, VIEW + "?s=abc123");
     await page.route("**/api/team/report*", (route) => route.fulfill({ status: 200, contentType: "application/pdf", body: "<html><script>window.__pwn=1</script></html>" }));
