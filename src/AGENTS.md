@@ -13,8 +13,10 @@ The Astro side of the funnel (static output, no server rendering). Each page in 
 | `lib/result.ts` | The pure parts of the saved result, unit tested without a page: `flatten` (the one adapter to the old flat object), `isFlat` (shape check for a device copy) and `startResult` (the wait, the box and the retry, one live timer). |
 | `lib/local.ts` | Every `dhirise.*` localStorage key and the wipe used at sign out. A new key belongs in this list and in its header comment. |
 | `lib/auth-client.ts` | Better Auth and Convex client setup. Talks to the site's own `/api/auth/*`, never to Convex for auth. |
+| `pages/dhiinterviews/privacy.astro` | The privacy page (spec 0007). Its words are plain and factual; the contact address is read from the consent text so the two cannot differ. Update it whenever the consent text or a service that handles student data changes. |
 | `pages/dhiinterviews/*.astro` | One page each. Page scripts are written as `<script is:inline type="text/dhi-deferred" src="js/...">`; `session.ts` starts them, in order, after the guard lets the page through. |
-| `../functions/api/` | The Cloudflare Pages Function that forwards `/api/auth/*` to Convex, and the health check. |
+| `../functions/api/` | The Cloudflare Pages Functions that forward `/api/auth/*` to Convex, the health check, and two GET only forwarders for the report copy: `files/` (`/api/files/report`, the student's own PDF) and `render/` (`/api/render/payload`, read by Browser Run with a signed token). |
+| `pages/dhiinterviews/report-render.astro` | The page Cloudflare Browser Run opens to draw the saved PDF (spec 0006). No sign in, no Guard, no tracking. `public/dhiinterviews/js/render-boot.js` reads the token from the `#t=` fragment, fetches the payload with a header, draws `report-student.js` in its print mode and sets `data-ready` or `data-error`. |
 
 ## Commands
 
@@ -30,6 +32,7 @@ pnpm run deploy:pages    # convex deploy, then build, then wrangler pages deploy
 
 - Page scripts are plain ES5 and hang one global on `window`. They never talk to Convex themselves; they call `DhiSession` (typed in `session.ts`). Anything a page and the server must agree on (`consentText.ts`, `feedbackRules.ts`) is imported from `convex/` so the two cannot drift.
 - Pages never score. Pages that show a result wait for `DhiSession.result()` and draw only when it arrives. The device copy is `dhirise.result.v1` (`{ v: 1, owner, result }`), written only after the server answered and used only for its owner.
+- `report-student.js` has a print mode, on when `window.DHI_RENDER` is set (only the render page sets it): no flag text, no animation, no interactive parts, the India date. The Download button (`report-download.js` rules, `DhiSession.reportCopy`) gives the server made PDF and falls back to the browser's print page.
 - A page that must not flash before the guard decides keeps its script tags `text/dhi-deferred`; do not turn them into plain `<script>` tags.
 - The router is pages only: links are relative (`report-student.html`), `build.format` is `file`. `/` redirects to the landing page through `public/_redirects`.
 - No secrets here. Public values come from `PUBLIC_*` build variables (`.env.example`); `js/funnel-config.js` stays empty in the repo.
@@ -42,6 +45,6 @@ pnpm run deploy:pages    # convex deploy, then build, then wrangler pages deploy
 
 ## Related specs
 
-[0001 stack](../docs/specs/0001-adopt-astro-convex-cloudflare-stack/index.md) · [0002 sign in and saved check](../docs/specs/0002-google-sign-in-and-saved-check/index.md) · [0005 results](../docs/specs/0005-results-and-report-from-saved-data/index.md)
+[0001 stack](../docs/specs/0001-adopt-astro-convex-cloudflare-stack/index.md) · [0002 sign in and saved check](../docs/specs/0002-google-sign-in-and-saved-check/index.md) · [0005 results](../docs/specs/0005-results-and-report-from-saved-data/index.md) · [0006 report copy](../docs/specs/0006-report-copy-saved-when-seen/index.md)
 
 _Drafted by /audit from the repo, worth a quick human pass. Edit freely: once a line stops matching this draft, later runs treat it as curated and will flag rather than overwrite it._

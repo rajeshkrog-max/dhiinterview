@@ -163,7 +163,7 @@ Order follows the project's Tracer Bullet approach: one thin real thread first (
 
 ## Follow-up
 
-- [ ] Scope row 22 stores `REPORT_VERSION` with the report copy and PDF; update spec 0002 AC-13 and its milestone 4 note when row 22 is designed.
+- [x] (done in spec 0006, which keeps `REPORT_VERSION` in `convex/reportVersion.ts` and updated spec 0002) Scope row 22 stores `REPORT_VERSION` with the report copy and PDF; update spec 0002 AC-13 and its milestone 4 note when row 22 is designed.
 - [ ] `public/dhiinterviews/js/engine/AGENTS.md` still says scoring runs in the browser and that "the backend stores an engine version": `/sync` should refresh it once built, and add the rule "bump `ENGINE_VERSION` when scoring changes".
 - [ ] Erase (scope row 15) must delete `results` and `resultFlags` for the student.
 - [ ] Team access to results and flags (scope rows 14 and 23): decide which roles may read the flags.

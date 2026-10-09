@@ -241,6 +241,8 @@ window.DhiReportText = {
     p: "Set a target each day and tick it the moment it is done.",
     k: "Same time, same place, every day. The rhythm does the work."
   },
+  /* the saved PDF copy has no tick grid, so a line that talks about ticking is worded without it */
+  weekHowCopy: { p: "Set a target each day and finish it before the day ends." },
   plan: {
     routine: [
       { room: "Habit Tracker", title: "Find your anchor", actions: ["Wake up at the same time", "Eat breakfast before you study", "Books closed 30 minutes before bed"] },
@@ -393,6 +395,13 @@ window.DhiReportText = {
   shareButton: "Share with a friend",
   shareText: "I just found my study style with DhiRise. Try it:",
   shareCopied: "Link copied",
+
+  /* the Download button (spec 0006): the PDF is made on our side, so these words are not in the PDF itself */
+  downloadButton: "Download PDF",
+  downloadPreparing: "Getting your PDF ready",
+  downloadFailed: "We could not get your PDF just now, so we will open the print page. You can save it as a PDF from there.",
+  downloadOffline: "We could not reach DhiRise. Please check your connection and try again.",
+  downloadSignin: "Please sign in again to download your PDF.",
 
   footer: "A study and wellbeing screening based on your answers. Not a medical or psychological diagnosis."
 };

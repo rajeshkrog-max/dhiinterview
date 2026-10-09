@@ -7,14 +7,24 @@
 
 export type ConsentKind = "landing" | "lead";
 
-export const CONSENT_VERSION = "v1";
+// v1 is frozen: consent rows already saved point at its exact text. Never edit it.
+export const CONSENT_VERSION_V1 = "v1";
 
-export const CONSENT_LINES: readonly string[] = [
+export const CONSENT_LINES_V1: readonly string[] = [
   "DhiRise collects your name, age, class, and the Google account you use to continue. We use these to create your study profile, save your check, and send you the result.",
   "If you are under 18, a parent or guardian must be with you and must agree. Do not continue alone.",
   "Your answers are used only to prepare your study picture and to improve this check. We do not sell your data.",
   "You may withdraw this consent, correct your details, or request erasure by writing to the address below. Withdrawal does not affect a result already prepared. Grievance contact: privacy@dhirise.com",
   "By tapping I agree, you confirm that you have read this notice, and that a parent or guardian has agreed if you are under 18.",
+];
+
+// v2 (scope row 25): v1 plus one line that names Cloudflare Browser Run, which draws the saved PDF copy of the report (spec 0006).
+export const CONSENT_VERSION = "v2";
+
+export const CONSENT_LINES: readonly string[] = [
+  ...CONSENT_LINES_V1.slice(0, 3),
+  "To save a PDF copy of your report, DhiRise uses Cloudflare Browser Run. It opens our own report page on Cloudflare's servers and prints it to a PDF, so your report data passes through Cloudflare for that. We keep the PDF so you can download it.",
+  ...CONSENT_LINES_V1.slice(3),
 ];
 
 // The phone step on done.html. The wording is a placeholder until the privacy page owner signs it off (spec 0003, follow up).
@@ -29,12 +39,14 @@ export const LEAD_CONSENT_LINES: readonly string[] = [
 
 // Every known version, by version string. Add a new key for new wording; keep the old ones.
 export const CONSENT_TEXTS: Readonly<Record<string, string>> = {
+  [CONSENT_VERSION_V1]: CONSENT_LINES_V1.join("\n\n"),
   [CONSENT_VERSION]: CONSENT_LINES.join("\n\n"),
   [LEAD_CONSENT_VERSION]: LEAD_CONSENT_LINES.join("\n\n"),
 };
 
 // The kind each version belongs to.
 export const CONSENT_KINDS: Readonly<Record<string, ConsentKind>> = {
+  [CONSENT_VERSION_V1]: "landing",
   [CONSENT_VERSION]: "landing",
   [LEAD_CONSENT_VERSION]: "lead",
 };

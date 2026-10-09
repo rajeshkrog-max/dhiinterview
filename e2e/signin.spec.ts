@@ -71,8 +71,8 @@ test.describe("the form and the profile (AC-3)", () => {
     await page.click("#readNotice");
     await expect(page.locator("#sheetDim")).toBeVisible();
     await expect(page.locator("#agree")).toBeHidden(); // read only: nothing to agree to yet
-    await expect(page.locator("#consentLines")).toHaveAttribute("data-version", "v1");
-    await expect(page.locator("#consentLines p")).toHaveCount(5);
+    await expect(page.locator("#consentLines")).toHaveAttribute("data-version", "v2");
+    await expect(page.locator("#consentLines p")).toHaveCount(6);
   });
 });
 

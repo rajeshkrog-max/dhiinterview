@@ -29,6 +29,7 @@ The engine holds everything that decides what a student sees about themselves: t
 ## Gotchas
 
 - The area and index names are repeated in `tools/lead-sheet.gs` (`AREAS`, `INDICES`). If you add or rename one here, update the sheet script too.
+- `DhiReportText.VERSION` must equal `REPORT_VERSION` in `convex/reportVersion.ts`; bumping both makes the server draw each student's saved PDF copy again.
 - Peer shares ("X% of students chose this") are seeded numbers (`peerSeed` in `questions.js`, `peers` in `reportText.js`), not real data.
 - A saved result never changes. Each one stores the `ENGINE_VERSION` that made it, so changing scoring affects only students who finish afterwards.
 

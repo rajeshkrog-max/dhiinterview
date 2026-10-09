@@ -1,9 +1,13 @@
 /* Dhirise · the student report. Built from the saved result (DhiSession.result(), spec 0005) and the words in js/engine/reportText.js.
    Inline SVG only. Numbers count up and charts draw in once, when their card comes into view (instant for reduced motion).
-   Week 1 ticks are kept in localStorage "dhirise.path.v1" for this check only. */
+   Week 1 ticks are kept in localStorage "dhirise.path.v1" for this check only.
+   Print mode (spec 0006): when js/render-boot.js has set window.DHI_RENDER the server is drawing the saved PDF copy. Then the
+   page draws its final state with no animation, leaves out everything that comes from flags and everything interactive (the
+   flag passages, the teasers, the tick grid, the join and feedback cards, the trophy link), and calls DHI_RENDER.drawn(). */
 (function () {
   "use strict";
   var T = window.DhiReportText, Q = window.DhiQuestions;
+  var PRINT = window.DHI_RENDER || null;                      /* set only by the render page (js/render-boot.js) */
   var check = DhiStore.get();
   if (!check.completedAt) {                                   /* only a finished check has a report */
     var missing = DhiStore.firstMissing();
@@ -17,7 +21,7 @@
   function build(r) {
   var profile = check.profile || {};
   DhiSession.markReportSeen();                                /* saved on the server, so every device resumes at the report */
-  var reduced = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var reduced = !!PRINT || (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);   /* print never animates, whatever the setting */
   var SVGNS = "http://www.w3.org/2000/svg";
   var root = document.getElementById("report");
 
@@ -94,9 +98,33 @@
   function styled(text) { return fill(text, { block: T.block[styleOrder[0]], pace: T.pace[styleOrder[0]] }); }
   function answerOf(said) { return said ? said.text : ""; }
   var first = cap(profile.name ? String(profile.name).trim().split(/\s+/)[0] : "");
-  var activeFlags = T.flagOrder.filter(function (f) { return r.flags[f] === true; });
+  var activeFlags = PRINT ? [] : T.flagOrder.filter(function (f) { return r.flags[f] === true; });   /* the copy never carries flag text, even if the data did */
 
   var fullKey = blend ? blendKey : styleOrder[0];          /* v, p, k, or a blend vp / vk / pk */
+
+  /* ---------- the Download button (spec 0006): the PDF the server made of this report ---------- */
+  /* The rules (ready, ask, poll every 3 seconds, give up at 60, print fallback) are in js/report-download.js. This only draws
+     the button and its message. It never touches the report itself. */
+  function downloadControl() {
+    var box = el("div", "dl");
+    var btn = el("button", "dl-btn", T.downloadButton);
+    btn.type = "button";
+    var msg = el("p", "dl-msg");
+    msg.setAttribute("role", "status");
+    msg.setAttribute("aria-live", "polite");
+    var busy = false;
+    btn.addEventListener("click", function () {
+      if (busy) return;
+      busy = true;
+      btn.setAttribute("aria-busy", "true");
+      DhiReportDownload.run({
+        copy: DhiSession.reportCopy, T: T,
+        say: function (text) { msg.textContent = text || ""; },
+        print: function () { setTimeout(function () { window.print(); }, 400); }
+      }).then(function () { busy = false; btn.removeAttribute("aria-busy"); });
+    });
+    return add(box, btn, msg);
+  }
 
   /* ---------- 0. soft warning chip ---------- */
   add(root, el("p", "warn span2", T.warnChip));
@@ -108,17 +136,23 @@
     logo.src = "assets/dhirise-logo-light.png"; logo.alt = "DhiRise"; logo.width = 40; logo.height = 40;
     logo.onerror = function () { logo.onerror = null; logo.src = "assets/dhirise-logo.png"; };
     var d = new Date(check.completedAt);
-    var date = isNaN(d) ? "" : d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+    var dateFormat = { day: "numeric", month: "short", year: "numeric" };
+    if (PRINT) dateFormat.timeZone = "Asia/Kolkata";           /* the server may be in another zone: the day must not shift */
+    var date = isNaN(d) ? "" : d.toLocaleDateString("en-IN", dateFormat);
     var title = el("h1", "title", first ? fill(T.title, { name: first }) : fill(T.title, { name: "Your" }).replace(/^Your's/, "Your"));
-    add(h, logo, add(el("div", "head-text"), title,
+    var headText = add(el("div", "head-text"), title,
       el("p", "meta", [profile.class, date].filter(Boolean).join(" · ")),
-      el("span", "pill", styleName)));
-    /* a small trophy: the Founding Circle leaderboard */
-    var trophy = el("a", "head-trophy");
-    trophy.href = "leaderboard.html";
-    trophy.setAttribute("aria-label", "Founding Circle leaderboard");
-    trophy.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7M10 17h4"/></svg>';
-    add(h, trophy);
+      el("span", "pill", styleName));
+    if (!PRINT && window.DhiSession && DhiSession.reportCopy && window.DhiReportDownload) add(headText, downloadControl());   /* spec 0006: not in the saved copy */
+    add(h, logo, headText);
+    /* a small trophy: the Founding Circle leaderboard (not in the saved copy: a link is no use on paper) */
+    if (!PRINT) {
+      var trophy = el("a", "head-trophy");
+      trophy.href = "leaderboard.html";
+      trophy.setAttribute("aria-label", "Founding Circle leaderboard");
+      trophy.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7M10 17h4"/></svg>';
+      add(h, trophy);
+    }
     add(root, h);
   })();
 
@@ -341,10 +375,10 @@
     function weekHead(i) { return fill(T.weekLabel, { n: i + 1 }) + " · " + plan[i].title; }
     var c = card("path", T.pathTitle);
     add(c, add(el("div", "week-head"), el("p", "week-title", weekHead(0)), el("span", "room-pill", "In Dhi · " + plan[0].room)));
-    add(c, el("p", "note week-how", T.weekHow[styleOrder[0]]));
+    add(c, el("p", "note week-how", (PRINT && T.weekHowCopy[styleOrder[0]]) || T.weekHow[styleOrder[0]]));
     plan[0].actions.map(styled).forEach(function (text, ai) {
       var days = el("div", "days");
-      for (var d = 1; d <= 7; d++) (function (d) {
+      if (!PRINT) for (var d = 1; d <= 7; d++) (function (d) {
         var id = "a" + ai + "d" + d;
         var b = el("button", "tick", String(d));
         b.type = "button";
@@ -358,9 +392,9 @@
         });
         add(days, b);
       })(d);
-      add(c, add(el("div", "action"), el("p", "action-text", text), days));
+      add(c, add(el("div", "action"), el("p", "action-text", text), PRINT ? null : days));
     });
-    [1, 2].forEach(function (i) {
+    if (!PRINT) [1, 2].forEach(function (i) {                  /* the blurred weeks 2 and 3 teasers are not in the saved copy */
       var detail = el("p", "blur", plan[i].actions.map(styled).join(" · "));
       detail.setAttribute("aria-hidden", "true");
       add(c, add(el("div", "week-locked"),
@@ -406,7 +440,7 @@
   })();
 
   /* ---------- 11. join ---------- */
-  (function join() {
+  if (!PRINT) (function join() {
     var cfg = window.DHI_FUNNEL || {};
     var c = card("join", T.joinTitle);
     add(c, el("p", "lede", T.joinLine));
@@ -428,7 +462,7 @@
   })();
 
   /* ---------- 11b. feedback: stars, a note, optional share; saved on the server (DhiSession.submitFeedback) ---------- */
-  (function feedback() {
+  if (!PRINT) (function feedback() {
     var c = card("feedback span2", T.feedbackTitle);
     var thanks = el("p", "thanks", T.feedbackThanks);
     thanks.setAttribute("aria-live", "polite");
@@ -505,6 +539,9 @@
   add(root, el("footer", "foot span2", T.footer));
 
   startAnimations();
+  if (PRINT) { PRINT.drawn(); return; }                         /* the render page takes it from here */
   if (window.dhiriseLeaves) window.dhiriseLeaves({ mobile: 4, wide: 6 });
+  /* ask the server for the saved PDF copy only now the report is on screen; fire and forget, a failure shows nothing (spec 0006) */
+  if (window.DhiSession && DhiSession.reportCopy) requestAnimationFrame(function () { setTimeout(function () { DhiSession.reportCopy.request(); }, 0); });
   }
 })();

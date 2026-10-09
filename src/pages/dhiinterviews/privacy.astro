@@ -1,0 +1,87 @@
+---
+// The privacy page (scope row 18, spec 0007). A standalone page like terms.astro, in the same dark skin (css/terms.css).
+// Its words come from the consent text (convex/consentText.ts), so the contact address can never differ from the one students agree to.
+import { CONSENT_LINES } from "../../../convex/consentText";
+
+const contact = /([a-z0-9._-]+@[a-z0-9.-]+\.[a-z]{2,})/i.exec(CONSENT_LINES.join(" "))?.[1] ?? "privacy@dhirise.com";
+---
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0c18">
+<title>DhiRise · Privacy</title>
+<meta name="description" content="What DhiRise keeps about you, why, who helps us look after it, and how to reach us.">
+<link rel="icon" href="assets/dhirise-logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Mukta:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/terms.css">
+</head>
+<body>
+<header class="tm-top">
+  <a class="tm-back" href="landing.html">← Back</a>
+  <img src="assets/dhirise-logo-light.png" alt="DhiRise" width="32" height="32" onerror="this.onerror=null;this.src='assets/dhirise-logo.png'">
+  <span aria-hidden="true"></span>
+</header>
+
+<main class="tm">
+  <h1>Privacy at DhiRise</h1>
+  <p class="tm-lead">The short version: we ask only for what we need to give you your study picture, we keep it private, we do not sell it, and you can ask us to fix it or erase it at any time.</p>
+
+  <section>
+    <h2>1. What we keep</h2>
+    <ul>
+      <li>Your name, age and class.</li>
+      <li>The email of the Google account you use to sign in.</li>
+      <li>Your answers to the 18 questions, and the result and report we prepare from them.</li>
+      <li>A PDF copy of your report, so you can download it later.</li>
+      <li>Your mobile number, only if you add it, and whether you asked to join the Dhi early access group on WhatsApp.</li>
+      <li>The feedback you write, if you write any.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>2. Why we keep it</h2>
+    <p>To make your study profile, save your check, show you your result and report, and message you about your result and the Dhi app. Your answers are also used to improve this check.</p>
+  </section>
+
+  <section>
+    <h2>3. Who helps us look after it</h2>
+    <p>We use a few services to run DhiRise. Each one handles only what it needs to do its job.</p>
+    <ul>
+      <li><b>Google</b> lets you sign in. We get your name and email from it. A copy of the mobile number step and of your feedback also goes to a Google Sheet kept by the DhiRise team.</li>
+      <li><b>Convex</b> is our database. Your profile, answers, result and PDF copy are stored there.</li>
+      <li><b>Cloudflare</b> serves this website. Its service called <b>Cloudflare Browser Run</b> opens our own report page and prints it to a PDF, so your report data passes through Cloudflare when your PDF copy is made.</li>
+    </ul>
+    <p>We do not sell your data.</p>
+  </section>
+
+  <section>
+    <h2>4. Your report and your PDF copy</h2>
+    <p>Only you can open your report and download your PDF copy. Some answers can show how you feel, for example when you feel low. That is shown only to you, in your own report. It is not in the PDF copy, not in the team's Google Sheet and not on any leaderboard.</p>
+  </section>
+
+  <section>
+    <h2>5. If you are under 18</h2>
+    <p>A parent or guardian must be with you and must agree before you use DhiRise. Please do not continue alone.</p>
+  </section>
+
+  <section>
+    <h2>6. Your choices</h2>
+    <p>You may take back your consent, correct your details, or ask us to erase them, which includes your PDF copy. Write to <a href={`mailto:${contact}`}>{contact}</a>. Taking back your consent does not change a result that was already prepared.</p>
+  </section>
+
+  <section>
+    <h2>7. Who to contact</h2>
+    <p>For any question or complaint about your data, write to the DhiRise privacy contact at <a href={`mailto:${contact}`}>{contact}</a>. This is the same address as in the notice you agree to before you begin.</p>
+  </section>
+
+  <section>
+    <h2>8. Changes</h2>
+    <p>If this page or the notice changes, new students see the new notice when they sign up. We keep the exact words of every notice a student agreed to.</p>
+    <p>Last updated: 9 October 2026.</p>
+  </section>
+</main>
+</body>
+</html>

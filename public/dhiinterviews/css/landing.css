@@ -202,6 +202,9 @@ form{display:flex;flex-direction:column;gap:10px;margin:0}
 .sheet-body p{margin:0 0 12px}
 .sheet-body p:last-child{margin-bottom:0}
 .sheet-foot{flex:none;padding-top:14px}
+.sheet-privacy{margin:0 0 8px;text-align:center;font-size:14px}
+.sheet-privacy a{color:var(--gold);display:inline-block;padding:8px 4px}
+.sheet-privacy a:focus-visible{outline:2px solid #fff;outline-offset:2px;border-radius:4px}
 .sheet-hint{margin:0 0 8px;font-size:12px;color:var(--muted);text-align:center}
 /* the last line of the notice ("By tapping I agree, …"): highlighted in gold */
 #consentLines .consent-final{padding:10px 12px;border-left:3px solid var(--gold);border-radius:8px;

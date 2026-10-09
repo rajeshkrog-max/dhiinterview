@@ -53,6 +53,9 @@ body{font-family:var(--f-body);color:var(--white);-webkit-font-smoothing:antiali
 .notice{margin:6px 0 10px;padding:12px 14px;border-radius:12px;background:rgba(255,255,255,.06);font-size:13px;line-height:1.5;color:var(--muted)}
 .notice p{margin:0 0 8px}
 .notice p:last-child{margin:0}
+.notice-link{margin:0 0 10px;font-size:13px}
+.notice-link a{color:var(--gold,#e9b95c);display:inline-block;padding:6px 2px}
+.notice-link a:focus-visible{outline:2px solid #fff;outline-offset:2px;border-radius:4px}
 /* +91 sits inside the field, left, muted */
 .phone-field{position:relative}
 .phone-field .cc{position:absolute;left:14px;top:0;height:48px;display:flex;align-items:center;font:500 18px var(--f-body);letter-spacing:.04em;color:var(--muted);pointer-events:none}

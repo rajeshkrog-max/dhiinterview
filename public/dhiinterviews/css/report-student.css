@@ -212,3 +212,34 @@ p{margin:0}
 .leaves{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden;contain:strict;opacity:.45}
 .leaf{position:absolute;left:0;top:0;pointer-events:none;will-change:transform}
 @media (prefers-reduced-motion:reduce){.leaves{display:none}.tick{transition:none}}
+
+/* ---------- the Download button (spec 0006) ---------- */
+.dl{margin-top:12px}
+.dl-btn{display:inline-flex;align-items:center;min-height:40px;padding:6px 16px;border-radius:12px;cursor:pointer;
+  font:700 14px var(--f-body);color:var(--gold);background:transparent;border:1px solid rgba(233,185,92,.55)}
+.dl-btn:hover{background:rgba(233,185,92,.12)}
+.dl-btn:focus-visible{outline:2px solid var(--white);outline-offset:3px}
+.dl-btn[aria-busy="true"]{opacity:.7;cursor:progress}
+.dl-msg{min-height:1.4em;margin-top:6px;font-size:13px;line-height:1.4;color:var(--muted)}
+
+/* ---------- print: the Download fallback prints this page; the saved copy prints the render page (spec 0006) ---------- */
+@page{size:A4;margin:12mm}
+@media print{
+  html,body{background:var(--ink)!important;min-height:0}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .report{display:block;max-width:none;padding:0}
+  .card{margin:0 0 12px;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;break-inside:avoid;page-break-inside:avoid}
+  .warn{margin:0 0 12px}
+  /* everything interactive, animated or live stays off paper */
+  .dl,.leaves,.head-trophy,.days,.week-locked,.feedback,.join,.fc-wrap,.ch-bar,.ch-dim,#dhiSaveMark,#dhiResultBox,#dhiBoot{display:none!important}
+}
+
+/* ---------- the saved PDF copy (spec 0006): html.render and body.render, drawn by js/render-boot.js ---------- */
+html.render,body.render{background:var(--ink)}
+body.render{min-height:0}
+.render *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.render .report{display:block;max-width:none;padding:0}
+.render .card{margin:0 0 12px;background:var(--ink-2);box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;break-inside:avoid;page-break-inside:avoid}
+.render .warn{margin:0 0 12px}
+.render .fc-copy{padding:6px;text-align:center;background:transparent;border-color:transparent}
+.render .fc-print{display:block;width:44%;max-width:300px;height:auto;margin:0 auto}

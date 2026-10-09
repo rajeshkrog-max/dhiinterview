@@ -7,7 +7,7 @@
 import { defineConfig } from 'astro/config';
 import { existsSync, readFileSync } from 'node:fs';
 
-// Local development only: send /api/auth/* to the Convex dev deployment, like functions/api/auth does in
+// Local development only: send /api/auth/* (and /api/files, /api/render) to the Convex dev deployment, like functions/api does in
 // production. The address comes from .env.local, which `convex dev` writes (git ignored).
 const convexSite =
   process.env.CONVEX_SITE_URL ??
@@ -30,6 +30,9 @@ export default defineConfig({
               xfwd: true,
               headers: { 'x-better-auth-forwarded-host': 'localhost:4321', 'x-better-auth-forwarded-proto': 'http' },
             },
+            // the saved report PDF (spec 0006): the student's download and the render page's data, like functions/api/files and render
+            '/api/files': { target: convexSite, changeOrigin: true },
+            '/api/render': { target: convexSite, changeOrigin: true },
           }
         : {},
     },

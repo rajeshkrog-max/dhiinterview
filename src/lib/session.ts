@@ -651,6 +651,73 @@ function result(): Promise<FlatResult> {
   return resultPending;
 }
 
+// ---------- the saved PDF copy of the report (spec 0006) ----------
+
+export type CopyState = "none" | "queued" | "making" | "ready" | "failed";
+export type CopyStatus = { state: CopyState; ready: boolean };
+let copyAsked = false;
+
+// Asks the server for this student's copy. Called once the report is on screen, fire and forget: it never throws, never
+// waits for anything and shows the student nothing, so a failure cannot touch the report (AC-7). Asked once per page load;
+// the Download button asks again when it finds no copy was ever made.
+async function copyRequest(force = false): Promise<void> {
+  if (copyAsked && !force) return;
+  copyAsked = true;
+  try {
+    const c = await getClient();
+    if (!c) return void (copyAsked = false);
+    await withTimeout(c.mutation(api.reportCopy.request, {}), 10000);
+  } catch {
+    copyAsked = false; // a lost first request is made again by the next open, or by Download
+  }
+}
+
+// Where the copy stands, or null when that could not be found out right now.
+async function copyStatus(): Promise<CopyStatus | null> {
+  try {
+    const c = await getClient();
+    if (!c) return null;
+    return await withTimeout(c.query(api.reportCopy.status, {}), 10000);
+  } catch {
+    return null;
+  }
+}
+
+export type CopyDownload = { ok: true } | { ok: false; code: "signin" | "offline" | "not_ready" | "failed" };
+
+// Fetches the student's own PDF with their token (the file route takes no id) and saves it on the device.
+async function copyDownload(): Promise<CopyDownload> {
+  let token: string | null = null;
+  try {
+    const { data } = await withTimeout(authClient.convex.token({ fetchOptions: { throw: false } }), 8000);
+    token = data?.token ?? null;
+  } catch {
+    return { ok: false, code: "offline" };
+  }
+  if (!token) return { ok: false, code: "signin" };
+  try {
+    const res = await withTimeout(fetch("/api/files/report", { headers: { authorization: "Bearer " + token }, cache: "no-store", credentials: "omit" }), 30000);
+    if (res.status === 401) return { ok: false, code: "signin" };
+    if (res.status === 404) return { ok: false, code: "not_ready" };
+    if (!res.ok) return { ok: false, code: "failed" };
+    const blob = await res.blob();
+    if (!blob.type.toLowerCase().startsWith("application/pdf") || blob.size < 5) return { ok: false, code: "failed" };
+    const name = /filename="([A-Za-z0-9._-]{1,80})"/.exec(res.headers.get("content-disposition") ?? "")?.[1] ?? "DhiRise-report.pdf";
+    const href = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = href;
+    a.download = name;
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(href), 4000);
+    return { ok: true };
+  } catch {
+    return { ok: false, code: "offline" };
+  }
+}
+
 // ---------- the page guard ----------
 
 function startPageScripts(): Promise<void> {
@@ -787,6 +854,8 @@ export const DhiSession = {
   dismissOld: () => remove(OLD_CHECK_KEY),
   onStatus: (fn: (s: SyncStatus, detail?: number) => void) => listeners.add(fn),
   result,
+  /** The saved PDF copy of the report (spec 0006): `request` is fire and forget, `status` and `download` are for the Download button. */
+  reportCopy: { request: copyRequest, status: copyStatus, download: copyDownload },
   hasCache: () => readCache() !== null,
   /** The cached student, for "Continue as" when the server cannot be reached. */
   cachedName: () => readCache()?.profile.name ?? null,

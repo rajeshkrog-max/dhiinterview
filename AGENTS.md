@@ -6,7 +6,7 @@ A mobile first self check for students (Class 8 to college, India) and the marke
 
 - **Language / Runtime**: TypeScript (strict) for the backend and the browser bridge, Node 22. Page scripts stay plain JavaScript (ES5 style, runs in the browser).
 - **Framework**: Astro 7 (static output, no server adapter). Backend: Convex. Sign in: Better Auth (Google only). Hosting: Cloudflare Pages. Source of truth: spec `docs/specs/0001-adopt-astro-convex-cloudflare-stack/`.
-- **Key dependencies**: `js/vendor/html2pdf.bundle.min.js` (legacy report only), Google Apps Script receiver in `tools/lead-sheet.gs`, Python with Pillow for image prep scripts in `tools/`
+- **Key dependencies**: Cloudflare Browser Run (draws the saved report PDF on the server, spec 0006), `js/vendor/html2pdf.bundle.min.js` (legacy report only), Google Apps Script receiver in `tools/lead-sheet.gs`, Python with Pillow for image prep scripts in `tools/`
 - **Package manager**: pnpm
 - **Storage**: Convex is the truth. The browser keeps a device copy in `localStorage` (keys start with `dhirise.` and end with a version, e.g. `dhirise.session.v1`, `dhirise.result.v1`); the list is in `src/lib/local.ts`.
 

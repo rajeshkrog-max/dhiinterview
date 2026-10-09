@@ -21,7 +21,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 19 | Live smoke test and fixes | Prototype pass | planned |
 | 20 | Site layout, root address and 404 | Prototype pass | planned |
 | 21 | About page | Prototype pass | planned |
-| 18 | Privacy page and grievance contact | Prototype pass | planned |
+| 18 | Privacy page and grievance contact | Prototype pass | in-progress |
 | 24 | Leaderboard on every screen size | Prototype pass | planned |
 | 4 | Real sign in and saved check | Slice 1 | in-progress |
 | 5 | Leads and feedback saved | Slice 2 | in-progress |
@@ -29,8 +29,9 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 7 | Sheet copy | Slice 3 | in-progress |
 | 8 | Product analytics with consent | Slice 3 | planned |
 | 9 | Error monitoring and alerts | Slice 3 | planned |
-| 22 | Report copy saved when seen, with Download | Report copies | planned |
+| 22 | Report copy saved when seen, with Download | Report copies | in-progress |
 | 23 | Team link to the saved report, in the admin view and the Sheet | Report copies | planned |
+| 25 | Privacy notice names Cloudflare Browser Run | Report copies | planned |
 | 10 | Live referral codes and tracking | Slice 4 | planned |
 | 11 | Challenge join with parent consent | Slice 4 | planned |
 | 12 | Live leaderboard | Slice 4 | planned |
@@ -82,7 +83,7 @@ Added 2026-10-09. The site answers on the live address today (`/` already redire
 ### 19. Live smoke test and fixes · Alpha
 Walk the whole student flow on the live address (sign in, form, 18 questions, done, who, report, challenge, leaderboard, terms) as a fresh student and on a second device, write down everything that fails, and fix it. Also closes what rows 4, 5 and 7 left open: the production check of AC-14 and their unticked test boxes.
 **Done when:** a fresh student can go from the landing page to the report on the live address with no error, a second device resumes at the right place, a lead and a feedback note reach the Sheet, and the open production check from spec 0002 is ticked.
-- [ ] Check the live site and list what fails: `/check verify live prototype`
+- [x] Check the live site and list what fails: `/check verify live prototype` (2026-10-09: found the live site was an old build, deployed it; then sign in, 18 answers, result, report, lead and feedback all reached production and the Sheet. Second device resume was confirmed by you, not recorded by the check. Staging alias of AC-14 not checked.)
 - [ ] Fix what fails: `/debug`
 
 ### 20. Site layout, root address and 404 · needs a decision
@@ -95,10 +96,11 @@ A short About page in the shared frame: what DhiRise is, who it is for, and who 
 **Done when:** the About page opens at its own address in the shared frame, is linked from the landing page footer, and reads well on phone and desktop.
 - [ ] Build it: `/develop about page` (after row 20)
 
-### 18. Privacy page and grievance contact · from spec 0001
+### 18. Privacy page and grievance contact · in-progress · from spec 0001
 A plain language privacy page for students and parents, written from the consent text in `BACKEND.md`, with a named grievance contact, in the shared frame from row 20. Google's sign in consent screen needs its address to leave test mode (which caps users at 100). (basis: India's data protection law, a named practice)
 **Done when:** the page is live on the site's own address in the shared frame, is linked from the landing consent and from Google's consent screen, and says where student data is stored and who to contact.
-- [ ] Build it: `/develop privacy page and grievance contact` (after row 20)
+- [x] Build it: `/develop privacy page and grievance contact` (built 2026-10-09 as a standalone page like the terms page, on an assumed spec because row 20's shared frame is not decided yet: [0007](../specs/0007-privacy-page-and-grievance-contact.md), owes ratification. Still owed from you: a named grievance person, the page's address in Google's consent screen, and a decision on what to say about where data is stored)
+Code in `src/pages/dhiinterviews/privacy.astro`, the links in `landing.astro` and `done.astro`, `tests/privacy-page.test.js`, `e2e/privacy.spec.ts`
 
 ### 24. Leaderboard on every screen size · Beta
 The leaderboard only has a phone layout today (no width breakpoints in `leaderboard.css`). Make the podium, the list and the sticky "you" card work on phone, tablet and desktop. Stays on demo rows.
@@ -182,15 +184,31 @@ Know when sign in, saving or the sheet copy breaks, before students tell you.
 ## Report copies: saved when seen, linked for the team
 Added 2026-10-09. Needs row 6 (saved results with a report version) first. Row 22 is the same work as milestone 4 of row 4 (spec 0002, AC-13), now with its own row so it is not lost.
 
-### 22. Report copy saved when seen, with Download · needs a decision
-When a student opens their report, a frozen copy of it is saved once, looking exactly as the student saw it (replaced only when a newer report version exists). The report gets a Download button that gives the same report as a PDF. Saving never blocks or slows the report.
-**Done when:** opening the report saves one copy even if the student never taps Download; reopening does not make duplicates; the Download button gives a PDF of that same report; a failed save never stops the report from showing; only the student and signed in team members can fetch a copy.
-- [ ] Design it (spec): `/architect report copy saved when seen, with download` (builds on spec [0002](../specs/0002-google-sign-in-and-saved-check/index.md) AC-13)
+### 22. Report copy saved when seen, with Download · in-progress
+When a student opens their report, the server makes one PDF copy of it with Cloudflare Browser Run, from our own report page and the saved data (nothing is uploaded from the phone), and keeps it. The copy looks as the student saw it, except the parts that come from sensitive flags (replaced only when a newer report version exists). The report gets a Download button that gives that same PDF. Saving never blocks or slows the report.
+**Done when:** opening the report saves one copy even if the student never taps Download; reopening does not make duplicates; the Download button gives a PDF of that same report; a failed save never stops the report from showing; only the student can fetch a copy (the team gets access in row 23).
+- [x] Design it (spec): `/architect report copy saved when seen, with download` (builds on spec [0002](../specs/0002-google-sign-in-and-saved-check/index.md) AC-13, which this replaces)
+- [x] Build it: `/develop report copy saved when seen, with download`
+  - [x] M1 The thin thread: `reportFiles` table, `request` and `status`, the signed token, the payload and file routes with their Pages forwarders, a bare render page, and the job proving Browser Run can open our live page (AC-1, 2, 4, 8, 9, 10, 11) _proven live on 2026-10-09 (dev plus a Pages preview, no WAF rule needed)_
+  - [x] M2 The real report on paper: the print mode of `report-student.js`, the Founding Card as an image, print styles (AC-5, 13) _checked on a real Browser Run copy on 2026-10-09_
+  - [x] M3 The Download button: `DhiSession.reportCopy`, the request after the report draws, button states, the print fallback (AC-1, 6, 7)
+  - [x] M4 Safety and clean up: retries, lease, the minute job and daily budget, replace on a newer version, the sweep, tests, pointers in specs 0001, 0002 and 0005 (AC-3, 7, 10, 11, 12, 13)
+- [ ] Verify it: `/check verify report copy saved when seen, with download`
+- [x] Test it: `/test report copy saved when seen, with download`
+- [ ] Review it (fresh model): `/check review report copy saved when seen, with download`
+- [ ] Document it: `/document report copy saved when seen, with download`
+Code in `convex/report*.ts`, `functions/api/files`, `functions/api/render`, `src/pages/dhiinterviews/report-render.astro`, `public/dhiinterviews/js/render-boot.js` and `report-download.js` · Spec [0006](../specs/0006-report-copy-saved-when-seen/index.md) · runs on the Cloudflare Workers Free plan for roughly 150 to 200 copies a day (one request every 10 seconds, 10 minutes of browser time a day), so a paid plan is needed for launch volume; needs three new Convex settings (see the spec's Follow up)
 
 ### 23. Team link to the saved report, in the admin view and the Sheet · needs a decision
 A private team page (named Google accounts only, as you chose) lists students whose report was seen, each with a link that opens the frozen copy in the same look. The same link goes into the Sheet row for that student, filled in once the report is seen. This starts the team sign in that row 14 widens later.
 **Done when:** a signed in team member opens a student's saved report from the admin list and from the Sheet link; a signed out visitor or a non team account is refused; a student who has not seen their report shows an empty link; the Sheet link appears shortly after the report is first seen.
 - [ ] Design it (spec): `/architect team link to the saved report` (after rows 22, 7)
+
+### 25. Privacy notice names Cloudflare Browser Run · needs a decision · from spec 0006
+The report copy (row 22) sends a student's report data to Cloudflare Browser Run to draw the PDF. Students, many under 18, and their parents should be told, in the consent text and the privacy page. Consent text is versioned, so this is a new text version; you supply or approve the wording.
+**Done when:** the consent text and the privacy page (row 18) name Cloudflare Browser Run as a service that handles report data, a new consent text version is live, and it ships before real students open the report copy.
+_Progress 2026-10-09: consent text v2 (v1 plus one line that names Cloudflare Browser Run and says report data passes through it to draw the PDF) is in `convex/consentText.ts`, tested and pushed to dev; v1 stays frozen for saved consents. Still to do: the privacy page (row 18) naming it, and shipping to production. The wording was approved in chat by the owner._
+- [ ] Design it (spec): `/architect privacy notice names Cloudflare Browser Run` (before row 22 goes live)
 
 ## Slice 4: the challenge goes live
 

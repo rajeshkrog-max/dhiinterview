@@ -1,0 +1,27 @@
+---
+// The page Cloudflare Browser Run opens to make the saved PDF copy of a report (spec 0006). Not linked from anywhere and
+// not for students: it works only with a short lived signed token in the address (#t=...), and draws the report in print
+// form from the student's saved data. It has no Guard, no sign in, no Convex client, no analytics, no leaves, no music, no
+// challenge scripts and no identity.js. js/render-boot.js does the work; see its header.
+---
+<!doctype html>
+<html lang="en" class="render">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>DhiRise · Report copy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Playfair+Display:wght@600;700&family=Mukta:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/report-student.css">
+</head>
+<body class="render">
+<main class="report" id="report" aria-label="Your report"></main>
+
+<script is:inline src="js/funnel-config.js"></script>
+<script is:inline src="js/engine/questions.js"></script>
+<script is:inline src="js/engine/reportText.js"></script>
+<script is:inline src="js/card-export.js"></script>
+<script is:inline src="js/render-boot.js"></script>
+</body>
+</html>

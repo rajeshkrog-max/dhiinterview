@@ -16,6 +16,12 @@ const app = defineApp({
     // Each deployment has its own pair, so a dev deployment can never write to the production Sheet.
     GOOGLE_SERVICE_ACCOUNT_KEY: v.optional(v.string()),
     SHEET_ID: v.optional(v.string()),
+    // The saved report PDF (spec 0006). All optional: a deployment without them still deploys, and the copy ends
+    // `failed` with `render_not_configured` while the report itself keeps working. Secrets are set per deployment.
+    CLOUDFLARE_ACCOUNT_ID: v.optional(v.string()),
+    CLOUDFLARE_API_TOKEN: v.optional(v.string()), // custom token with only "Browser Rendering - Edit"
+    REPORT_RENDER_SECRET: v.optional(v.string()), // signs the 2 minute render tokens; different on dev and production
+    REPORT_RENDER_BASE_URL: v.optional(v.string()), // the public site address Browser Run opens (never localhost)
   },
 });
 app.use(betterAuth);

@@ -8,4 +8,8 @@ const crons = cronJobs();
 crons.daily("purge abandoned sign in accounts", { hourUTC: 21, minuteUTC: 0 }, internal.purge.purgeAbandoned, {});
 crons.interval("copy leads and feedback to the Sheet", { minutes: 5 }, internal.sheetSync.runIfDue, {});
 crons.daily("queue Sheet rows whose content changed", { hourUTC: 20, minuteUTC: 30 }, internal.sheetSync.dailyCheck, { kind: "lead" });
+// The saved report PDF (spec 0006): the minute job restarts the copy job (retries, a job that died), and the daily sweep
+// deletes stored files no row holds.
+crons.interval("make due report copies", { minutes: 1 }, internal.reportMake.runIfDue, {});
+crons.daily("delete unattached report files", { hourUTC: 21, minuteUTC: 30 }, internal.reportCopy.sweep, {});
 export default crons;

@@ -5,3 +5,12 @@
   X-Content-Type-Options: nosniff
   Content-Security-Policy: frame-ancestors 'none'
   Referrer-Policy: strict-origin-when-cross-origin
+
+# The report copy render page (spec 0006): opened only by Cloudflare Browser Run with a signed token in the address fragment.
+/dhiinterviews/report-render
+  X-Robots-Tag: noindex
+  Cache-Control: private, no-store
+
+/dhiinterviews/report-render.html
+  X-Robots-Tag: noindex
+  Cache-Control: private, no-store

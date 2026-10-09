@@ -139,6 +139,34 @@ export default defineSchema({
     .index("by_kind_and_refId", ["kind", "refId"])
     .index("by_status_and_nextAttemptAt", ["status", "nextAttemptAt"]),
 
+  // The saved PDF copy of a student's report (spec 0006). One row per check, made by the server only (Cloudflare Browser
+  // Run draws our own render page); nothing is ever uploaded from a browser. `storageId` is never given to a browser:
+  // the owner downloads through GET /api/files/report. `lastError` is a short code, never student data.
+  reportFiles: defineTable({
+    studentId: v.id("students"),
+    checkId: v.id("checks"),
+    resultId: v.id("results"),
+    state: v.union(v.literal("queued"), v.literal("making"), v.literal("ready"), v.literal("failed")), // the latest job
+    wantedVersion: v.number(),
+    storageId: v.optional(v.id("_storage")), // the copy held (can exist while a newer one is made)
+    size: v.optional(v.number()),
+    sha256: v.optional(v.string()),
+    reportVersion: v.optional(v.number()), // the version of the held copy
+    attempts: v.number(), // counted tries in this round
+    nextAttemptAt: v.optional(v.number()),
+    leaseUntil: v.optional(v.number()),
+    lastAttemptAt: v.optional(v.number()),
+    failedAt: v.optional(v.number()),
+    lastError: v.optional(v.string()),
+    createdAt: v.number(),
+    readyAt: v.optional(v.number()),
+    replacedAt: v.optional(v.number()),
+  })
+    .index("by_checkId", ["checkId"])
+    .index("by_studentId", ["studentId"]) // for erasing a student's data (scope row 15)
+    .index("by_storageId", ["storageId"])
+    .index("by_state_and_nextAttemptAt", ["state", "nextAttemptAt"]),
+
   // One row: the one at a time lease of the copy job, and the numbers the Sync status tab shows.
   sheetStatus: defineTable({
     lastRunAt: v.number(),

@@ -19,6 +19,18 @@ export const flagsValidator = v.object({
   lowConsistency: v.boolean(),
 });
 
+// Every flag set to false. For a result that goes somewhere it must never carry a flag: the data the saved report PDF is drawn
+// from (spec 0006). It lives here because this file is the only one allowed to name a flag (convex/results.test.ts).
+export const NO_FLAGS = {
+  keepsFeelingsInside: false,
+  lowCareerClarity: false,
+  heavyExpectations: false,
+  selfDoubt: false,
+  sleepStrain: false,
+  lowMood: false,
+  lowConsistency: false,
+};
+
 // What the signed in student receives. `detail` is made by the server from fixed code, never from user input.
 export const resultView = v.object({
   engineVersion: v.number(),
