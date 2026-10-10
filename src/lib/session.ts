@@ -8,13 +8,17 @@
 //  - sign in, sign out ("Not you"), creating the profile, finishing, the one time import of old answers
 //  - the saved result (spec 0005): `result()` gives the pages the old flat result object, from the device copy,
 //    else from the server, and shows a kind "try again" state (never a redirect to landing) when it cannot be had
+//  - the profile picture (spec 0011): `picture()` is the student's own same origin picture path, kept in memory only (never in
+//    localStorage); the bridge calls `avatars.ensure` once per page load when the server says a fetch may be due, and re-reads `me`
+//    once, a few seconds later, so a first picture appears without a reload; `pictureControl()`, `removePicture()` and `restorePicture()`
+//    are the report page's own Remove / Use my Google picture row
 //
 // Page scripts are written as <script type="text/dhi-deferred" src="...">; this file starts them, in order,
 // once the guard has let the page through. Sign in itself goes through the site's own /api/auth/* address.
 import { ConvexClient } from "convex/browser";
 import { ConvexError } from "convex/values";
 import { api } from "../../convex/_generated/api";
-import { CONSENT_TEXTS, CONSENT_VERSION, LEAD_CONSENT_VERSION, consentHash } from "../../convex/consentText";
+import { CONSENT_LINES, CONSENT_TEXTS, CONSENT_VERSION, LEAD_CONSENT_VERSION, PICTURE_LINE_MARK, consentHash } from "../../convex/consentText";
 import { MIN_NOTE_CHARS, isGenuine } from "../../convex/feedbackRules";
 import { authClient, createConvexClient } from "./auth-client";
 import { flatten, isFlat, startResult, type FlatResult, type ResultView } from "./result";
@@ -49,6 +53,12 @@ type MeAnswer =
         feedbackSavedAt: number | null;
         answers: Record<string, string>;
       };
+      picture: { url: string } | null;
+      pictureDue: boolean;
+      pictureRecheckAt: number | null;
+      pictureNotice: "none" | "ask" | "later";
+      pictureAskAt: number | null;
+      pictureRemoved: boolean;
     };
 
 // `unknown` = signed in as far as we can tell, but the server could not be reached (offline).
@@ -91,6 +101,13 @@ let flushing: Promise<void> | null = null;
 let failures = 0;
 let retryTimer = 0;
 const listeners = new Set<(s: SyncStatus, detail?: number) => void>();
+
+// The profile picture (spec 0011). The path (`/api/avatar/<key>`) lives in memory only, for this page load.
+const PICTURE_RECHECK_WAIT_MS = 6000; // after an `ensure` that scheduled a fetch, read `me` once more after this long
+let picturePath: string | null = null;
+let lastMe: Extract<MeAnswer, { state: "ready" }> | null = null;
+let pictureEnsured = false;
+const pictureListeners = new Set<(url: string | null) => void>();
 
 // ---------- small helpers ----------
 
@@ -172,6 +189,8 @@ function applyMe(me: MeAnswer, uid: string): void {
     };
     writeJSON(SESSION_KEY, cache);
     state = "ready";
+    lastMe = me;
+    setPicture(me.picture?.url ?? null);
   } else if (me.state === "needsProfile") {
     googleName = me.googleName;
     remove(SESSION_KEY);
@@ -221,6 +240,147 @@ function verify(): Promise<SessionState> {
 function resetVerification(): void {
   verified = null;
   state = "loading";
+  lastMe = null;
+  pictureEnsured = false;
+  setPicture(null);
+}
+
+// ---------- the profile picture (spec 0011) ----------
+
+// The browser side of the switch: on unless the deploy time config says `profilePicture: false` (owner decision: on by default).
+const pictureEnabled = (): boolean => (window as unknown as { DHI_FUNNEL?: { profilePicture?: unknown } }).DHI_FUNNEL?.profilePicture !== false;
+
+function setPicture(url: string | null): void {
+  if (url === picturePath) return;
+  picturePath = url;
+  pictureListeners.forEach((fn) => fn(pictureEnabled() ? url : null));
+}
+
+// Only a same origin /api/avatar/ path is ever handed to a page; anything else (it should never happen) is dropped.
+const picture = (): string | null => (pictureEnabled() && picturePath && picturePath.startsWith("/api/avatar/") ? picturePath : null);
+
+// The one time notice (spec 0011, AC-2): `ask` for a student who has not agreed to the picture line. After Not now it is `later`, and
+// comes back as `ask` once the server's 14 day mark has passed on this device's clock. Never during the check (the pages decide where).
+function pictureNotice(): "ask" | "none" {
+  const me = lastMe;
+  if (!me || !pictureEnabled()) return "none";
+  if (me.pictureNotice === "ask") return "ask";
+  return me.pictureNotice === "later" && me.pictureAskAt !== null && Date.now() >= me.pictureAskAt ? "ask" : "none";
+}
+
+type AcceptResult = { ok: true } | { ok: false; code: "needs_guardian" | "consent_text_changed" | "off" | "offline" };
+
+// The student agreed: the server records the new consent, then this reads `me` again so the picture starts at once.
+async function acceptPicture(guardianTick: boolean): Promise<AcceptResult> {
+  const c = await getClient();
+  if (!c) return { ok: false, code: "offline" };
+  try {
+    const hash = await consentHash(CONSENT_TEXTS[CONSENT_VERSION]);
+    const res = await withTimeout(c.mutation(api.students.acceptPicture, { notice: { version: CONSENT_VERSION, hash }, guardianTick }), 10000);
+    if (!res.ok) return res;
+    const me = (await withTimeout(c.query(api.students.me, {}), 10000)) as MeAnswer;
+    if (me.state === "ready") {
+      lastMe = me;
+      pictureEnsured = false;
+      setPicture(me.picture?.url ?? null);
+      void ensurePicture();
+    }
+    return { ok: true };
+  } catch {
+    return { ok: false, code: "offline" };
+  }
+}
+
+// Not now: initials stay, and the notice is asked again after 14 days.
+async function declinePicture(): Promise<void> {
+  const c = await getClient();
+  if (lastMe) lastMe = { ...lastMe, pictureNotice: "later", pictureAskAt: Date.now() + 14 * 24 * 60 * 60 * 1000 }; // this page load stops asking at once
+  if (!c) return;
+  try {
+    await withTimeout(c.mutation(api.students.declinePicture, {}), 10000);
+  } catch {
+    /* the server will ask again; nothing to tell the student */
+  }
+}
+
+// Once per page load, and only when the server says a fetch may be due: now (`pictureDue`) or because the weekly check has come
+// round (`pictureRecheckAt`, compared with this device's clock; the server decides again). A scheduled fetch is followed by one
+// more read of `me` a few seconds later, so the first picture shows without a reload.
+async function ensurePicture(): Promise<void> {
+  const me = lastMe;
+  if (pictureEnsured || !me || !pictureEnabled()) return;
+  const weekly = me.pictureRecheckAt !== null && Date.now() >= me.pictureRecheckAt;
+  if (!me.pictureDue && !weekly) return;
+  pictureEnsured = true;
+  try {
+    const c = await getClient();
+    if (!c) return;
+    const res = await withTimeout(c.mutation(api.avatars.ensure, {}), 10000);
+    if (res.scheduled) void rereadPictureLater();
+  } catch {
+    /* the same: never an error on screen because of a picture */
+  }
+}
+
+// One more read of `me` a few seconds after a fetch was scheduled, so the picture shows without a reload. Resolves once it has read.
+function rereadPictureLater(): Promise<void> {
+  return new Promise<void>((resolve) => {
+    window.setTimeout(() => {
+      void getClient()
+        .then(async (client2) => {
+          if (!client2) return;
+          const again = (await withTimeout(client2.query(api.students.me, {}), 10000)) as MeAnswer;
+          if (again.state === "ready") {
+            lastMe = again;
+            setPicture(again.picture?.url ?? null);
+          }
+        })
+        .catch(() => {
+          /* a picture is a nicety: the initials stay */
+        })
+        .then(resolve);
+    }, PICTURE_RECHECK_WAIT_MS);
+  });
+}
+
+// The report page's picture row (spec 0011, AC-9): `remove` while a picture is shown, `restore` after the student's own Remove,
+// otherwise `none` (the feature is off, nothing is stored, the student has not agreed, or the team blocked it).
+function pictureControl(): "remove" | "restore" | "none" {
+  const me = lastMe;
+  if (!me || !pictureEnabled()) return "none";
+  if (me.pictureRemoved) return "restore";
+  return picture() ? "remove" : "none";
+}
+
+// Remove: the server deletes the stored file; this page then shows initials at once. The picture can stay in browser copies for up to an hour.
+async function removePicture(): Promise<{ ok: true } | { ok: false; code: "offline" }> {
+  const c = await getClient();
+  if (!c) return { ok: false, code: "offline" };
+  try {
+    await withTimeout(c.mutation(api.avatars.remove, {}), 10000);
+    if (lastMe) lastMe = { ...lastMe, picture: null, pictureRemoved: true };
+    setPicture(null);
+    return { ok: true };
+  } catch {
+    return { ok: false, code: "offline" };
+  }
+}
+
+// Use my Google picture: the server clears the removal, makes a new key and fetches again; the picture shows when it lands.
+async function restorePicture(): Promise<{ ok: true } | { ok: false; code: "needs_consent" | "blocked" | "off" | "offline" }> {
+  const c = await getClient();
+  if (!c) return { ok: false, code: "offline" };
+  try {
+    const res = await withTimeout(c.mutation(api.avatars.restore, {}), 10000);
+    if (!res.ok) return res;
+    if (lastMe) lastMe = { ...lastMe, pictureRemoved: false };
+    // Nothing was scheduled (a limit held it back, or the account has no photo): there is nothing to wait for, so answer at once and
+    // let the page say "not yet". The next page load asks again.
+    if (res.scheduled) await rereadPictureLater();
+    return { ok: true };
+  } catch {
+    return { ok: false, code: "offline" };
+  }
 }
 
 // ---------- the offline queue (rules: spec 0002, Feature design) ----------
@@ -792,6 +952,10 @@ async function runGuard(): Promise<void> {
   if (mode === "landing") {
     // landing paints itself once `ready()` answers (js/gate.js), then calls reveal()
     await startPageScripts();
+    // A returning student opens the app here: the first picture and the weekly check start from this page too (spec 0011, AC-6).
+    void verify().then((final) => {
+      if (final === "ready") void ensurePicture();
+    });
     return;
   }
 
@@ -814,6 +978,7 @@ async function runGuard(): Promise<void> {
   void verify().then((final) => {
     if (final === "signedOut" || final === "needsProfile") location.replace(LANDING);
     else if (final === "ready" && cache && cache.owner !== authUserId) location.reload();
+    else if (final === "ready") void ensurePicture(); // after the page scripts, so DHI_FUNNEL (funnel-config.js) is loaded
   });
 }
 
@@ -834,7 +999,12 @@ export const DhiSession = {
   },
   /** Resolves with the real state once the server has answered (or could not be reached). Never rejects. */
   ready: () => verify(),
-  consent: { version: CONSENT_VERSION },
+  consent: {
+    version: CONSENT_VERSION,
+    /** The lines of the current notice, and the one that names the picture, for the picture notice (spec 0011). */
+    lines: CONSENT_LINES,
+    pictureLine: CONSENT_LINES.find((l) => l.includes(PICTURE_LINE_MARK)) ?? "",
+  },
   isBlockedBrowser,
   signInWithGoogle,
   testSignIn,
@@ -856,6 +1026,20 @@ export const DhiSession = {
   result,
   /** The saved PDF copy of the report (spec 0006): `request` is fire and forget, `status` and `download` are for the Download button. */
   reportCopy: { request: copyRequest, status: copyStatus, download: copyDownload },
+  /** The profile picture (spec 0011): the student's own same origin picture path, or null (initials). Memory only. */
+  picture,
+  /** True when the deploy time switch `DHI_FUNNEL.profilePicture` is on; pages draw the circle (picture or initials) only then. */
+  pictureEnabled,
+  /** `ask` when the one time picture notice should be shown now, otherwise `none` (spec 0011, AC-2). */
+  pictureNotice,
+  acceptPicture,
+  declinePicture,
+  /** The report page's picture row (spec 0011, AC-9): which control to show, and the two actions. */
+  pictureControl,
+  removePicture,
+  restorePicture,
+  /** Called when the picture path becomes known or changes after the page has drawn (a first fetch landed, or Remove). */
+  onPicture: (fn: (url: string | null) => void) => pictureListeners.add(fn),
   hasCache: () => readCache() !== null,
   /** The cached student, for "Continue as" when the server cannot be reached. */
   cachedName: () => readCache()?.profile.name ?? null,

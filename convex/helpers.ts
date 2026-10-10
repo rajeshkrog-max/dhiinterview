@@ -19,13 +19,20 @@ export function fail(code: string): never {
 
 export type Reader = QueryCtx | MutationCtx;
 
-export type SignedInUser = { authUserId: string; email: string; name: string; emailVerified: boolean };
+// `image` is the Google picture address from the account. It is read only by the picture code (spec 0011) and never returned to a browser.
+export type SignedInUser = { authUserId: string; email: string; name: string; emailVerified: boolean; image: string | null };
 
 // The Better Auth user for this session, or null.
 export async function getSignedInUser(ctx: Reader): Promise<SignedInUser | null> {
   const user = await authComponent.safeGetAuthUser(ctx);
   if (!user) return null;
-  return { authUserId: user._id, email: user.email.trim().toLowerCase(), name: user.name, emailVerified: user.emailVerified };
+  return {
+    authUserId: user._id,
+    email: user.email.trim().toLowerCase(),
+    name: user.name,
+    emailVerified: user.emailVerified,
+    image: user.image ?? null,
+  };
 }
 
 export async function requireSignedIn(ctx: Reader): Promise<SignedInUser> {

@@ -99,6 +99,16 @@
     dots.appendChild(document.createElement("i"));
   });
   if (name) $("who").textContent = name;
+  /* spec 0011: the student's own circle (picture, or initials) at the left of the top bar, next to their name; nothing when the feature is off */
+  var pic = window.DhiAvatar ? DhiAvatar.mine({ size: 40, name: name }) : null;
+  if (pic) {
+    var wrap = document.createElement("span");
+    wrap.className = "who-wrap";
+    $("who").parentNode.insertBefore(wrap, $("who"));
+    wrap.appendChild(pic);
+    wrap.appendChild($("who"));
+    $("who").parentNode.classList.add("topbar--pic");
+  }
 
   /* where are we */
   var index = 0;

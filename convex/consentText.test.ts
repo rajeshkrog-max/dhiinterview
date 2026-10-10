@@ -9,6 +9,10 @@ import {
   CONSENT_VERSION,
   CONSENT_VERSION_V1,
   CONSENT_VERSION_V2,
+  CONSENT_VERSION_V3,
+  CONSENT_LINES_V3,
+  PICTURE_CONSENT_VERSIONS,
+  PICTURE_LINE_MARK,
   consentHash,
 } from "./consentText";
 
@@ -50,15 +54,54 @@ describe("consent text", () => {
     expect(CONSENT_TEXTS[CONSENT_VERSION_V2]).toContain("Cloudflare Browser Run");
   });
 
-  test("covers spec 0008 AC-11: the current version is v3, is v2 plus exactly one line, and says the team can open a report and each open is recorded", () => {
-    expect(CONSENT_VERSION).toBe("v3");
-    expect(CONSENT_KINDS[CONSENT_VERSION]).toBe("landing");
-    expect(CONSENT_LINES).toHaveLength(CONSENT_LINES_V2.length + 1);
-    expect(CONSENT_LINES.filter((l) => !CONSENT_LINES_V2.includes(l))).toEqual([
+  test("covers spec 0008 AC-11: v3 is frozen (its fingerprint never changes), is v2 plus exactly one line, and says the team can open a report and each open is recorded", async () => {
+    expect(CONSENT_VERSION_V3).toBe("v3");
+    expect(await consentHash(CONSENT_TEXTS[CONSENT_VERSION_V3])).toBe("b14f67e8b5006d18dcd5cca65db37c86bc9d07479e2f670bb6eb667317d476d7");
+    expect(CONSENT_KINDS[CONSENT_VERSION_V3]).toBe("landing");
+    expect(CONSENT_LINES_V3).toHaveLength(CONSENT_LINES_V2.length + 1);
+    expect(CONSENT_LINES_V3.filter((l) => !CONSENT_LINES_V2.includes(l))).toEqual([
       "Named members of the DhiRise team can open your report to help you. Each time one does, we record who opened it and when.",
     ]);
-    expect(CONSENT_LINES.filter((l) => CONSENT_LINES_V2.includes(l))).toEqual([...CONSENT_LINES_V2]); // every v2 line, same order
-    expect(CONSENT_TEXTS[CONSENT_VERSION]).toContain("Cloudflare Browser Run");
-    expect(CONSENT_LINES.at(-1)).toMatch(/^By tapping I agree/); // the agree line stays last
+    expect(CONSENT_LINES_V3.filter((l) => CONSENT_LINES_V2.includes(l))).toEqual([...CONSENT_LINES_V2]); // every v2 line, same order
+    expect(CONSENT_TEXTS[CONSENT_VERSION_V3]).toContain("Cloudflare Browser Run");
+    expect(CONSENT_LINES_V3.at(-1)).toMatch(/^By tapping I agree/); // the agree line stays last
+  });
+
+  test("covers spec 0011 AC-2: the current version is v4, is v3 plus exactly one line placed before the team line, and the agree line stays last", () => {
+    expect(CONSENT_VERSION).toBe("v4");
+    expect(CONSENT_KINDS[CONSENT_VERSION]).toBe("landing");
+    expect(CONSENT_LINES).toHaveLength(CONSENT_LINES_V3.length + 1);
+    const added = CONSENT_LINES.filter((l) => !CONSENT_LINES_V3.includes(l));
+    expect(added).toHaveLength(1);
+    expect(CONSENT_LINES.filter((l) => CONSENT_LINES_V3.includes(l))).toEqual([...CONSENT_LINES_V3]); // every v3 line, same order
+    expect(CONSENT_LINES.indexOf(added[0])).toBe(CONSENT_LINES.findIndex((l) => l.startsWith("Named members of the DhiRise team")) - 1);
+    expect(CONSENT_TEXTS[CONSENT_VERSION]).toBe(CONSENT_LINES.join("\n\n"));
+    expect(CONSENT_LINES.at(-1)).toMatch(/^By tapping I agree/);
+  });
+
+  test("covers spec 0011 AC-15: every version in PICTURE_CONSENT_VERSIONS names the saved picture and where it shows, and no older version is in the list", () => {
+    expect(PICTURE_CONSENT_VERSIONS).toContain(CONSENT_VERSION); // the current text always names the picture
+    for (const version of PICTURE_CONSENT_VERSIONS) {
+      const text = CONSENT_TEXTS[version];
+      expect(text, version).toContain(PICTURE_LINE_MARK);
+      expect(text, version).toMatch(/next to your name/);
+      expect(text, version).toMatch(/leaderboard/);
+      expect(text, version).toMatch(/report link you share/);
+      expect(text, version).toMatch(/remove it at any time/);
+      expect(CONSENT_KINDS[version], version).toBe("landing");
+    }
+    for (const old of [CONSENT_VERSION_V1, CONSENT_VERSION_V2, CONSENT_VERSION_V3]) {
+      expect(PICTURE_CONSENT_VERSIONS).not.toContain(old);
+      expect(CONSENT_TEXTS[old]).not.toContain(PICTURE_LINE_MARK); // the frozen texts never mention it
+    }
+  });
+
+  test("covers spec 0011 AC-15: a later landing version fails here unless it keeps the picture line and is listed", () => {
+    // A landing version after v3 must carry the picture line. Any new key in CONSENT_TEXTS of kind landing that is not v1 to v3 has to be listed.
+    for (const [version, kind] of Object.entries(CONSENT_KINDS)) {
+      if (kind !== "landing" || [CONSENT_VERSION_V1, CONSENT_VERSION_V2, CONSENT_VERSION_V3].includes(version)) continue;
+      expect(CONSENT_TEXTS[version], version).toContain(PICTURE_LINE_MARK);
+      expect(PICTURE_CONSENT_VERSIONS, version).toContain(version);
+    }
   });
 });

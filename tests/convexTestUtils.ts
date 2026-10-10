@@ -25,18 +25,18 @@ type Created = { _id: string };
 // Makes a Better Auth user and a live session for it. Returns a handle that calls functions as that student.
 export async function signInAs(
   t: Backend,
-  opts: { email?: string; name?: string; emailVerified?: boolean; createdAt?: number; sessionUpdatedAt?: number } = {},
+  opts: { email?: string; name?: string; image?: string; emailVerified?: boolean; createdAt?: number; sessionUpdatedAt?: number; sessionDays?: number } = {},
 ) {
   const email = opts.email ?? `student${Math.random().toString(36).slice(2, 8)}@example.com`;
   const createdAt = opts.createdAt ?? Date.now();
   const { userId, sessionId } = await t.run(async (ctx) => {
     const user = (await ctx.runMutation(components.betterAuth.adapter.create, {
-      input: { model: "user", data: { name: opts.name ?? "Test Student", email, emailVerified: opts.emailVerified ?? true, createdAt, updatedAt: createdAt } },
+      input: { model: "user", data: { name: opts.name ?? "Test Student", email, emailVerified: opts.emailVerified ?? true, createdAt, updatedAt: createdAt, ...(opts.image ? { image: opts.image } : {}) } },
     })) as Created;
     const session = (await ctx.runMutation(components.betterAuth.adapter.create, {
       input: {
         model: "session",
-        data: { userId: user._id, token: "tok" + user._id, expiresAt: Date.now() + 7 * 86400000, createdAt, updatedAt: opts.sessionUpdatedAt ?? createdAt },
+        data: { userId: user._id, token: "tok" + user._id, expiresAt: Date.now() + (opts.sessionDays ?? 7) * 86400000, createdAt, updatedAt: opts.sessionUpdatedAt ?? createdAt },
       },
     })) as Created;
     return { userId: user._id, sessionId: session._id };

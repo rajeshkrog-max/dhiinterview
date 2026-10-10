@@ -2,7 +2,9 @@
 // HTTP routes and the clean up. Browser Run is a pretend `fetch`. Each test names the criterion it covers.
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api, internal } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import type { ActionCtx } from "./_generated/server";
+import { newKey } from "./avatarCore";
 import { rateLimiter } from "./limits";
 import { signRenderToken } from "./reportCore";
 import { runOneJob, type MakeConfig } from "./reportMakeCore";
@@ -385,7 +387,7 @@ describe("the render payload and the two HTTP routes", () => {
     const row = await onlyRow(t);
     const data = await t.query(internal.reportCopy.payload, { studentId: row.studentId, checkId: row.checkId });
     expect(data).not.toBeNull();
-    expect(data!.profile).toEqual({ name: "Asha", class: "College" });
+    expect(data!.profile).toEqual({ name: "Asha", class: "College", avatar: null });
     expect(data!.wantedVersion).toBe(REPORT_VERSION);
     expect(data!.result.flags).toEqual({
       keepsFeelingsInside: false,
@@ -495,9 +497,9 @@ describe("what the code can and cannot do", () => {
     ([name]) => !name.endsWith(".test.ts"),
   );
 
-  test("covers AC-4: there is no upload route, and the only code that stores a file is the job that has Browser Run's reply", () => {
+  test("covers AC-4: there is no upload route, and the only code that stores a file is the job that has Browser Run's reply (and, spec 0011, the profile picture sync, which stores what Google returned)", () => {
     const storing = sources.filter(([, text]) => /storage\.store\(|generateUploadUrl|storage\.generate/.test(text)).map(([name]) => name);
-    expect(storing).toEqual(["./reportMakeCore.ts"]);
+    expect(storing).toEqual(["./avatars.ts", "./reportMakeCore.ts"]);
     const http = sources.find(([name]) => name === "./http.ts")![1];
     const routes = [...http.matchAll(/path:\s*"([^"]+)",\s*method:\s*"([A-Z]+)"/g)].map((m) => `${m[2]} ${m[1]}`);
     // every route is a GET; the two /api/team routes are the team link to the saved report (spec 0008), which stores and uploads nothing
@@ -517,5 +519,96 @@ describe("what the code can and cannot do", () => {
       const head = copy.slice(start, copy.indexOf("returns:", start));
       expect(head).toMatch(/args:\s*\{\}/);
     }
+  });
+});
+
+describe("the picture in the render payload (spec 0011, AC-4, AC-17)", () => {
+  afterEach(() => {
+    delete process.env.PROFILE_PICTURE_ENABLED;
+    delete process.env.PICTURE_CONSENT_REQUIRED;
+  });
+
+  // A stored picture for a student, the way avatars.apply leaves the row.
+  const seedPicture = (t: Backend, studentId: Id<"students">, over: Record<string, unknown> = {}) =>
+    t.run(async (ctx) => {
+      const storageId = await ctx.storage.store(new Blob([new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 1, 2])], { type: "image/jpeg" }));
+      const key = newKey();
+      const id = await ctx.db.insert("avatars", {
+        studentId,
+        key,
+        storageId,
+        contentType: "image/jpeg",
+        size: 6,
+        sha256: "abc",
+        sourceUrl: "https://lh3.googleusercontent.com/a/private-address",
+        etag: '"private-etag"',
+        checkedAt: Date.now(),
+        updatedAt: Date.now(),
+        ...over,
+      });
+      return { key, id, storageId };
+    });
+  const payloadOf = async (t: Backend) => {
+    const row = await onlyRow(t);
+    return await t.query(internal.reportCopy.payload, { studentId: row.studentId, checkId: row.checkId });
+  };
+
+  test("covers AC-4: a student with a stored picture gets its same origin path in profile.avatar, and no Google address, storage id or ETag", async () => {
+    const t = makeBackend();
+    await asked(t, { name: "Asha Rao" });
+    const { key } = await seedPicture(t, (await onlyRow(t)).studentId);
+    const data = await payloadOf(t);
+    expect(data!.profile).toEqual({ name: "Asha", class: "College", avatar: `/api/avatar/${key}` });
+    const text = JSON.stringify(data);
+    expect(text).not.toMatch(/googleusercontent|private-address|private-etag|storageId|sourceUrl|sha256/);
+  });
+
+  test("covers AC-4: no picture, a removed one, a blocked one, or the feature switched off all give avatar null", async () => {
+    const t = makeBackend();
+    await asked(t);
+    const studentId = (await onlyRow(t)).studentId;
+    expect((await payloadOf(t))!.profile.avatar).toBeNull(); // nothing fetched
+    const { id } = await seedPicture(t, studentId);
+    expect((await payloadOf(t))!.profile.avatar).not.toBeNull();
+    await t.run(async (ctx) => ctx.db.patch("avatars", id, { removedAt: Date.now() }));
+    expect((await payloadOf(t))!.profile.avatar).toBeNull();
+    await t.run(async (ctx) => ctx.db.patch("avatars", id, { removedAt: undefined, blockedAt: Date.now() }));
+    expect((await payloadOf(t))!.profile.avatar).toBeNull();
+    await t.run(async (ctx) => ctx.db.patch("avatars", id, { blockedAt: undefined }));
+    expect((await payloadOf(t))!.profile.avatar).not.toBeNull();
+    process.env.PROFILE_PICTURE_ENABLED = "false";
+    expect((await payloadOf(t))!.profile.avatar).toBeNull();
+  });
+
+  test("covers AC-1 and AC-4: in the asked mode a student who has not agreed to the picture line has no avatar in the copy", async () => {
+    const t = makeBackend();
+    await asked(t);
+    await seedPicture(t, (await onlyRow(t)).studentId);
+    await t.run(async (ctx) => {
+      const c = (await ctx.db.query("consents").first())!;
+      await ctx.db.patch("consents", c._id, { textVersion: "v3" });
+    });
+    expect((await payloadOf(t))!.profile.avatar).not.toBeNull(); // the default mode asks nobody
+    process.env.PICTURE_CONSENT_REQUIRED = "true";
+    expect((await payloadOf(t))!.profile.avatar).toBeNull();
+  });
+
+  test("covers AC-4: the picture is not report content, so REPORT_VERSION is untouched and the payload still names the wanted version", async () => {
+    const t = makeBackend();
+    await asked(t);
+    await seedPicture(t, (await onlyRow(t)).studentId);
+    expect((await payloadOf(t))!.wantedVersion).toBe(REPORT_VERSION);
+  });
+
+  test("covers AC-4: the payload route carries the path in its JSON for a valid token", async () => {
+    process.env.REPORT_RENDER_SECRET = SECRET;
+    const t = makeBackend();
+    await asked(t);
+    const row = await onlyRow(t);
+    const { key } = await seedPicture(t, row.studentId);
+    const token = await signRenderToken(SECRET, row.studentId, row.checkId, Date.now());
+    const res = await t.fetch("/api/render/payload", { headers: { "x-render-token": token } });
+    expect(res.status).toBe(200);
+    expect((await res.json()).profile.avatar).toBe(`/api/avatar/${key}`);
   });
 });

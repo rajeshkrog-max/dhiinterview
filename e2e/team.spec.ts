@@ -317,6 +317,113 @@ test.describe("the viewer (AC-3, AC-6, AC-7, AC-10)", () => {
     await expect(page.locator("#signOut")).toBeVisible();
     await page.click("#signOut");
     await expect(page.locator("#signIn")).toBeVisible();
-    await expect(page).toHaveURL(/team-report\.html\?s=abc123$/);
+    await expect(page).toHaveURL(/team-report(\.html)?\?s=abc123$/);
+  });
+});
+
+// ---------- the student's picture on the team pages (spec 0011, AC-4 and AC-13) ----------
+const AV1 = "/api/avatar/AbCdEfGhIjKlMnOpQrStUv";
+const TEAM_PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64");
+
+test.describe("the picture on the team pages (spec 0011)", () => {
+  test("covers AC-4: every list row has a 28px circle before the name: the picture when the server sends a path, the initial when it sends null", async ({ page }) => {
+    await signInAsTeam(page, LIST);
+    const asked: string[] = [];
+    await page.route("**/api/avatar/**", (route) => {
+      asked.push(new URL(route.request().url()).pathname);
+      return route.fulfill({ status: 200, contentType: "image/png", body: TEAM_PNG });
+    });
+    await page.route("**/api/team/list*", (route) =>
+      json(route, 200, { rows: [{ ...row(1, { name: "Asha Rao" }), avatar: AV1 }, { ...row(2, { name: "Kavya Nair" }), avatar: null }, row(3, { name: "Old Shape" })], next: null }),
+    );
+    await page.reload();
+    await expect(page.locator("#rows li")).toHaveCount(3);
+    const circles = page.locator("#rows li .dhi-avatar");
+    await expect(circles).toHaveCount(3);
+    await expect(circles.nth(0)).toHaveClass(/dhi-avatar--28\b.*dhi-avatar--photo/);
+    await expect(circles.nth(0).locator("img")).toHaveAttribute("src", AV1);
+    await expect(circles.nth(1)).toHaveText("K");
+    await expect(circles.nth(2)).toHaveText("O"); // an old answer with no avatar field at all is just initials
+    for (let i = 0; i < 3; i++) {
+      expect(await circles.nth(i).evaluate((e: HTMLElement) => Math.round(e.getBoundingClientRect().width))).toBe(28);
+      await expect(circles.nth(i)).toHaveAttribute("aria-hidden", "true"); // the name is written beside it
+    }
+    // the circle comes first, then the name and class, then Open
+    expect(await page.locator("#rows li").first().evaluate((li) => [...li.querySelector(".tt-lead")!.children].map((c) => c.className.split(" ")[0]))).toEqual(["dhi-avatar", "tt-who"]);
+    expect(new Set(asked)).toEqual(new Set([AV1]));
+    expect(await overflow(page)).toBeLessThanOrEqual(0);
+  });
+
+  test("covers AC-4 and AC-10: a list answer cannot make the page draw or contact another address: only /api/avatar/ paths become pictures", async ({ page }) => {
+    await signInAsTeam(page, LIST);
+    const hosts = new Set<string>();
+    page.on("request", (r) => hosts.add(new URL(r.url()).host));
+    await page.route("**/api/team/list*", (route) =>
+      json(route, 200, { rows: ["https://evil.example/x.png", "//evil.example/x.png", "javascript:alert(1)"].map((a, i) => ({ ...row(i + 1, { name: "Zed " + i }), avatar: a })), next: null }),
+    );
+    await page.reload();
+    await expect(page.locator("#rows li")).toHaveCount(3);
+    await expect(page.locator("#rows li .dhi-avatar img")).toHaveCount(0);
+    await expect(page.locator("#rows li .dhi-avatar").first()).toHaveText("Z");
+    expect([...hosts].some((h) => /evil/.test(h))).toBe(false);
+  });
+
+  test("covers AC-4: the viewer shows a 40px circle with the name and class above the PDF, from the one row the list gives for that code", async ({ page }) => {
+    await signInAsTeam(page, VIEW + "?s=abc123");
+    const asked: (string | null)[] = [];
+    await page.route("**/api/team/list*", (route) => {
+      asked.push(new URL(route.request().url()).searchParams.get("ref"));
+      return json(route, 200, { rows: [{ ...row(1, { name: "Asha Rao", class: "Class 10" }), avatar: AV1 }], next: null });
+    });
+    await page.route("**/api/avatar/**", (route) => route.fulfill({ status: 200, contentType: "image/png", body: TEAM_PNG }));
+    await page.route("**/api/team/report*", (route) => route.fulfill({ status: 200, headers: { "content-type": "application/pdf", "content-disposition": 'inline; filename="DhiRise-report-Asha.pdf"' }, body: PDF }));
+    await page.goto(VIEW + "?s=abc123");
+    await expect(page.locator("#viewerBox")).toBeVisible();
+    await expect(page.locator("#who")).toBeVisible();
+    await expect(page.locator("#who .tt-name")).toHaveText("Asha Rao");
+    await expect(page.locator("#who .tt-meta")).toHaveText("Class 10");
+    await expect(page.locator("#who .dhi-avatar")).toHaveClass(/dhi-avatar--40\b.*dhi-avatar--photo/);
+    await expect(page.locator("#who .dhi-avatar img")).toHaveAttribute("src", AV1);
+    expect(asked).toEqual(["abc123"]);
+    // the bar sits above the PDF
+    const [whoY, pdfY] = await Promise.all([page.locator("#who").boundingBox(), page.locator("#pdf").boundingBox()]);
+    expect(whoY!.y).toBeLessThan(pdfY!.y);
+    expect(await overflow(page)).toBeLessThanOrEqual(0);
+  });
+
+  test("covers AC-4: if the lookup for the header fails, the PDF still opens and no header is shown", async ({ page }) => {
+    await signInAsTeam(page, VIEW + "?s=abc123");
+    await page.route("**/api/team/list*", (route) => json(route, 500, {}));
+    await page.route("**/api/team/report*", (route) => route.fulfill({ status: 200, headers: { "content-type": "application/pdf", "content-disposition": 'inline; filename="DhiRise-report-Asha.pdf"' }, body: PDF }));
+    await page.goto(VIEW + "?s=abc123");
+    await expect(page.locator("#viewerBox")).toBeVisible();
+    await expect(page.locator("#pdf")).toHaveAttribute("src", /^blob:/);
+    await expect(page.locator("#who")).toBeHidden();
+  });
+
+  test("covers AC-4: a name in the header is plain text, never markup", async ({ page }) => {
+    await signInAsTeam(page, VIEW + "?s=abc123");
+    const evil = "<img src=x onerror=window.__pwn=1>";
+    await page.route("**/api/team/list*", (route) => json(route, 200, { rows: [{ ...row(1, { name: evil }), avatar: null }], next: null }));
+    await page.route("**/api/team/report*", (route) => route.fulfill({ status: 200, headers: { "content-type": "application/pdf" }, body: PDF }));
+    await page.goto(VIEW + "?s=abc123");
+    await expect(page.locator("#who .tt-name")).toHaveText(evil);
+    await expect(page.locator("#who img")).toHaveCount(0);
+    expect(await page.evaluate(() => (window as unknown as { __pwn?: number }).__pwn)).toBeUndefined();
+  });
+
+  test("covers AC-13: both team pages load the picture helper and its styles from this site, and nothing is refused (the strict policy itself needs the built site, see verify.md)", async ({ page }) => {
+    const problems: string[] = [];
+    page.on("console", (m) => /content security policy|refused to/i.test(m.text()) && problems.push(m.text()));
+    const loaded: string[] = [];
+    page.on("response", (r) => /avatar\.(js|css)$/.test(new URL(r.url()).pathname) && loaded.push(new URL(r.url()).pathname + " " + r.status()));
+    await signInAsTeam(page, LIST);
+    await page.route("**/api/team/list*", (route) => json(route, 200, { rows: [{ ...row(1), avatar: AV1 }], next: null }));
+    await page.route("**/api/avatar/**", (route) => route.fulfill({ status: 200, contentType: "image/png", body: TEAM_PNG }));
+    await page.reload();
+    await expect(page.locator("#rows li .dhi-avatar img")).toHaveCount(1);
+    expect(loaded.some((l) => l.startsWith("/dhiinterviews/js/avatar.js 2") || l.startsWith("/dhiinterviews/js/avatar.js 304"))).toBe(true);
+    expect(loaded.some((l) => l.startsWith("/dhiinterviews/css/avatar.css"))).toBe(true);
+    expect(problems).toEqual([]);
   });
 });

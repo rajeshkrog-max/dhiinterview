@@ -1,5 +1,6 @@
 ---
 import Guard from "../../components/Guard.astro";
+import { PRIZE_TITLE } from "../../lib/prize";
 ---
 <!doctype html>
 <html lang="en">
@@ -13,6 +14,7 @@ import Guard from "../../components/Guard.astro";
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Mukta:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="css/card.css">
 <link rel="stylesheet" href="css/leaderboard.css">
+<link rel="stylesheet" href="css/avatar.css">
 <Guard mode="protected" />
 </head>
 <body>
@@ -31,7 +33,7 @@ import Guard from "../../components/Guard.astro";
 
   <section class="lb-prize" aria-label="Prize">
     <img id="lbPrize" alt="" width="48" height="48">
-    <p>Top referrer wins a gift hamper worth ₹2,999</p>
+    <p>Top referrer wins a {PRIZE_TITLE.charAt(0).toLowerCase() + PRIZE_TITLE.slice(1)}</p>
   </section>
 
   <section class="lb-podium" id="lbPodium" aria-label="Top 3"></section>
@@ -48,6 +50,7 @@ import Guard from "../../components/Guard.astro";
 <script is:inline type="text/dhi-deferred" src="js/challenge-config.js"></script>
 <script is:inline type="text/dhi-deferred" src="js/api.js"></script>
 <script is:inline type="text/dhi-deferred" src="js/share-icons.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/avatar.js"></script>
 <script is:inline type="text/dhi-deferred" src="js/leaderboard.js"></script>
 </body>
 </html>

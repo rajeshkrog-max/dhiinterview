@@ -1,6 +1,7 @@
 // Sign in, the guard, the form, resume on a second device, the offline queue and the sign in problem screens
 // (spec 0002, AC-1 to AC-5, AC-12, AC-15, AC-16). Runs on the dev deployment with the fake test sign in.
 import { expect, test } from "@playwright/test";
+import { CONSENT_LINES, CONSENT_VERSION } from "../convex/consentText";
 import { PATH, answersOnDevice, newContext, newStudent, newTag, openQuestion, signIn, waitSaved } from "./helpers";
 
 const PROTECTED = ["questions.html?q=5", "question.html", "question2.html", "meet.html", "done.html", "who.html", "report-student.html", "challenge.html", "leaderboard.html"];
@@ -9,17 +10,17 @@ test.describe("the guard (AC-1)", () => {
   test("covers AC-1: a visitor with no session is sent to landing from every page after it, and terms stays public", async ({ page }) => {
     for (const p of PROTECTED) {
       await page.goto(PATH + p);
-      await expect(page, p).toHaveURL(/\/landing\.html$/);
+      await expect(page, p).toHaveURL(/\/landing(\.html)?$/);
     }
     await page.goto(PATH + "terms.html");
-    await expect(page).toHaveURL(/\/terms\.html$/);
+    await expect(page).toHaveURL(/\/terms(\.html)?$/);
   });
 
   test("covers AC-1: a signed in student who has not finished the form is also sent to landing", async ({ page }) => {
     await signIn(page, newTag());
     for (const p of ["questions.html?q=5", "meet.html", "report-student.html"]) {
       await page.goto(PATH + p);
-      await expect(page, p).toHaveURL(/\/landing\.html$/);
+      await expect(page, p).toHaveURL(/\/landing(\.html)?$/);
     }
   });
 });
@@ -55,11 +56,11 @@ test.describe("the form and the profile (AC-3)", () => {
     // without the guardian tick the form does not go through
     await page.evaluate(() => (document.getElementById("form") as HTMLFormElement).requestSubmit());
     await expect(page.locator("#guardianErr")).toContainText("parent or guardian");
-    await expect(page).toHaveURL(/landing\.html/);
+    await expect(page).toHaveURL(/landing(\.html)?/);
 
     await page.evaluate(() => (document.getElementById("guardian") as HTMLInputElement).click());
     await page.evaluate(() => (document.getElementById("form") as HTMLFormElement).requestSubmit());
-    await expect(page).toHaveURL(/\/meet\.html$/, { timeout: 40_000 });
+    await expect(page).toHaveURL(/\/meet(\.html)?$/, { timeout: 40_000 });
     const profile = await page.evaluate(() => JSON.parse(localStorage.getItem("dhirise.session.v1") || "{}").profile); // meet.html does not load the store
     expect(profile).toEqual({ name: "Eli Tester", age: 15, class: "Class 9" }); // spaces collapsed
   });
@@ -71,8 +72,8 @@ test.describe("the form and the profile (AC-3)", () => {
     await page.click("#readNotice");
     await expect(page.locator("#sheetDim")).toBeVisible();
     await expect(page.locator("#agree")).toBeHidden(); // read only: nothing to agree to yet
-    await expect(page.locator("#consentLines")).toHaveAttribute("data-version", "v3");
-    await expect(page.locator("#consentLines p")).toHaveCount(7);
+    await expect(page.locator("#consentLines")).toHaveAttribute("data-version", CONSENT_VERSION); // v4 today; read from the consent text so it cannot go stale
+    await expect(page.locator("#consentLines p")).toHaveCount(CONSENT_LINES.length); // 8 lines in v4
   });
 });
 
@@ -93,10 +94,10 @@ test.describe("resume on a second device (AC-4, AC-5)", () => {
     const b = await ctxB.newPage();
     await signIn(b, tag);
     await expect(b.locator("#back")).toBeVisible(); // "Continue as", no automatic redirect
-    await expect(b).toHaveURL(/landing\.html/);
+    await expect(b).toHaveURL(/landing(\.html)?/);
     await expect(b.locator("#continueAs")).toContainText("Eli Tester");
     await b.evaluate(() => (document.getElementById("continueAs") as HTMLButtonElement).click());
-    await expect(b).toHaveURL(/questions\.html\?q=4$/);
+    await expect(b).toHaveURL(/questions(\.html)?\?q=4$/);
 
     await openQuestion(b, 1);
     expect(await b.locator("#options button").allTextContents()).toEqual(optionsA);
@@ -158,7 +159,7 @@ test.describe("sign in problems (AC-12)", () => {
     await page.goto(PATH + "landing.html?signin=error&error=access_denied");
     await expect(page.locator("#signMsg")).toHaveText("No problem. You can try again whenever you like.");
     await expect(page.locator("#google")).toBeVisible();
-    await expect(page).toHaveURL(/landing\.html$/); // the return parameters are cleaned from the address
+    await expect(page).toHaveURL(/landing(\.html)?$/); // the return parameters are cleaned from the address
   });
 
   test("covers AC-12: any other return error shows a kind message that mentions test users", async ({ page }) => {
@@ -177,14 +178,14 @@ test.describe("a slow or missing connection (AC-16)", () => {
     await page.goto(PATH + "meet.html", { waitUntil: "commit" });
     await expect(page.locator("html")).not.toHaveClass(/dhi-pending/, { timeout: 4000 }); // shown from the copy, before the server answers
     await page.waitForTimeout(6000);
-    await expect(page).toHaveURL(/\/meet\.html$/);
+    await expect(page).toHaveURL(/\/meet(\.html)?$/);
   });
 
   test("covers AC-16: with a copy on the device and the server unreachable, the quiz page still works", async ({ page }) => {
     await newStudent(page);
     await page.route("**/api/auth/get-session", (route) => route.abort());
     await openQuestion(page, 1);
-    await expect(page).toHaveURL(/\/question\.html$/);
+    await expect(page).toHaveURL(/\/question(\.html)?$/);
     expect(await page.evaluate(() => (window as any).DhiSession.state)).toBe("unknown");
     await page.locator("#options button").first().click();
     await expect(page.locator('#options button[aria-checked="true"]')).toHaveCount(1);
@@ -196,7 +197,7 @@ test.describe("a slow or missing connection (AC-16)", () => {
     await p.route("**/api/auth/get-session", (route) => route.abort());
     await p.goto(PATH + "question.html");
     await expect(p.locator("#dhiBoot")).toContainText("We could not reach DhiRise");
-    await expect(p).toHaveURL(/\/question\.html$/);
+    await expect(p).toHaveURL(/\/question(\.html)?$/);
     await ctx.close();
   });
 });

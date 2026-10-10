@@ -38,6 +38,13 @@ body.has-you .lb{padding-bottom:calc(220px + env(safe-area-inset-bottom))}
 .lb-av{flex:none;display:block;width:36px;height:36px;border-radius:50%;background:#1b1e3d no-repeat 50% 20% / 230% auto;
   border:2px solid rgba(255,255,255,.2)}
 .lb-av.big{width:64px;height:64px;border-width:3px}
+/* a student's picture in place of the owl (spec 0011): the same box, the circle centred in it */
+.lb-pic{flex:none;display:flex;align-items:center;justify-content:center;width:36px;height:36px}
+.lb-pic.big{width:64px;height:64px}
+.lb-gold .lb-pic.big{width:76px;height:76px}
+.lb-gold .lb-pic .dhi-avatar{box-shadow:0 0 0 3px rgba(233,185,92,.25),0 0 24px rgba(233,185,92,.35)}
+.lb-silver .lb-pic .dhi-avatar{box-shadow:0 0 0 3px rgba(201,209,220,.2)}
+.lb-bronze .lb-pic .dhi-avatar{box-shadow:0 0 0 3px rgba(208,138,82,.2)}
 
 /* podium: #2 left, #1 centre (raised, crown), #3 right */
 .lb-podium{display:grid;grid-template-columns:1fr 1.15fr 1fr;align-items:end;gap:10px;padding-top:24px}

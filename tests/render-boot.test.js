@@ -35,7 +35,7 @@ describe("render page", () => {
 
   test("covers AC-5: the render page loads only the scripts it needs, and none that sign in, track, animate or play sound", () => {
     const scripts = [...page.matchAll(/<script[^>]*\ssrc="([^"]+)"/g)].map((m) => m[1]);
-    expect(scripts).toEqual(["js/funnel-config.js", "js/engine/questions.js", "js/engine/reportText.js", "js/card-export.js", "js/render-boot.js"]);
+    expect(scripts).toEqual(["js/funnel-config.js", "js/engine/questions.js", "js/engine/reportText.js", "js/card-export.js", "js/avatar.js", "js/render-boot.js"]);
     expect(code(page)).not.toMatch(/Guard|session|posthog|leaves|identity|challenge|music|card\.js|api\.js|store\.js/i);
   });
 

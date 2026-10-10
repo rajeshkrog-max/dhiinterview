@@ -57,6 +57,10 @@ describe("the Convex API surface", () => {
     expect(src["auth.ts"]).toMatch(/emailAndPassword:\s*\{\s*enabled:\s*env\.TEST_SIGNIN_ENABLED === "true"/);
   });
 
+  test("covers spec 0011 AC-10 and AC-11: Better Auth's update-user route is switched off, so a student cannot set their own picture address", () => {
+    expect(src["auth.ts"]).toMatch(/disabledPaths:\s*\[[^\]]*"\/update-user"[^\]]*\]/);
+  });
+
   test("covers AC-2: the Google tokens are stored encrypted and no offline access is requested", () => {
     expect(src["auth.ts"]).toMatch(/encryptOAuthTokens:\s*true/);
     expect(src["auth.ts"]).not.toMatch(/accessType\s*:/); // the setting that would ask Google for offline access

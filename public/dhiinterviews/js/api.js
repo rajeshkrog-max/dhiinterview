@@ -190,11 +190,13 @@
       return Promise.resolve({ code: m.code, link: shareBase() + "/landing.html?ref=" + m.code, valid: c.valid, pending: c.pending });
     },
 
-    /* top leaderboardSize rows → [{ rank, displayName, cls, style, valid, me? }] */
+    /* top leaderboardSize rows → [{ rank, displayName, cls, style, valid, avatar, me? }]; `avatar` is a same origin picture path or null */
     getLeaderboard: function () {
-      // BACKEND: replace with fetch("/api/challenge/leaderboard") → [{ rank, displayName, cls, style, valid }] (first name + initial only)
+      // BACKEND: replace with fetch("/api/challenge/leaderboard") → [{ rank, displayName, cls, style, valid, avatar }] (first name + initial only).
+      // `avatar` (spec 0011, AC-4) comes from convex/avatarState.ts `leaderboardPictureFor`: a path only while LEADERBOARD_PICTURES_ENABLED is on
+      // and the student agreed, has not removed it and is not blocked; otherwise null. The mock and the demo rows never have one.
       return Promise.resolve(ranking().slice(0, CFG.leaderboardSize || 50).map(function (r) {
-        return { rank: r.rank, displayName: r.displayName, cls: r.cls, style: r.style, valid: r.valid, me: !!r.me, demo: !!r.demo };
+        return { rank: r.rank, displayName: r.displayName, cls: r.cls, style: r.style, valid: r.valid, avatar: !r.demo && typeof r.avatar === "string" ? r.avatar : null, me: !!r.me, demo: !!r.demo };
       }));
     },
 

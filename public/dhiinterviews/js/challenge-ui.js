@@ -1,5 +1,5 @@
 /* DhiRise · the Founding Circle Challenge on the report (report-student.html). Data only through js/api.js.
-   - A pill under the card's share buttons: "Win ₹2,999 · Join the challenge", or once joined "Your code … · Rank #n · Leaderboard →",
+   - A pill under the card's share buttons: "Win <prize amount> · Join the challenge" (the amount is DHI_CHALLENGE.prize.amount), or once joined "Your code … · Rank #n · Leaderboard →",
      or after the end "Challenge closed · See winners".
    - A full-screen invite right after a valid feedback (event "dhirise:feedback" from js/report-student.js),
      and again on later report visits: at most DHI_CHALLENGE.maxInviteShows times in total. Esc / "Maybe later" close it.
@@ -45,7 +45,7 @@
     var p = el("a", "ch-pill");
     if (over) { p.textContent = "Challenge closed · See winners"; p.href = "leaderboard.html"; }
     else if (me.joined && me.code) { p.textContent = joinedText(me, rank); p.href = "leaderboard.html"; }
-    else { p.textContent = "Win ₹2,999 · Join the challenge"; p.href = "challenge.html"; }
+    else { p.textContent = "Win " + C.prize.amount + " · Join the challenge"; p.href = "challenge.html"; }
     var slot = document.querySelector(".fc-actions");
     if (slot) slot.appendChild(p);
     else root.insertBefore(add(el("div", "ch-pill-wrap span2"), p), root.firstChild);
@@ -89,7 +89,7 @@
 
     var title = el("h2", "ch-title", "Founding Circle Challenge"); title.id = "chTitle";
     var line = el("p", "ch-line", "You're one of the first. Help us find students who feel the same way."); line.id = "chLine";
-    var prize = el("p", "ch-prize-line", "Top referrer wins a gift hamper worth ₹2,999");
+    var prize = el("p", "ch-prize-line", "Top referrer wins a " + C.prize.title.charAt(0).toLowerCase() + C.prize.title.slice(1));
 
     var clock = el("div", "ch-clock");
     clock.setAttribute("role", "timer");

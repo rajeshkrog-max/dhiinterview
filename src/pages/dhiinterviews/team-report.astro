@@ -8,6 +8,7 @@ import Frame from "../../layouts/Frame.astro";
 ---
 <Frame title="Team report" description="One student's saved report, for the DhiRise team." noindex wide page="report">
   <link slot="head" rel="stylesheet" href="/dhiinterviews/css/team.css">
+  <link slot="head" rel="stylesheet" href="/dhiinterviews/css/avatar.css">
   <div class="tt">
     <div class="tt-bar">
       <h1>Saved report</h1>
@@ -22,6 +23,7 @@ import Frame from "../../layouts/Frame.astro";
     </section>
 
     <section id="viewerBox" hidden>
+      <div class="tt-whobar" id="who" hidden></div>
       <div class="tt-toolbar">
         <a class="tt-btn" href="team.html">← All saved reports</a>
         <span class="tt-spacer"></span>
@@ -37,6 +39,7 @@ import Frame from "../../layouts/Frame.astro";
     </section>
   </div>
 
+  <script is:inline src="/dhiinterviews/js/avatar.js"></script>
   <script>
     import "../../lib/team";
   </script>

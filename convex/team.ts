@@ -4,7 +4,8 @@
 //    every request, from the signed in session of that request (never from an input). Nothing is cached.
 //  - the team functions take a student id (the reference code) as input. That is allowed only behind the team check;
 //    student facing functions still never take one (convex/AGENTS.md).
-//  - the list returns a name and a class and nothing else about a student: no phone, email, score or flag (AC-1)
+//  - the list returns a name, a class and the picture path (spec 0011, AC-4: null unless the same rule as every other place allows
+//    it) and nothing else about a student: no phone, email, score or flag (AC-1)
 //  - every PDF served adds one `reportViews` row, written after the stored file is confirmed to exist, and nothing else adds
 //    one (AC-5). No code in this file edits or deletes a `reportViews` row.
 // A refusal writes one console line with a reason and, for a team member, the team email. It never names a student, and the
@@ -12,6 +13,7 @@
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { env, internalMutation, internalQuery } from "./_generated/server";
+import { pictureFor } from "./avatarState";
 import { getSignedInUser, type Reader } from "./helpers";
 import { rateLimiter } from "./limits";
 import { classValidator } from "./schema";
@@ -34,14 +36,14 @@ async function teamGate(ctx: Reader): Promise<Gate> {
 }
 
 const refusedValidator = v.object({ ok: v.literal(false), code: v.union(v.literal("not_signed_in"), v.literal("not_team")) });
-const rowValidator = v.object({ studentId: v.id("students"), name: v.string(), class: classValidator, madeAt: v.number() });
+const rowValidator = v.object({ studentId: v.id("students"), name: v.string(), class: classValidator, madeAt: v.number(), avatar: v.union(v.string(), v.null()) });
 
 // One list row for a report row that holds a file, or null (no file yet, or the student no longer exists).
 async function listRow(ctx: Reader, file: Doc<"reportFiles">) {
   if (file.storageId === undefined || file.readyAt === undefined) return null;
   const student = await ctx.db.get("students", file.studentId);
   if (!student) return null;
-  return { studentId: student._id, name: student.name, class: student.class, madeAt: file.readyAt };
+  return { studentId: student._id, name: student.name, class: student.class, madeAt: file.readyAt, avatar: await pictureFor(ctx, student._id) };
 }
 
 // The students whose saved copy is ready, newest first, 50 at a time (AC-1). With `ref` it is the one student that code names,

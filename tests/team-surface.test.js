@@ -149,13 +149,14 @@ describe("the team pages and their script (AC-10)", () => {
     expect(code).not.toMatch(/https?:\/\//); // no outside address at all
   });
 
-  test("covers AC-10 and spec 0009 AC-7: the pages and the frame have no inline script, no inline handler and no outside address, so the policy can stay strict", () => {
+  test("covers AC-10, AC-13 and spec 0009 AC-7: the pages and the frame have no inline script, no inline handler and no outside address, so the policy can stay strict", () => {
     const frame = read("src/layouts/Frame.astro");
     const frameHtml = frame.replace(/^---[\s\S]*?---/, "");
     expect(frameHtml).not.toMatch(/<script\b/i); // the frame adds no script at all
     for (const [name, text] of [...Object.entries(pages), ["Frame.astro", frame]]) {
       const html = text.replace(/^---[\s\S]*?---/, "");
-      expect(html, name).not.toMatch(/is:inline/);
+      // the one is:inline tag allowed is the picture helper, a plain same site file with no body (spec 0011): script-src 'self' already covers it
+      expect(html.replace(/<script is:inline src="\/dhiinterviews\/js\/avatar\.js"><\/script>/, ""), name).not.toMatch(/is:inline/);
       expect(html, name).not.toMatch(/\son[a-z]+=/i); // onclick=, onerror=, ...
       expect(html, name).not.toMatch(/https?:\/\//);
       expect(html, name).not.toMatch(/<iframe[^>]*\ssrc=/i); // the viewer's frame gets its blob address from the script
@@ -163,7 +164,8 @@ describe("the team pages and their script (AC-10)", () => {
     for (const [name, text] of Object.entries(pages)) {
       const html = text.replace(/^---[\s\S]*?---/, "");
       expect(html, name).toMatch(/<Frame\b[^>]*\snoindex\b/); // the frame writes the robots tag for a page that asks for it
-      expect(html.match(/<script\b/g), name).toHaveLength(1); // the one bundled import of src/lib/team
+      expect(html.match(/<script\b/g), name).toHaveLength(2); // the picture helper (above) and the one bundled import of src/lib/team
+      expect(html, name).toContain('<script is:inline src="/dhiinterviews/js/avatar.js"></script>');
       expect(html, name).toMatch(/import "\.\.\/\.\.\/lib\/team"/);
     }
     expect(frameHtml).toContain('<meta name="robots" content="noindex, nofollow">'); // the one literal, in the frame

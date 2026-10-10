@@ -1,0 +1,10 @@
+/* Dhirise · the picture row on the report page (spec 0011, AC-9), drawn by js/picture-control.js. It reuses the report's card and button
+   classes (.card, .btn-gold, .btn-ghost) and its colour variables; the fallbacks keep it readable anywhere else. */
+.pcontrol[hidden]{display:none}
+.pcontrol .pc-head{display:flex;align-items:center;gap:12px;margin:0 0 8px}
+.pcontrol .pc-title{margin:0;font-family:var(--f-head,Georgia,serif);font-weight:700;font-size:18px;line-height:1.25}
+.pcontrol .pc-text{margin:0 0 10px;font-size:15px;line-height:1.5;color:var(--muted,rgba(255,255,255,.72))}
+.pcontrol .pc-msg{min-height:1.4em;margin:0 0 8px;font-size:13px;line-height:1.4;color:var(--gold,#e9b95c)}
+.pcontrol .pc-msg:empty{min-height:0;margin:0}
+.pcontrol button[aria-busy="true"]{opacity:.7;cursor:progress}
+.pcontrol .pc-text:empty{display:none}

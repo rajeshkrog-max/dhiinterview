@@ -51,4 +51,27 @@ describe("privacy page", () => {
     expect(words).toMatch(/we record who opened it and when/);
     expect(words).not.toMatch(/only you can open your report/i); // no longer true
   });
+
+  test("covers spec 0011 AC-15: the picture section says it is on for everyone, who sees it, how to remove it, and what a removal cannot reach", () => {
+    expect(words).toMatch(/5\. Your Google profile picture/);
+    expect(words).toMatch(/nothing else from your Google profile/i);
+    expect(words).toMatch(/There is no separate question about it\. It is on for every student/);
+    expect(words).toMatch(/If you joined before the picture was added, the words you agreed to when you began did not mention it/);
+    expect(words).not.toMatch(/the ticks you gave when you began cover it/); // not true for students who joined under v1 to v3
+    for (const who of ["You, on your own screens", "Other students, if the leaderboard shows pictures", "Anyone you give a report link to", "Named members of the DhiRise team"]) expect(words, who).toContain(who);
+    expect(words).toMatch(/Remove my picture/);
+    expect(words).toMatch(/Use my Google picture/);
+    expect(words).toMatch(/browser copies for up to an hour/);
+    expect(words).toMatch(/PDF copies of your report and report links that were already made may keep the picture they drew/);
+    expect(words).toMatch(/made very early, before your picture was saved, may have no picture/);
+    expect(words).toMatch(/the team can also take it off/);
+  });
+
+  test("covers spec 0011 AC-15: 'what we keep' and the Google bullet name the picture, and the sections are numbered in order", () => {
+    expect(words).toMatch(/profile picture from your Google account/);
+    expect(words).toMatch(/We get your name, email and profile picture from it/);
+    const numbers = [...page.matchAll(/<h2>(\d+)\. /g)].map((m) => Number(m[1]));
+    expect(numbers).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    expect(words).toMatch(/Last updated: 10 October 2026/);
+  });
 });

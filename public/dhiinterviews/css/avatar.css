@@ -1,0 +1,19 @@
+/* Dhirise · the profile picture circle (spec 0011), drawn by js/avatar.js. Fixed sizes so nothing shifts when the picture loads, and no
+   motion. The six colours carry white initials; each has a contrast of at least 4.5 to 1 against white (tests/avatar.test.js reads this
+   file and checks it). Add a colour only together with a bump of COLORS in avatar.js. */
+.dhi-avatar{display:inline-grid;place-items:center;flex:none;box-sizing:border-box;border-radius:50%;overflow:hidden;
+  color:#fff;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-weight:700;line-height:1;text-transform:none;
+  user-select:none;-webkit-user-select:none;vertical-align:middle}
+.dhi-avatar--28{width:28px;height:28px;font-size:13px}
+.dhi-avatar--40{width:40px;height:40px;font-size:18px}
+.dhi-avatar--64{width:64px;height:64px;font-size:28px}
+.dhi-avatar img{display:block;width:100%;height:100%;object-fit:cover}
+.dhi-avatar--photo{background:#3a3631}
+.dhi-avatar--c0{background:#8a4b0f}
+.dhi-avatar--c1{background:#2f5d8a}
+.dhi-avatar--c2{background:#2e6b4f}
+.dhi-avatar--c3{background:#7b3f8c}
+.dhi-avatar--c4{background:#9c3b3b}
+.dhi-avatar--c5{background:#4a5568}
+.dhi-avatar--neutral{background:#4a5568}
+.dhi-avatar svg{width:62%;height:62%;fill:#fff}

@@ -15,6 +15,8 @@ import { CONSENT_LINES, CONSENT_VERSION } from "../../../convex/consentText";
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=Playfair+Display:wght@600;700&family=Mukta:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="css/landing.css">
+<link rel="stylesheet" href="css/avatar.css">
+<link rel="stylesheet" href="css/picture-notice.css">
 <Guard mode="landing" />
 </head>
 <body>
@@ -108,6 +110,7 @@ import { CONSENT_LINES, CONSENT_VERSION } from "../../../convex/consentText";
 
     <!-- 3. signed in with a profile: "Continue as", never an automatic redirect -->
     <div class="back" id="back" hidden>
+      <span class="back-pic" id="backPic" hidden></span>
       <button type="button" class="btn" id="continueAs">Continue as <span id="backName"></span></button>
       <p class="msg" id="outMsg" role="status" aria-live="polite" hidden></p>
       <button type="button" class="link" id="notYou">Not you</button>
@@ -155,6 +158,8 @@ import { CONSENT_LINES, CONSENT_VERSION } from "../../../convex/consentText";
 <script is:inline type="text/dhi-deferred" src="js/funnel-config.js"></script>
 <script is:inline type="text/dhi-deferred" src="js/api.js"></script>
 <script is:inline type="text/dhi-deferred" src="js/engine/store.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/avatar.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/picture-notice.js"></script>
 <script is:inline type="text/dhi-deferred" src="js/gate.js"></script>
 <script is:inline type="text/dhi-deferred" src="js/music.js"></script>
 </body>

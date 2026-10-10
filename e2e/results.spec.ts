@@ -84,7 +84,7 @@ test("covers AC-13: a result that cannot be reached shows a kind try again state
   await page.goto(PATH + "report-student.html");
   const box = page.locator("#dhiResultBox");
   await expect(box).toContainText("We could not load your result", { timeout: 30_000 });
-  await expect(page).toHaveURL(/\/report-student\.html$/); // the sign in is fine: no redirect
+  await expect(page).toHaveURL(/\/report-student(\.html)?$/); // the sign in is fine: no redirect
   await expect(page.locator(".ring")).toHaveCount(0); // nothing drawn from a guess
 
   await page.unroute("**/api/auth/**");
@@ -98,7 +98,7 @@ test("covers AC-14: a check that is not finished goes to where it left off, not 
   await signIn(page, tag);
   await page.evaluate(async () => (window as any).DhiSession.createProfile({ name: "Not Yet", age: 20, class: "College", guardianPresent: false }));
   await page.goto(PATH + "report-student.html");
-  await expect(page).toHaveURL(/\/question\.html$/, { timeout: 40_000 }); // no answers yet: where the check left off
+  await expect(page).toHaveURL(/\/question(\.html)?$/, { timeout: 40_000 }); // no answers yet: where the check left off
   expect(await dhiKeys(page)).not.toContain(RESULT_KEY);
 });
 
@@ -172,7 +172,7 @@ test("covers AC-6: when Finish answers scoring_failed the page shows a kind try 
 
   await page.evaluate(() => ((window as any).DhiSession.finish = (window as any).__realFinish)); // the cause is gone
   await page.locator("#next").click();
-  await expect(page).toHaveURL(/\/done\.html$/, { timeout: 40_000 });
+  await expect(page).toHaveURL(/\/done(\.html)?$/, { timeout: 40_000 });
   await page.waitForFunction(() => !!(window as any).DhiStore, null, { timeout: 30_000 }); // done.html starts its scripts after the guard
   expect(await page.evaluate(() => (window as any).DhiStore.get().completedAt)).toBeTruthy();
 });
@@ -189,7 +189,7 @@ test("covers AC-7: a Finish that worked on the server but timed out on the devic
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto(PATH + "done.html");
   await expect(page.locator("#see:not([hidden])")).toBeVisible({ timeout: 40_000 });
-  await expect(page).toHaveURL(/\/done\.html$/);
+  await expect(page).toHaveURL(/\/done(\.html)?$/);
   expect(await page.evaluate(() => (window as any).DhiStore.get().completedAt)).toBeTruthy(); // the server told the device
   expect(await page.evaluate((k) => localStorage.getItem(k) !== null, RESULT_KEY)).toBe(true);
 });
@@ -203,7 +203,7 @@ test("covers AC-7: all 18 answers saved but the check not finished on the server
   });
   await waitSaved(page);
   await page.goto(PATH + "done.html");
-  await expect(page).toHaveURL(/questions\.html\?q=18$/, { timeout: 40_000 });
+  await expect(page).toHaveURL(/questions(\.html)?\?q=18$/, { timeout: 40_000 });
   expect(await dhiKeys(page)).not.toContain(RESULT_KEY);
 });
 

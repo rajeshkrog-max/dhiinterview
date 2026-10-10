@@ -23,13 +23,13 @@ test("covers AC-2, AC-3, AC-4, AC-7: form, question 1, the Finish button, the re
   await page.evaluate(() => (document.getElementById("agree") as HTMLButtonElement).click());
   await page.evaluate(() => (document.getElementById("guardian") as HTMLInputElement).click());
   await page.evaluate(() => (document.getElementById("form") as HTMLFormElement).requestSubmit());
-  await expect(page).toHaveURL(/\/meet\.html$/, { timeout: 40_000 });
+  await expect(page).toHaveURL(/\/meet(\.html)?$/, { timeout: 40_000 });
 
   // meet → question 1 by tapping an option
   // the page is shown before its own script has attached the button, so retry the tap until it takes
   await expect(async () => {
     await page.evaluate(() => (document.getElementById("start") as HTMLButtonElement).click());
-    await expect(page).toHaveURL(/\/question\.html$/, { timeout: 2000 });
+    await expect(page).toHaveURL(/\/question(\.html)?$/, { timeout: 2000 });
   }).toPass({ timeout: 30_000 });
   await expect(page.locator("#options button")).toHaveCount(4);
   await page.locator("#options button").nth(2).click();
@@ -43,24 +43,24 @@ test("covers AC-2, AC-3, AC-4, AC-7: form, question 1, the Finish button, the re
   await expect(page.locator("#next")).toBeEnabled({ timeout: 20_000 }); // opens after the tip has been read
   await expect(page.locator("#next")).toHaveText("Finish");
   await page.locator("#next").click();
-  await expect(page).toHaveURL(/\/done\.html$/, { timeout: 40_000 });
+  await expect(page).toHaveURL(/\/done(\.html)?$/, { timeout: 40_000 });
 
   // without a saved number, the story and the report send the student back to the phone step (spec 0003, AC-7)
   for (const p of ["who.html", "report-student.html"]) {
     await page.goto(PATH + p);
-    await expect(page, p).toHaveURL(/\/done\.html$/);
+    await expect(page, p).toHaveURL(/\/done(\.html)?$/);
   }
 
   // the phone step (a minor, so the guardian tick is needed), then the story opens
   await openPhoneStep(page);
   await submitPhone(page, "9876543210", { guardian: true });
   await expect(page.locator("#thanks")).toBeVisible({ timeout: 30_000 });
-  await expect(page).toHaveURL(/\/who\.html$/, { timeout: 30_000 });
+  await expect(page).toHaveURL(/\/who(\.html)?$/, { timeout: 30_000 });
 
   // the later pages open now; the report is marked seen on the server
   for (const p of ["challenge.html", "leaderboard.html"]) {
     await page.goto(PATH + p);
-    await expect(page, p).toHaveURL(new RegExp(p.replace(".", "\\.") + "$"));
+    await expect(page, p).toHaveURL(new RegExp(p.replace(".html", "(\\.html)?") + "$")); // the dev server may show the clean address
   }
   await page.goto(PATH + "report-student.html");
   await expect(page.locator("#report h1").first()).toContainText("Mind & Study Profile");
@@ -69,9 +69,9 @@ test("covers AC-2, AC-3, AC-4, AC-7: form, question 1, the Finish button, the re
   // landing offers Continue as, never an automatic redirect, and goes to the report
   await page.goto(PATH + "landing.html");
   await expect(page.locator("#back")).toBeVisible();
-  await expect(page).toHaveURL(/landing\.html$/);
+  await expect(page).toHaveURL(/landing(\.html)?$/);
   await page.evaluate(() => (document.getElementById("continueAs") as HTMLButtonElement).click());
-  await expect(page).toHaveURL(/\/report-student\.html$/);
+  await expect(page).toHaveURL(/\/report-student(\.html)?$/);
 });
 
 test("covers AC-7: Finish offline says Connect to finish, and works once the connection is back", async ({ page, context }) => {
@@ -86,10 +86,10 @@ test("covers AC-7: Finish offline says Connect to finish, and works once the con
   await context.setOffline(true);
   await page.locator("#next").click();
   await expect(page.locator("#next")).toHaveText("Connect to finish", { timeout: 30_000 });
-  await expect(page).toHaveURL(/questions\.html\?q=18$/);
+  await expect(page).toHaveURL(/questions(\.html)?\?q=18$/);
   await context.setOffline(false);
   await page.locator("#next").click();
-  await expect(page).toHaveURL(/\/done\.html$/, { timeout: 40_000 });
+  await expect(page).toHaveURL(/\/done(\.html)?$/, { timeout: 40_000 });
 });
 
 test("covers AC-7: after finishing, an answer change is refused, the student is told, and the server keeps the old answer", async ({ page }) => {

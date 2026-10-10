@@ -244,13 +244,13 @@ describe("the list", () => {
     const body = JSON.parse(text);
     expect(body.next).toBeNull();
     expect(body.rows).toEqual([
-      { studentId: fresh.studentId, name: "Fresh Copy", class: "College", madeAt: expect.any(Number) },
-      { studentId: old.studentId, name: "Old Copy", class: "Class 9", madeAt: expect.any(Number) },
+      { studentId: fresh.studentId, name: "Fresh Copy", class: "College", madeAt: expect.any(Number), avatar: null },
+      { studentId: old.studentId, name: "Old Copy", class: "Class 9", madeAt: expect.any(Number), avatar: null },
     ]);
     expect(body.rows[0].madeAt).toBeGreaterThan(body.rows[1].madeAt);
     expect(text).not.toContain(waiting.studentId);
     // no phone, email, score or flag anywhere in the answer
-    expect(Object.keys(body.rows[0]).sort()).toEqual(["class", "madeAt", "name", "studentId"]);
+    expect(Object.keys(body.rows[0]).sort()).toEqual(["avatar", "class", "madeAt", "name", "studentId"]);
     expect(text).not.toMatch(/@|phone|email|score|dhiStart|styleKey|selfDoubt|lowMood|sha256|storageId/i);
   });
 
@@ -491,6 +491,93 @@ describe("what the code may do with reportViews", () => {
     for (const [, text] of team) {
       expect(text).not.toMatch(/\b(query|mutation|action)\(\{/); // only internalQuery / internalMutation / httpAction
       expect(text).not.toMatch(/\.phone\b|student\.email|resultFlags|selfDoubt|lowMood|dhiStart/);
+    }
+  });
+});
+
+describe("the picture in the list (spec 0011, AC-4, AC-13)", () => {
+  afterEach(() => {
+    delete process.env.PROFILE_PICTURE_ENABLED;
+    delete process.env.PICTURE_CONSENT_REQUIRED;
+  });
+  const seedPicture = (t: Backend, studentId: Id<"students">, over: Record<string, unknown> = {}) =>
+    t.run(async (ctx) => {
+      const storageId = await ctx.storage.store(new Blob([new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 1, 2])], { type: "image/jpeg" }));
+      const key = "K".repeat(22);
+      const id = await ctx.db.insert("avatars", {
+        studentId,
+        key,
+        storageId,
+        contentType: "image/jpeg",
+        size: 6,
+        sha256: "abc",
+        sourceUrl: "https://lh3.googleusercontent.com/a/private-address",
+        etag: '"private-etag"',
+        checkedAt: Date.now(),
+        updatedAt: Date.now(),
+        ...over,
+      });
+      return { key, id };
+    });
+  const rowsOf = async (member: Awaited<ReturnType<typeof teamMember>>, query = "") => (await (await member.as.fetch(listPath(query))).json()).rows;
+
+  test("covers AC-4: a list row carries the student's picture path, and a student without one gets null", async () => {
+    const t = makeBackend();
+    const a = await readyStudent(t, { name: "With Picture" }, { readyAt: Date.now() - HOUR });
+    await readyStudent(t, { name: "No Picture" }, { readyAt: Date.now() - 2 * HOUR });
+    const { key } = await seedPicture(t, a.studentId);
+    const member = await teamMember(t);
+    const rows = await rowsOf(member);
+    expect(rows.map((r: { name: string; avatar: string | null }) => [r.name, r.avatar])).toEqual([
+      ["With Picture", `/api/avatar/${key}`],
+      ["No Picture", null],
+    ]);
+  });
+
+  test("covers AC-4: removed, blocked, and the feature switched off all show no picture to the team either", async () => {
+    const t = makeBackend();
+    const a = await readyStudent(t, { name: "With Picture" });
+    const { id } = await seedPicture(t, a.studentId);
+    const member = await teamMember(t);
+    expect((await rowsOf(member))[0].avatar).not.toBeNull();
+    await t.run(async (ctx) => ctx.db.patch("avatars", id, { removedAt: Date.now() }));
+    expect((await rowsOf(member))[0].avatar).toBeNull();
+    await t.run(async (ctx) => ctx.db.patch("avatars", id, { removedAt: undefined, blockedAt: Date.now() }));
+    expect((await rowsOf(member))[0].avatar).toBeNull();
+    await t.run(async (ctx) => ctx.db.patch("avatars", id, { blockedAt: undefined }));
+    process.env.PROFILE_PICTURE_ENABLED = "false";
+    expect((await rowsOf(member))[0].avatar).toBeNull();
+  });
+
+  test("covers AC-4: the one row a reference code finds (what the viewer asks for) carries the picture too", async () => {
+    const t = makeBackend();
+    const a = await readyStudent(t, { name: "With Picture" });
+    const { key } = await seedPicture(t, a.studentId);
+    const member = await teamMember(t);
+    const rows = await rowsOf(member, "?ref=" + encodeURIComponent(a.studentId));
+    expect(rows).toHaveLength(1);
+    expect(rows[0].avatar).toBe(`/api/avatar/${key}`);
+  });
+
+  test("covers AC-4 and AC-1 (spec 0008): the answer still has no phone, email, score or flag, and none of the picture's private fields", async () => {
+    const t = makeBackend();
+    const a = await readyStudent(t, { name: "With Picture" });
+    await seedPicture(t, a.studentId);
+    const member = await teamMember(t);
+    const res = await member.as.fetch(listPath());
+    const text = await res.text();
+    expect(Object.keys(JSON.parse(text).rows[0]).sort()).toEqual(["avatar", "class", "madeAt", "name", "studentId"]);
+    expect(text).not.toMatch(/googleusercontent|private-address|private-etag|storageId|sourceUrl|sha256|@|phone|score/i);
+  });
+
+  test("covers AC-13: the picture needs no change to the team pages' policy: it is a same origin path, and img-src 'self' is already there", async () => {
+    const { readFileSync } = await import("node:fs");
+    const headers = readFileSync(new URL("../public/_headers", import.meta.url), "utf8");
+    const policies = [...headers.matchAll(/Content-Security-Policy: (.+)/g)].map((m) => m[1]).filter((p) => p.includes("frame-src blob:"));
+    expect(policies).toHaveLength(4);
+    for (const p of policies) {
+      expect(p).toContain("img-src 'self' data:");
+      expect(p).not.toMatch(/googleusercontent|https:/);
     }
   });
 });

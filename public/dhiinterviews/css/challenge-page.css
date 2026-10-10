@@ -17,6 +17,7 @@ body{min-height:100vh;font-family:var(--f-body);color:var(--white);-webkit-font-
   padding:calc(14px + env(safe-area-inset-top)) 16px 0}
 .cp-back{justify-self:start;min-height:40px;display:inline-flex;align-items:center;font-size:15px;font-weight:600;color:var(--muted);text-decoration:none}
 .cp-back:focus-visible{outline:2px solid #fff;outline-offset:3px;border-radius:6px}
+.cp-me{justify-self:end;display:flex}
 
 .cp{display:flex;flex-direction:column;gap:40px;max-width:480px;margin:0 auto;
   padding:24px 16px calc(48px + env(safe-area-inset-bottom))}

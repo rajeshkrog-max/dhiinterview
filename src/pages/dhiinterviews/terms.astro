@@ -1,6 +1,7 @@
 ---
 // The challenge terms page, in the shared site frame (spec 0009). Plain reading page; the words are unchanged.
 import Frame from "../../layouts/Frame.astro";
+import { PRIZE_AMOUNT } from "../../lib/prize";
 ---
 <Frame
   title="Challenge terms"
@@ -32,7 +33,7 @@ import Frame from "../../layouts/Frame.astro";
 
     <section>
       <h2>4. The prize</h2>
-      <p>The top referrer wins <b>one gift hamper worth ₹2,999</b>, which may include shoes, headphones and apparel. Items depend on availability and sizes, and may be swapped for items of similar value. The prize can't be exchanged for cash.</p>
+      <p>The top referrer wins <b>one gift hamper worth {PRIZE_AMOUNT}</b>, which may include shoes, headphones and apparel. Items depend on availability and sizes, and may be swapped for items of similar value. The prize can't be exchanged for cash.</p>
     </section>
 
     <section>

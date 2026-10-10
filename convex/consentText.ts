@@ -28,15 +28,32 @@ export const CONSENT_LINES_V2: readonly string[] = [
   ...CONSENT_LINES_V1.slice(3),
 ];
 
-// v3 (scope row 23, spec 0008): v2 plus one line that says named members of the DhiRise team can open a report, and that each open is
-// recorded. The owner approved these exact words. Students who agreed under v1 or v2 are not asked again; the privacy page covers them.
-export const CONSENT_VERSION = "v3";
+// v3 is frozen: consent rows already saved point at its exact text. Never edit it. It is v2 plus one line that says named members of the
+// DhiRise team can open a report, and that each open is recorded (scope row 23, spec 0008). The owner approved these exact words.
+export const CONSENT_VERSION_V3 = "v3";
 
-export const CONSENT_LINES: readonly string[] = [
+export const CONSENT_LINES_V3: readonly string[] = [
   ...CONSENT_LINES_V2.slice(0, 4),
   "Named members of the DhiRise team can open your report to help you. Each time one does, we record who opened it and when.",
   ...CONSENT_LINES_V2.slice(4),
 ];
+
+// v4 (scope row 30, spec 0011): v3 plus one line that names the saved Google profile picture and where it shows. DRAFT WORDS: the owner has
+// not approved them yet (a launch blocker in spec 0011, follow up). In the asked mode (`PICTURE_CONSENT_REQUIRED` set), students who agreed under v1 to
+// v3 are asked once, in a notice, before any picture is fetched or shown; in the default mode nobody is asked (the privacy page tells them).
+export const CONSENT_VERSION = "v4";
+
+export const CONSENT_LINES: readonly string[] = [
+  ...CONSENT_LINES_V3.slice(0, 4),
+  "DhiRise also saves the small profile picture from your Google account, and shows it next to your name on your screens, on your report, on the leaderboard and on any report link you share. You can remove it at any time.",
+  ...CONSENT_LINES_V3.slice(4),
+];
+
+// The versions whose text names the saved profile picture (spec 0011, AC-1 and AC-15). A student has agreed to the picture when their
+// newest landing consent is one of these. Version strings are never compared by order. A later version that still names the picture is
+// added here; a test fails if a later version drops the picture line.
+export const PICTURE_CONSENT_VERSIONS: readonly string[] = [CONSENT_VERSION];
+export const PICTURE_LINE_MARK = "saves the small profile picture from your Google account";
 
 // The phone step on done.html. The wording is a placeholder until the privacy page owner signs it off (spec 0003, follow up).
 export const LEAD_CONSENT_VERSION = "lead-v1";
@@ -52,6 +69,7 @@ export const LEAD_CONSENT_LINES: readonly string[] = [
 export const CONSENT_TEXTS: Readonly<Record<string, string>> = {
   [CONSENT_VERSION_V1]: CONSENT_LINES_V1.join("\n\n"),
   [CONSENT_VERSION_V2]: CONSENT_LINES_V2.join("\n\n"),
+  [CONSENT_VERSION_V3]: CONSENT_LINES_V3.join("\n\n"),
   [CONSENT_VERSION]: CONSENT_LINES.join("\n\n"),
   [LEAD_CONSENT_VERSION]: LEAD_CONSENT_LINES.join("\n\n"),
 };
@@ -60,6 +78,7 @@ export const CONSENT_TEXTS: Readonly<Record<string, string>> = {
 export const CONSENT_KINDS: Readonly<Record<string, ConsentKind>> = {
   [CONSENT_VERSION_V1]: "landing",
   [CONSENT_VERSION_V2]: "landing",
+  [CONSENT_VERSION_V3]: "landing",
   [CONSENT_VERSION]: "landing",
   [LEAD_CONSENT_VERSION]: "lead",
 };

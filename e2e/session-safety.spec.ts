@@ -79,7 +79,7 @@ test.describe("Not you / sign out (AC-8)", () => {
     await expect(other.locator("#back")).toBeVisible();
     await other.evaluate(() => (document.getElementById("notYou") as HTMLButtonElement).click());
     await expect(other.locator("#stSignedOut")).toBeVisible({ timeout: 30_000 });
-    await expect(page).toHaveURL(/landing\.html$/, { timeout: 15_000 });
+    await expect(page).toHaveURL(/landing(\.html)?$/, { timeout: 15_000 });
   });
 
   test("covers AC-8: when the session ends another way and a different account signs in, the earlier student's data is gone", async ({ page }) => {

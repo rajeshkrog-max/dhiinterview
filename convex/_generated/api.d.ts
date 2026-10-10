@@ -9,6 +9,10 @@
  */
 
 import type * as auth from "../auth.js";
+import type * as avatarCore from "../avatarCore.js";
+import type * as avatarHttp from "../avatarHttp.js";
+import type * as avatarState from "../avatarState.js";
+import type * as avatars from "../avatars.js";
 import type * as checks from "../checks.js";
 import type * as consentText from "../consentText.js";
 import type * as crons from "../crons.js";
@@ -49,6 +53,10 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  avatarCore: typeof avatarCore;
+  avatarHttp: typeof avatarHttp;
+  avatarState: typeof avatarState;
+  avatars: typeof avatars;
   checks: typeof checks;
   consentText: typeof consentText;
   crons: typeof crons;

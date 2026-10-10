@@ -165,6 +165,15 @@
   /* teaser */
   var first = profile.name ? String(profile.name).trim().split(/\s+/)[0] : "";
   $("tName").textContent = first ? first.charAt(0).toUpperCase() + first.slice(1) + ", here is your start." : "Here is your start.";
+  /* spec 0011: the student's own circle (picture, or initials) above their name; nothing when the feature is off. The name is written
+     right below it, so the circle is decorative. */
+  var pic = window.DhiAvatar ? DhiAvatar.mine({ size: 40, name: profile.name }) : null;
+  if (pic) {
+    var picBox = document.createElement("div");
+    picBox.className = "t-pic";
+    picBox.appendChild(pic);
+    $("teaser").insertBefore(picBox, $("tName"));
+  }
   var S = DhiQuestions.STYLE_NAMES, A = DhiQuestions.AREA_NAMES;
   var order = ["v", "p", "k"].sort(function (a, b) { return r.style[b] - r.style[a]; });
   $("tBadge").textContent = r.confidence === "blended" ? "A blend: " + S[order[0]].toLowerCase() + ", " + S[order[1]].toLowerCase() : S[r.styleKey];

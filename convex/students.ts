@@ -2,9 +2,10 @@
 // consent and their one check, once. Every function acts only on the signed in student (see helpers.ts).
 import { v } from "convex/values";
 import { env, mutation, query } from "./_generated/server";
+import { isPictureAgreed, pictureEnabled, pictureView } from "./avatarState";
 import { CONSENT_KINDS, CONSENT_TEXTS, CONSENT_VERSION, consentHash } from "./consentText";
 import { classValidator } from "./schema";
-import { MAX_NAME, ADULT_AGE, answersOf, cleanName, fail, getSignedInUser, requireSignedIn, validAge } from "./helpers";
+import { MAX_NAME, ADULT_AGE, answersOf, cleanName, fail, getSignedInUser, requireSignedIn, requireStudent, validAge } from "./helpers";
 
 const meValidator = v.union(
   v.object({ state: v.literal("signedOut") }),
@@ -21,6 +22,19 @@ const meValidator = v.union(
       feedbackSavedAt: v.union(v.number(), v.null()),
       answers: v.record(v.string(), v.string()),
     }),
+    // The profile picture (spec 0011). `picture` is the same origin path, only when the student has agreed, has not removed it, is not
+    // blocked and the feature is on. `pictureDue` and `pictureRecheckAt` say when the bridge should call `avatars.ensure` (a query must
+    // not read the clock, so the weekly check is the browser comparing `pictureRecheckAt` with its own time). The Google address, the
+    // storage id and the ETag are never returned (AC-10).
+    picture: v.union(v.object({ url: v.string() }), v.null()),
+    pictureDue: v.boolean(),
+    pictureRecheckAt: v.union(v.number(), v.null()),
+    // The one time notice for students who have not agreed to the picture line (AC-2): `ask`, or `later` after Not now with `pictureAskAt`
+    // the earliest time to ask again (the browser compares it with its own clock), or `none`.
+    pictureNotice: v.union(v.literal("none"), v.literal("ask"), v.literal("later")),
+    pictureAskAt: v.union(v.number(), v.null()),
+    // True after the student's own Remove, while the team has not blocked it: the report page then offers "Use my Google picture" (AC-9).
+    pictureRemoved: v.boolean(),
   }),
 );
 
@@ -43,6 +57,7 @@ export const me = query({
     // Only whether, and when. The phone and the feedback text are never returned (spec 0003, AC-12).
     const lead = await ctx.db.query("leads").withIndex("by_checkId", (q) => q.eq("checkId", check._id)).unique();
     const feedback = await ctx.db.query("feedback").withIndex("by_checkId", (q) => q.eq("checkId", check._id)).unique();
+    const pic = await pictureView(ctx, student, user.image);
     return {
       state: "ready" as const,
       student: { name: student.name, age: student.age, class: student.class },
@@ -55,6 +70,12 @@ export const me = query({
         feedbackSavedAt: feedback?._creationTime ?? null,
         answers,
       },
+      picture: pic.picture,
+      pictureDue: pic.due,
+      pictureRecheckAt: pic.recheckAt,
+      pictureNotice: pic.notice,
+      pictureAskAt: pic.askAt,
+      pictureRemoved: pic.removed,
     };
   },
 });
@@ -123,5 +144,45 @@ export const createProfile = mutation({
     });
     await ctx.db.insert("checks", { studentId, seed: crypto.randomUUID(), source: "fresh" });
     return { studentId };
+  },
+});
+
+// The one time picture notice for a student who agreed to an older text (spec 0011, AC-2). Records one new `landing` consent row for the
+// current version, the way createProfile does, so the audit trail shows exactly what was agreed and when. A repeat tap, or a second device,
+// records nothing more. Under 18 needs the guardian tick, and the answer is a result (not a throw) so the page can say it kindly.
+export const acceptPicture = mutation({
+  args: { notice: v.object({ version: v.string(), hash: v.string() }), guardianTick: v.optional(v.boolean()) },
+  returns: v.union(v.object({ ok: v.literal(true) }), v.object({ ok: v.literal(false), code: v.union(v.literal("consent_text_changed"), v.literal("needs_guardian"), v.literal("off")) })),
+  handler: async (ctx, args) => {
+    if (!pictureEnabled()) return { ok: false as const, code: "off" as const }; // AC-16
+    const { student } = await requireStudent(ctx);
+    // Only the current text counts, and its fingerprint must match what the page showed.
+    const text = args.notice.version === CONSENT_VERSION && CONSENT_KINDS[args.notice.version] === "landing" ? CONSENT_TEXTS[args.notice.version] : undefined;
+    if (text === undefined || args.notice.hash !== (await consentHash(text))) return { ok: false as const, code: "consent_text_changed" as const };
+    if (await isPictureAgreed(ctx, student._id)) return { ok: true as const }; // already agreed: no second row
+    if (student.age < ADULT_AGE && args.guardianTick !== true) return { ok: false as const, code: "needs_guardian" as const };
+    const stored = await ctx.db.query("consentTexts").withIndex("by_version", (q) => q.eq("version", args.notice.version)).unique();
+    if (!stored) await ctx.db.insert("consentTexts", { version: args.notice.version, hash: args.notice.hash, text });
+    await ctx.db.insert("consents", {
+      studentId: student._id,
+      kind: "landing",
+      textVersion: args.notice.version,
+      ageAtConsent: student.age,
+      guardianPresent: args.guardianTick === true,
+      acceptedAt: Date.now(),
+    });
+    return { ok: true as const };
+  },
+});
+
+// "Not now": carries on with initials, never blocks the check or the report, and asks again after 14 days (AC-2).
+export const declinePicture = mutation({
+  args: {},
+  returns: v.object({ ok: v.literal(true) }),
+  handler: async (ctx) => {
+    if (!pictureEnabled()) return { ok: true as const };
+    const { student } = await requireStudent(ctx);
+    await ctx.db.patch("students", student._id, { pictureNoticeDeclinedAt: Date.now() });
+    return { ok: true as const };
   },
 });

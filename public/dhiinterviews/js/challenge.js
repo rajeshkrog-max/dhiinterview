@@ -14,6 +14,10 @@
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   function add(p) { for (var i = 1; i < arguments.length; i++) if (arguments[i]) p.appendChild(arguments[i]); return p; }
 
+  /* ---------- the student's own circle, top right (spec 0011): picture or initials; nothing when the feature is off ---------- */
+  var myCircle = window.DhiAvatar ? DhiAvatar.mine({ size: 40 }) : null;
+  if (myCircle) add($("cpMe"), myCircle);
+
   /* ---------- 1. hero ---------- */
   var prize = $("cpPrize");
   prize.onerror = function () { prize.onerror = null; prize.src = C.prize.imageFallback; };

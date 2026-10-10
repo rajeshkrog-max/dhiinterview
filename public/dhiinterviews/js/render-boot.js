@@ -1,10 +1,11 @@
 /* Dhirise · the report render page's boot (spec 0006). Opened only by Cloudflare Browser Run, with a short lived signed
    token in the address fragment (#t=...), to draw the report the server turns into the saved PDF copy.
-   Needs loaded first: js/funnel-config.js, js/engine/questions.js, js/engine/reportText.js, js/card-export.js.
+   Needs loaded first: js/funnel-config.js, js/engine/questions.js, js/engine/reportText.js, js/card-export.js, js/avatar.js.
    It reads the token, fetches the student's data with a plain fetch (no sign in, no Convex client), stubs the few pieces of
    the student page that js/report-student.js reads (DhiStore, DhiSession), sets window.DHI_RENDER (the print flag),
    loads js/report-student.js, adds the Founding Card as an image, and marks #report:
      data-ready="1"  only when the data has loaded, the report has drawn, the report fonts are in and the images are decoded
+                     (the student's picture, when the data has one, is waited for at most 3 seconds, then the initials are kept: spec 0011, AC-17)
      data-error="<code>" on any failure, with the page left blank, so the job never prints a half made or wrong report
    No analytics, no sign in, no localStorage, no sound, no leaves. */
 (function () {
@@ -108,6 +109,23 @@
     return families.every(function (f) { return got[f]; });
   }
 
+  /* AC-17: the picture the data carries is on the page from the start (js/avatar.js draws it eagerly). Wait for it, but never longer
+     than 3 seconds: after that the copy is made with the initials, so a slow picture can never hold up or fail a copy. */
+  var PICTURE_WAIT_MS = 3000;
+  function pictureSettled() {
+    var img = root.querySelector(".dhi-avatar img");
+    if (!img || (img.complete && img.naturalWidth)) return Promise.resolve();
+    return new Promise(function (resolve) {
+      var timer = setTimeout(function () {
+        if (window.DhiAvatar && img.parentNode) DhiAvatar.update(img.parentNode, null);
+        resolve();
+      }, PICTURE_WAIT_MS);
+      function done() { clearTimeout(timer); resolve(); }
+      img.addEventListener("load", done);
+      img.addEventListener("error", done);
+    });
+  }
+
   function decoded(img) {
     return img.complete && img.naturalWidth ? Promise.resolve() : img.decode();
   }
@@ -123,7 +141,7 @@
 
       var logo = root.querySelector("img.logo");
       var fonts = document.fonts ? document.fonts.ready : Promise.resolve();
-      return Promise.all([fonts, logo ? decoded(logo) : Promise.resolve()]).then(function () {
+      return Promise.all([fonts, logo ? decoded(logo) : Promise.resolve(), pictureSettled()]).then(function () {
         /* the report must be in its own fonts: if Google Fonts could not be reached, say so instead of printing in another face */
         if (!fontsLoaded(["Playfair Display", "Mukta"])) throw new Error("fonts");
         if (!root.querySelector(".card.head")) throw new Error("empty");

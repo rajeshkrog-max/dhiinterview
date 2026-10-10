@@ -14,6 +14,7 @@ import Guard from "../../components/Guard.astro";
 <link rel="stylesheet" href="css/card.css">
 <link rel="stylesheet" href="css/challenge.css">
 <link rel="stylesheet" href="css/challenge-page.css">
+<link rel="stylesheet" href="css/avatar.css">
 <Guard mode="protected" />
 </head>
 <body>
@@ -22,7 +23,7 @@ import Guard from "../../components/Guard.astro";
 <header class="cp-top">
   <a class="cp-back" href="report-student.html">← Report</a>
   <img src="assets/dhirise-logo-light.png" alt="DhiRise" width="32" height="32" onerror="this.onerror=null;this.src='assets/dhirise-logo.png'">
-  <span aria-hidden="true"></span>
+  <span class="cp-me" id="cpMe"></span>
 </header>
 
 <main class="cp">
@@ -77,6 +78,7 @@ import Guard from "../../components/Guard.astro";
 <script is:inline type="text/dhi-deferred" src="js/challenge-config.js"></script>
 <script is:inline type="text/dhi-deferred" src="js/api.js"></script>
 <script is:inline type="text/dhi-deferred" src="js/share-icons.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/avatar.js"></script>
 <script is:inline type="text/dhi-deferred" src="js/challenge.js"></script>
 </body>
 </html>

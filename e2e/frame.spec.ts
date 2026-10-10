@@ -36,7 +36,7 @@ test.describe("the 404 page (AC-3)", () => {
   test("covers AC-3: the Go to DhiRise button leads to the landing page", async ({ page }) => {
     await page.goto("/nope");
     await page.locator("main a.fr-btn").click();
-    await expect(page).toHaveURL(/\/dhiinterviews\/landing(\.html)?$/);
+    await expect(page).toHaveURL(/\/dhiinterviews\/landing((\.html)?)?$/);
   });
 });
 
@@ -154,10 +154,10 @@ test.describe("the frame on its five pages (AC-4, AC-5, AC-9)", () => {
 });
 
 test.describe("the privacy and terms words stay the same (AC-8)", () => {
-  test("covers AC-8: privacy still has its 8 sections and names the services; terms its 10", async ({ page }) => {
+  test("covers AC-8: privacy has its 9 sections (the picture section is the fifth) and names the services; terms its 10", async ({ page }) => {
     await page.goto("/dhiinterviews/privacy.html");
     await expect(page.locator("main h1")).toHaveText("Privacy at DhiRise");
-    await expect(page.locator("main h2")).toHaveCount(8);
+    await expect(page.locator("main h2")).toHaveCount(9);
     await expect(page.locator("main")).toContainText("Cloudflare Browser Run");
     await page.goto("/dhiinterviews/terms.html");
     await expect(page.locator("main h1")).toHaveText("Founding Circle Challenge: full terms");

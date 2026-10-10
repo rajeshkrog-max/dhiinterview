@@ -1,0 +1,16 @@
+/* Dhirise · the one time picture notice (spec 0011), drawn by js/picture-notice.js into the report page. It reuses the report's card and
+   button classes (.card, .btn-gold, .btn-ghost) and its colour variables; the fallbacks keep it readable anywhere else. */
+.pnotice .pn-title{margin:0 0 8px;font-family:var(--f-head,Georgia,serif);font-weight:700;font-size:20px;line-height:1.25}
+.pnotice .pn-text{margin:0 0 12px;font-size:15px;line-height:1.5;color:var(--muted,rgba(255,255,255,.72))}
+.pn-more{margin:0 0 14px;font-size:14px;line-height:1.5;color:var(--muted,rgba(255,255,255,.72))}
+.pn-more summary{display:inline-flex;align-items:center;min-height:44px;cursor:pointer;font-weight:600;color:var(--gold,#e9b95c)}
+.pn-more summary:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.pn-more p{margin:8px 0 0;font-size:13px}
+.pn-guardian{display:flex;align-items:flex-start;gap:12px;margin:0 0 14px;min-height:44px;font-size:15px;line-height:1.4;cursor:pointer}
+.pn-guardian input{flex:none;width:22px;height:22px;margin:1px 0 0;accent-color:var(--gold,#e9b95c)}
+.pn-msg{min-height:1.4em;margin:0 0 8px;font-size:13px;line-height:1.4;color:var(--gold,#e9b95c)}
+.pnotice button[aria-busy="true"]{opacity:.7;cursor:progress}
+/* on the landing, inside its own glass card: no card frame, a quiet rule above, the page's own full width buttons stacked */
+.pn-landing{display:flex;flex-direction:column;gap:10px;margin-top:6px;padding-top:14px;border-top:1px solid rgba(255,255,255,.18);text-align:left}
+.pn-landing .pn-title{font-size:18px;margin:0}
+.pn-landing .pn-text,.pn-landing .pn-more,.pn-landing .pn-guardian,.pn-landing .pn-msg{margin:0}

@@ -140,11 +140,26 @@
     if (PRINT) dateFormat.timeZone = "Asia/Kolkata";           /* the server may be in another zone: the day must not shift */
     var date = isNaN(d) ? "" : d.toLocaleDateString("en-IN", dateFormat);
     var title = el("h1", "title", first ? fill(T.title, { name: first }) : fill(T.title, { name: "Your" }).replace(/^Your's/, "Your"));
-    var headText = add(el("div", "head-text"), title,
+    /* spec 0011: with the picture feature on, the student's own circle (picture, or initials) leads the card and the DhiRise mark becomes
+       a small label above the title, so there is one 64px circle beside one column of text, not three icons of different sizes. The name
+       is written in the title, so the circle is decorative. The saved copy (PRINT) draws it only when the server's payload carried a
+       picture path (profile.avatar): drawn at once, not lazily, and js/render-boot.js waits for it for at most 3 seconds (AC-17). */
+    var pic = null;
+    if (window.DhiAvatar) {
+      if (!PRINT) pic = DhiAvatar.mine({ size: 64, name: profile.name });
+      else if (profile.avatar) pic = DhiAvatar.make({ url: profile.avatar, name: profile.name, size: 64 });
+    }
+    if (pic) {
+      h.className = "card head head--pic span2";
+      logo.className = "brand-logo"; logo.width = 18; logo.height = 18;
+    }
+    var headText = el("div", "head-text");
+    if (pic) add(headText, add(el("p", "brand"), logo, el("span", "brand-name", "DhiRise")));
+    add(headText, title,
       el("p", "meta", [profile.class, date].filter(Boolean).join(" · ")),
       el("span", "pill", styleName));
     if (!PRINT && window.DhiSession && DhiSession.reportCopy && window.DhiReportDownload) add(headText, downloadControl());   /* spec 0006: not in the saved copy */
-    add(h, logo, headText);
+    if (pic) add(h, pic, headText); else add(h, logo, headText);
     /* a small trophy: the Founding Circle leaderboard (not in the saved copy: a link is no use on paper) */
     if (!PRINT) {
       var trophy = el("a", "head-trophy");
@@ -154,6 +169,8 @@
       add(h, trophy);
     }
     add(root, h);
+    /* spec 0011: the one time picture notice for a student who has not agreed yet, right under the heading */
+    if (!PRINT && window.DhiPictureNotice) DhiPictureNotice.mountAfter(h, profile);
   })();
 
   /* ---------- 2. Dhi starting score ---------- */
@@ -534,6 +551,9 @@
       add(el("div", "fb-share"), share, shareLabel), hint, submit);
     add(root, c);
   })();
+
+  /* ---------- 11c. the picture row (spec 0011): Remove my picture / Use my Google picture; not in the saved copy ---------- */
+  if (!PRINT && window.DhiPictureControl) DhiPictureControl.mount(root, profile);
 
   /* ---------- 12. footer ---------- */
   add(root, el("footer", "foot span2", T.footer));

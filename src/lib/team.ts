@@ -8,6 +8,9 @@
 // It does not use session.ts: that file is the student page guard and sends anyone without a student profile away.
 // Names and classes come from students, so they are put on the page with textContent only, never as HTML, and every id put in
 // a link goes through encodeURIComponent. Nothing here stores anything on the device.
+// The student's picture (spec 0011, AC-4) is drawn by js/avatar.js (DhiAvatar, a same site script the pages load): each list row has a
+// 28px circle, and the viewer a 40px one above the PDF. The server sends a path or null; only a same origin /api/avatar/ path is ever
+// drawn, which the strict policy of these pages already allows (img-src 'self', AC-13). Without a picture the circle shows the initial.
 import { authClient } from "./auth-client";
 
 const LIST_PAGE = "/dhiinterviews/team.html";
@@ -16,9 +19,13 @@ const CODE = /^[A-Za-z0-9]{1,64}$/; // what a reference code looks like; anythin
 const PDF_MAGIC = "%PDF-";
 const PDF_VIEW = "#view=FitH&navpanes=0"; // how the embedded PDF opens: fit to width, no thumbnail sidebar
 
-type Row = { studentId: string; name: string; class: string; madeAt: number };
+type Row = { studentId: string; name: string; class: string; madeAt: number; avatar: string | null };
 type Who = { kind: "token"; token: string } | { kind: "signedOut" } | { kind: "offline" };
 type Reply = { kind: "res"; res: Response } | { kind: "signedOut" } | { kind: "offline" };
+
+type Circle = (opts: { url: string | null; name: string; size: 28 | 40 | 64; lazy?: boolean }) => HTMLElement;
+const circle = (url: string | null, name: string, size: 28 | 40, lazy = false): HTMLElement | null =>
+  (window as unknown as { DhiAvatar?: { make: Circle } }).DhiAvatar?.make({ url, name, size, lazy }) ?? null;
 
 const page = document.body.dataset.page === "report" ? "report" : "list";
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T | null;
@@ -194,7 +201,7 @@ function parseRows(body: unknown): { rows: Row[]; next: string | null } | null {
   const rows: Row[] = [];
   for (const r of b.rows as Record<string, unknown>[]) {
     if (r && typeof r.studentId === "string" && typeof r.name === "string" && typeof r.class === "string" && typeof r.madeAt === "number") {
-      rows.push({ studentId: r.studentId, name: r.name, class: r.class, madeAt: r.madeAt });
+      rows.push({ studentId: r.studentId, name: r.name, class: r.class, madeAt: r.madeAt, avatar: typeof r.avatar === "string" ? r.avatar : null });
     }
   }
   return { rows, next: b.next as string | null };
@@ -212,6 +219,11 @@ function rowElement(r: Row): HTMLLIElement {
   meta.className = "tt-meta";
   meta.textContent = `${r.class} · ${when.format(new Date(r.madeAt))}`;
   who.append(name, meta);
+  const lead = document.createElement("div");
+  lead.className = "tt-lead";
+  const face = circle(r.avatar, r.name, 28, true);
+  if (face) lead.append(face);
+  lead.append(who);
   const open = document.createElement("a");
   open.className = "tt-btn main";
   open.href = "team-report.html?s=" + encodeURIComponent(r.studentId);
@@ -219,7 +231,7 @@ function rowElement(r: Row): HTMLLIElement {
   open.rel = "noopener";
   open.textContent = "Open";
   open.setAttribute("aria-label", "Open the saved report of " + r.name);
-  li.append(who, open);
+  li.append(lead, open);
   return li;
 }
 
@@ -271,6 +283,28 @@ function startList(): void {
 // ---------- the viewer ----------
 
 function startViewer(): void {
+  // Who the report is of: the same one-row answer the list gives for a code (it is not audited, only served PDFs are). It sits above
+  // the PDF as a 40px circle, the name and the class. Nothing is shown if it cannot be had: the report itself does not wait for it.
+  async function showWho(): Promise<void> {
+    const reply = await request("/api/team/list?ref=" + encodeURIComponent(code));
+    if (reply.kind !== "res" || !reply.res.ok) return;
+    const r = parseRows(await reply.res.json().catch(() => null))?.rows[0];
+    const bar = $("who");
+    if (!r || !bar) return;
+    const text = document.createElement("div");
+    text.className = "tt-who";
+    const name = document.createElement("span");
+    name.className = "tt-name";
+    name.textContent = r.name;
+    const meta = document.createElement("span");
+    meta.className = "tt-meta";
+    meta.textContent = r.class;
+    text.append(name, meta);
+    const face = circle(r.avatar, r.name, 40);
+    bar.replaceChildren(...(face ? [face, text] : [text]));
+    bar.hidden = false;
+  }
+
   async function open(): Promise<void> {
     say("Opening the saved report…");
     const reply = await request("/api/team/report?s=" + encodeURIComponent(code));
@@ -302,6 +336,7 @@ function startViewer(): void {
     show("viewerBox", true);
     say(null);
   }
+  void showWho();
   void open();
 }
 

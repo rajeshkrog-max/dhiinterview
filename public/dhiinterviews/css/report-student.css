@@ -34,6 +34,10 @@ p{margin:0}
 .head-trophy:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .logo{width:40px;height:40px;flex:none;object-fit:contain}
 .head-text{min-width:0}
+.head--pic{align-items:flex-start;gap:16px}
+.head--pic .dhi-avatar{margin-top:2px}
+.brand{display:flex;align-items:center;gap:6px;margin:0 0 6px;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
+.brand-logo{width:18px;height:18px;flex:none;object-fit:contain}
 .title{margin:0 0 4px;font-family:var(--f-head);font-weight:700;font-size:24px;line-height:1.2}
 .meta{font-size:13px;color:var(--faint);margin-bottom:10px}
 .pill{display:inline-block;padding:3px 12px;border-radius:999px;font-size:13px;font-weight:700;color:var(--ink-text);background:var(--gold)}

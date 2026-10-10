@@ -1,6 +1,9 @@
 /* DhiRise · leaderboard.html. Podium (top 3), ranks 4–50, and a sticky card with your rank, milestones and Share
    (or "Join the challenge →" if you haven't joined). Refreshes every 5 minutes until endsAt; after that the board freezes.
-   Data only through js/api.js. Owl avatars by style: assets/cards/owl-{builder|achiever|explorer}.webp, cropped to the face in CSS. */
+   Data only through js/api.js. Owl avatars by style: assets/cards/owl-{builder|achiever|explorer}.webp, cropped to the face in CSS.
+   Spec 0011 (AC-4): a row that carries an `avatar` (a same origin picture path, sent by the server only while LEADERBOARD_PICTURES_ENABLED
+   is on, and only for a student who agreed, has not removed it and is not blocked) shows that picture in place of the owl: 28px in the
+   list, 40px on the podium, with the student's initial if it fails. A row without one, and every demo row, keeps its owl. */
 (function () {
   "use strict";
   var C = window.DHI_CHALLENGE, api = window.DhiApi;
@@ -12,7 +15,12 @@
 
   function el(tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
   function add(p) { for (var i = 1; i < arguments.length; i++) if (arguments[i]) p.appendChild(arguments[i]); return p; }
-  function avatar(style, cls) {
+  function picturesOn() { return !!(window.DhiAvatar && window.DhiSession && DhiSession.pictureEnabled && DhiSession.pictureEnabled()); }
+  function avatar(style, cls, row) {
+    if (row && row.avatar && !row.demo && picturesOn()) {
+      /* the wrapper keeps the owl's box, so the list and the podium do not move */
+      return add(el("span", "lb-pic" + (cls ? " " + cls : "")), DhiAvatar.make({ url: row.avatar, name: row.displayName, size: cls === "big" ? 40 : 28, lazy: true }));
+    }
     var a = el("span", "lb-av" + (cls ? " " + cls : ""));
     a.style.backgroundImage = 'url("assets/cards/owl-' + (OWL[style] || "builder") + '.webp")';
     a.setAttribute("aria-hidden", "true");
@@ -64,7 +72,7 @@
       if (first && !reduced) { spot.classList.add("rise"); spot.style.animationDelay = [120, 0, 240][i] + "ms"; }
       var crown = t[1] === 1 ? el("span", "lb-crown") : null;
       if (crown) crown.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 10H5z"/></svg>';
-      add(spot, crown, avatar(row.style, "big"),
+      add(spot, crown, avatar(row.style, "big", row),
         el("span", "lb-medal", "#" + row.rank),
         el("span", "lb-name", row.displayName + (row.me ? " (you)" : "")),
         el("span", "lb-valid", row.valid + " valid"),
@@ -80,7 +88,7 @@
     rows.forEach(function (row) {
       var li = el("li", "lb-row" + (row.me ? " me" : ""));
       if (row.me) li.setAttribute("aria-current", "true");
-      add(li, el("span", "lb-rank", String(row.rank)), avatar(row.style),
+      add(li, el("span", "lb-rank", String(row.rank)), avatar(row.style, "", row),
         add(el("span", "lb-who"), el("span", "lb-name", row.displayName + (row.me ? " (you)" : "")), el("span", "lb-cls", row.cls)),
         el("span", "lb-count", String(row.valid)));
       add(ol, li);
@@ -100,8 +108,11 @@
       return;
     }
     box.classList.remove("join");
+    /* spec 0011: the student's own circle (picture or initials) between the rank and the word "You"; nothing when the feature is off */
+    var pic = window.DhiAvatar ? DhiAvatar.mine({ size: 40 }) : null;
     var head = add(el("div", "lb-you-head"),
       el("span", "lb-you-rank", rank.rank ? "#" + rank.rank : "–"),
+      pic,
       add(el("div", "lb-you-text"),
         el("span", "lb-you-title", "You"),
         el("span", "lb-you-sub", rank.valid + " valid · " + rank.pending + " pending")));

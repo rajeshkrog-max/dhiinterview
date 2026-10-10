@@ -19,6 +19,10 @@ body{font-family:var(--f-body);color:var(--white);-webkit-font-smoothing:antiali
   border-radius:999px;background:rgba(20,17,14,.62);border:1px solid rgba(255,255,255,.18);
   -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
 .who{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* with the picture feature on, the 40px circle sits inside the 44px pill, concentric with its left end */
+.topbar--pic{padding-left:2px}
+.who-wrap{display:flex;align-items:center;gap:10px;min-width:0}
+.who-wrap .who{min-width:0}
 .step{font-size:14px;font-weight:600;letter-spacing:.08em}
 .dots{position:fixed;z-index:20;left:0;right:0;top:calc(66px + env(safe-area-inset-top));display:flex;justify-content:center;gap:6px}
 .dots i{width:18px;height:3px;border-radius:3px;background:rgba(20,17,14,.6);transition:background .3s ease,width .3s ease}

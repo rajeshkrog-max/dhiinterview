@@ -9,6 +9,7 @@ import { ConvexError, v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { internalMutation, internalQuery, mutation, query, type MutationCtx } from "./_generated/server";
+import { pictureFor } from "./avatarState";
 import { getSignedInUser, requireStudent } from "./helpers";
 import { rateLimiter } from "./limits";
 import { FRESH_ROUND_AFTER_MS, LEASE_MS, UNATTACHED_FILE_MS, afterCountedFailure } from "./reportCore";
@@ -122,7 +123,8 @@ export const ownFile = internalQuery({
 
 // The data the render page draws from (spec 0006, value sourcing). Internal: only GET /api/render/payload calls it, after
 // the signed token was checked. Only the first name and class leave the students row; the result is flattened with every
-// flag set to false (it never reads the flags table); no email, no phone.
+// flag set to false (it never reads the flags table); no email, no phone. `profile.avatar` is the picture path (spec 0011, AC-4)
+// by the same rule as every other place, or null; the render page draws it and waits for it at most 3 seconds (AC-17).
 export const payload = internalQuery({
   args: { studentId: v.string(), checkId: v.string() },
   returns: v.union(
@@ -130,7 +132,7 @@ export const payload = internalQuery({
     v.object({
       completedAt: v.string(),
       seed: v.string(),
-      profile: v.object({ name: v.string(), class: v.string() }),
+      profile: v.object({ name: v.string(), class: v.string(), avatar: v.union(v.string(), v.null()) }),
       result: v.any(),
       wantedVersion: v.number(),
     }),
@@ -157,7 +159,7 @@ export const payload = internalQuery({
     return {
       completedAt: new Date(check.completedAt).toISOString(),
       seed: check.seed,
-      profile: { name: student.name.trim().split(/\s+/)[0] ?? "", class: student.class },
+      profile: { name: student.name.trim().split(/\s+/)[0] ?? "", class: student.class, avatar: await pictureFor(ctx, student._id) },
       result: flat,
       wantedVersion: row.wantedVersion,
     };

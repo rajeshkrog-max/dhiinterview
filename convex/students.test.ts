@@ -69,7 +69,7 @@ describe("students.createProfile", () => {
       expect(s?.name).toBe("Asha Rao");
       expect(s?.email).toBe(email.toLowerCase());
       const consent = (await ctx.db.query("consents").collect())[0];
-      expect(consent).toMatchObject({ studentId, kind: "landing", textVersion: "v3", ageAtConsent: 20, guardianPresent: false });
+      expect(consent).toMatchObject({ studentId, kind: "landing", textVersion: "v4", ageAtConsent: 20, guardianPresent: false });
       expect(consent.acceptedAt).toBeLessThanOrEqual(Date.now());
     });
   });

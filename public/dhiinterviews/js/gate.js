@@ -56,6 +56,11 @@
     say($("outMsg"), "");
     $("notYou").textContent = "Not you";
     $("notYou").dataset.force = "";
+    /* spec 0011: the student's own circle (picture, or initials) above "Continue as"; nothing at all when the feature is off */
+    var slot = $("backPic"), pic = window.DhiAvatar ? DhiAvatar.mine({ size: 64, name: displayName }) : null;
+    slot.textContent = "";
+    slot.hidden = !pic;
+    if (pic) slot.appendChild(pic);
     show("back");
   }
   function paintReady() {
@@ -64,6 +69,8 @@
     /* answers an earlier version kept only in this browser: asked once, and only when the server has none */
     if (!check.completedAt && answered === 0 && S.oldAnswers()) { show("stImport"); return; }
     paintBack((check.profile && check.profile.name) || "");
+    /* spec 0011: the one time picture notice, only when the server says to ask (never in the default mode) */
+    if (window.DhiPictureNotice) DhiPictureNotice.mountIn($("back"), check.profile);
   }
 
   function paint(state) {

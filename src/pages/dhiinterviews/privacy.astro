@@ -24,6 +24,7 @@ const contact = PRIVACY_CONTACT;
         <li>The email of the Google account you use to sign in.</li>
         <li>Your answers to the 18 questions, and the result and report we prepare from them.</li>
         <li>A PDF copy of your report, so you can download it later.</li>
+        <li>One small copy of the profile picture from your Google account, and nothing else from your Google profile (see section 5).</li>
         <li>Your mobile number, only if you add it, and whether you asked to join the Dhi early access group on WhatsApp.</li>
         <li>The feedback you write, if you write any.</li>
       </ul>
@@ -38,7 +39,7 @@ const contact = PRIVACY_CONTACT;
       <h2>3. Who helps us look after it</h2>
       <p>We use a few services to run DhiRise. Each one handles only what it needs to do its job.</p>
       <ul>
-        <li><b>Google</b> lets you sign in. We get your name and email from it. A copy of the mobile number step and of your feedback also goes to a Google Sheet kept by the DhiRise team.</li>
+        <li><b>Google</b> lets you sign in. We get your name, email and profile picture from it. A copy of the mobile number step and of your feedback also goes to a Google Sheet kept by the DhiRise team.</li>
         <li><b>Convex</b> is our database. Your profile, answers, result and PDF copy are stored there.</li>
         <li><b>Cloudflare</b> serves this website. Its service called <b>Cloudflare Browser Run</b> opens our own report page and prints it to a PDF, so your report data passes through Cloudflare when your PDF copy is made.</li>
       </ul>
@@ -52,24 +53,39 @@ const contact = PRIVACY_CONTACT;
     </section>
 
     <section>
-      <h2>5. If you are under 18</h2>
+      <h2>5. Your Google profile picture</h2>
+      <p>DhiRise saves one small copy of the profile picture from your Google account, and nothing else from your Google profile. We show it next to your name, so DhiRise feels like yours. There is no separate question about it. It is on for every student. If you joined before the picture was added, the words you agreed to when you began did not mention it, so this page is where we tell you. You can take it off whenever you like, as described below.</p>
+      <p>Your picture can be seen by:</p>
+      <ul>
+        <li>You, on your own screens and in your report.</li>
+        <li>Other students, if the leaderboard shows pictures.</li>
+        <li>Anyone you give a report link to.</li>
+        <li>Named members of the DhiRise team.</li>
+      </ul>
+      <p>You can remove it at any time. Open your report and tap <b>Remove my picture</b>. We delete our copy, and your initial shows instead. You can bring it back with <b>Use my Google picture</b>.</p>
+      <p>A removed picture can stay in browser copies for up to an hour. PDF copies of your report and report links that were already made may keep the picture they drew. Asking us to erase your data removes those too. A PDF copy made very early, before your picture was saved, may have no picture at all.</p>
+      <p>If a picture is not right for DhiRise, the team can also take it off. To ask, write to <a href={`mailto:${contact}`}>{contact}</a>.</p>
+    </section>
+
+    <section>
+      <h2>6. If you are under 18</h2>
       <p>A parent or guardian must be with you and must agree before you use DhiRise. Please do not continue alone.</p>
     </section>
 
     <section>
-      <h2>6. Your choices</h2>
+      <h2>7. Your choices</h2>
       <p>You may take back your consent, correct your details, or ask us to erase them, which includes your PDF copy. Write to <a href={`mailto:${contact}`}>{contact}</a>. Taking back your consent does not change a result that was already prepared.</p>
     </section>
 
     <section>
-      <h2>7. Who to contact</h2>
+      <h2>8. Who to contact</h2>
       <p>For any question or complaint about your data, write to the DhiRise privacy contact at <a href={`mailto:${contact}`}>{contact}</a>. This is the same address as in the notice you agree to before you begin.</p>
     </section>
 
     <section>
-      <h2>8. Changes</h2>
+      <h2>9. Changes</h2>
       <p>If this page or the notice changes, new students see the new notice when they sign up. We keep the exact words of every notice a student agreed to.</p>
-      <p>Last updated: 9 October 2026.</p>
+      <p>Last updated: 10 October 2026.</p>
     </section>
   </article>
 </Frame>

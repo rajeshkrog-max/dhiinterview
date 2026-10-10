@@ -25,6 +25,14 @@ const app = defineApp({
     // The team link to the saved report (spec 0008): comma separated Google emails allowed to open any ready report.
     // Unset or empty means nobody. Read on every team request, so removing an email takes effect at once. Set per deployment.
     TEAM_EMAILS: v.optional(v.string()),
+    // The Google profile picture (spec 0011). On by default; `false` turns the whole feature off: no notice, no fetch, no picture, and the
+    // image route answers 404.
+    PROFILE_PICTURE_ENABLED: v.optional(v.string()),
+    // `true` brings back the spec's asked flow: the picture waits for the student's v4 consent and existing students get the one time
+    // notice. Unset (the default) means nobody is asked and every student's picture is fetched and shown.
+    PICTURE_CONSENT_REQUIRED: v.optional(v.string()),
+    // `true` lets live leaderboard rows carry pictures (scope row 12). Leave it off until the team can review pictures.
+    LEADERBOARD_PICTURES_ENABLED: v.optional(v.string()),
   },
 });
 app.use(betterAuth);

@@ -158,3 +158,90 @@ test("covers AC-11: the page prints to a real PDF under 5 MB", async ({ page }) 
   expect(pdf.length).toBeGreaterThan(50_000);
   expect(pdf.length).toBeLessThan(5 * 1024 * 1024);
 });
+
+// ---------- the student's picture in the copy (spec 0011, AC-4 and AC-17) ----------
+const KEY_PATH = "/api/avatar/AbCdEfGhIjKlMnOpQrStUv";
+const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64");
+const headCircle = (page: Page) => page.locator("#report .card.head .dhi-avatar");
+
+test.describe("the picture in the saved copy (spec 0011)", () => {
+  test("covers AC-4: a payload with a picture path draws a 64px circle with the picture, and the heading no longer shows the DhiRise mark", async ({ page }) => {
+    const { payload } = await makePayload();
+    await serve(page, { ...payload, profile: { ...payload.profile, avatar: KEY_PATH } });
+    const asked: string[] = [];
+    await page.route("**/api/avatar/**", (route) => {
+      asked.push(new URL(route.request().url()).pathname);
+      return route.fulfill({ status: 200, contentType: "image/png", body: PNG });
+    });
+    await page.goto(`${PAGE}#t=good`);
+    await settled(page);
+    await expect(page.locator("#report")).toHaveAttribute("data-ready", "1");
+    await expect(headCircle(page)).toHaveClass(/dhi-avatar--64\b.*dhi-avatar--photo/);
+    await expect(headCircle(page).locator("img")).toHaveAttribute("src", KEY_PATH);
+    await expect(headCircle(page).locator("img")).toHaveAttribute("loading", "eager"); // never lazy in the copy
+    expect(await headCircle(page).evaluate((e: HTMLElement) => Math.round(e.getBoundingClientRect().width))).toBe(64);
+    await expect(page.locator("#report .card.head img.logo")).toHaveCount(0);
+    expect(new Set(asked)).toEqual(new Set([KEY_PATH]));
+    await expect(page.locator("#report .pcontrol, #report #pictureNotice")).toHaveCount(0); // no picture controls in a saved copy
+  });
+
+  test("covers AC-4: no picture path (removed, blocked, off or never fetched) keeps the heading as before, with no empty circle", async ({ page }) => {
+    const { payload } = await makePayload();
+    for (const avatar of [null, undefined]) {
+      await serve(page, { ...payload, profile: { ...payload.profile, avatar } });
+      await page.goto(`${PAGE}#t=good`);
+      await settled(page);
+      await expect(page.locator("#report")).toHaveAttribute("data-ready", "1");
+      await expect(headCircle(page)).toHaveCount(0);
+      await expect(page.locator("#report .card.head img.logo")).toHaveCount(1);
+      await page.unroute("**/api/render/payload");
+    }
+  });
+
+  test("covers AC-17: a picture that answers 404 leaves the initial in the circle, and the copy is still ready", async ({ page }) => {
+    const { payload } = await makePayload();
+    await serve(page, { ...payload, profile: { ...payload.profile, avatar: KEY_PATH } });
+    await page.route("**/api/avatar/**", (route) => route.fulfill({ status: 404, contentType: "text/plain", body: "Not found" }));
+    await page.goto(`${PAGE}#t=good`);
+    await settled(page);
+    await expect(page.locator("#report")).toHaveAttribute("data-ready", "1");
+    await expect(headCircle(page)).toHaveText("A");
+    await expect(headCircle(page).locator("img")).toHaveCount(0);
+  });
+
+  test("covers AC-17: a picture that never arrives is waited for about 3 seconds, then the copy is made with the initial", async ({ page }) => {
+    const { payload } = await makePayload();
+    await serve(page, { ...payload, profile: { ...payload.profile, avatar: KEY_PATH } });
+    let askedAt = 0;
+    await page.route("**/api/avatar/**", async (route) => {
+      askedAt = Date.now();
+      await new Promise((r) => setTimeout(r, 12_000)); // slower than the page will ever wait
+      await route.abort().catch(() => undefined);
+    });
+    await page.goto(`${PAGE}#t=good`);
+    await settled(page);
+    const readyAt = Date.now();
+    await expect(page.locator("#report")).toHaveAttribute("data-ready", "1");
+    await expect(headCircle(page)).toHaveText("A");
+    expect(askedAt).toBeGreaterThan(0);
+    const waited = readyAt - askedAt;
+    expect(waited).toBeGreaterThanOrEqual(2500); // it did wait for the picture ...
+    expect(waited).toBeLessThan(7000); // ... but not the 12 seconds the server took
+  });
+
+  test("covers AC-4 and AC-10: only a same origin /api/avatar/ path is ever drawn, so a hostile payload cannot make the copy contact another host", async ({ page }) => {
+    const { payload } = await makePayload();
+    const hosts = new Set<string>();
+    page.on("request", (r) => hosts.add(new URL(r.url()).host));
+    for (const avatar of ["https://evil.example/pic.png", "//evil.example/pic.png", "javascript:alert(1)", "/somewhere/else.png"]) {
+      await serve(page, { ...payload, profile: { ...payload.profile, avatar } });
+      await page.goto(`${PAGE}#t=good`);
+      await settled(page);
+      await expect(page.locator("#report"), avatar).toHaveAttribute("data-ready", "1");
+      await expect(headCircle(page), avatar).toHaveText("A");
+      await expect(headCircle(page).locator("img"), avatar).toHaveCount(0);
+      await page.unroute("**/api/render/payload");
+    }
+    expect([...hosts].some((h) => /evil/.test(h))).toBe(false);
+  });
+});

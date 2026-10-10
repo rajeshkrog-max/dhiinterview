@@ -14,9 +14,9 @@ test("covers AC-6: offline, the phone step shows a kind retry and keeps the numb
   await expect(page.locator("#phone")).toHaveValue("987 654 3210");
   await expect(page.locator("#thanks")).toBeHidden();
   await context.setOffline(false);
-  await page.locator("#submit").click();
+  await page.evaluate(() => (document.getElementById("submit") as HTMLButtonElement).click()); // a real click is blocked by <astro-dev-toolbar> at phone width on the dev server
   await expect(page.locator("#thanks")).toBeVisible({ timeout: 30_000 });
-  await expect(page).toHaveURL(/\/who\.html$/, { timeout: 30_000 });
+  await expect(page).toHaveURL(/\/who(\.html)?$/, { timeout: 30_000 });
   expect((await cache(page)).leadSavedAt).toBeTruthy();
 });
 
@@ -37,7 +37,7 @@ test("covers AC-6, AC-8, AC-10: with the number saved the step is skipped, and f
   await finishedCheck(page);
   await openPhoneStep(page);
   await submitPhone(page, "9876543210");
-  await expect(page).toHaveURL(/\/who\.html$/, { timeout: 30_000 });
+  await expect(page).toHaveURL(/\/who(\.html)?$/, { timeout: 30_000 });
 
   // a student whose number is saved skips the phone step
   await page.emulateMedia({ reducedMotion: "reduce" });
@@ -45,7 +45,7 @@ test("covers AC-6, AC-8, AC-10: with the number saved the step is skipped, and f
   await page.locator("#see:not([hidden])").waitFor({ timeout: 30_000 });
   await page.evaluate(() => (document.getElementById("see") as HTMLButtonElement).click());
   await page.evaluate(() => (document.getElementById("unlock") as HTMLButtonElement).click());
-  await expect(page).toHaveURL(/\/who\.html$/);
+  await expect(page).toHaveURL(/\/who(\.html)?$/);
 
   // the report, then the feedback card: a short note is stopped on the page, a real one is saved on the server
   await page.goto(PATH + "report-student.html");
@@ -73,7 +73,7 @@ test("covers AC-13: the pages hold no old Sheet post and no old local copies of 
   await finishedCheck(page);
   await openPhoneStep(page);
   await submitPhone(page, "9876543210");
-  await expect(page).toHaveURL(/\/who\.html$/, { timeout: 30_000 });
+  await expect(page).toHaveURL(/\/who(\.html)?$/, { timeout: 30_000 });
   const keys = await page.evaluate(() => Object.keys(localStorage));
   expect(keys).not.toContain("dhirise.lead.v1");
   expect(keys).not.toContain("dhirise.reportFeedback.v1");

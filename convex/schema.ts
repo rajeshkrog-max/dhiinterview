@@ -28,6 +28,7 @@ export default defineSchema({
     age: v.number(),
     class: classValidator,
     referralCodeEntered: v.optional(v.string()),
+    pictureNoticeDeclinedAt: v.optional(v.number()), // when the student tapped Not now on the picture notice (spec 0011); asked again after 14 days
   })
     .index("by_authUserId", ["authUserId"])
     .index("by_email", ["email"]),
@@ -180,6 +181,29 @@ export default defineSchema({
   })
     .index("by_studentId", ["studentId"])
     .index("by_teamEmail_and_viewedAt", ["teamEmail", "viewedAt"]),
+
+  // The student's Google profile picture, copied once into our own storage (spec 0011). One row per student, patched in place.
+  // `sourceUrl`, `storageId` and `etag` are never given to a browser: a browser gets only `/api/avatar/<key>`. `key` is random and
+  // made again whenever the image changes, so an old address stops working. `lastError` is a short code, never a URL or a name.
+  avatars: defineTable({
+    studentId: v.id("students"),
+    key: v.string(), // 22 chars, base64url
+    storageId: v.optional(v.id("_storage")), // absent after a removal, or when Google has no photo
+    contentType: v.optional(v.string()), // image/jpeg, image/png or image/webp, taken from the file's own first bytes
+    size: v.optional(v.number()),
+    sha256: v.optional(v.string()), // tells a changed image from the same one
+    sourceUrl: v.string(), // the Google address last used (host checked)
+    etag: v.optional(v.string()),
+    checkedAt: v.number(), // the last time it was compared with Google (0 until the first fetch lands)
+    updatedAt: v.number(), // when the image last changed
+    removedAt: v.optional(v.number()), // set by the student's Remove
+    blockedAt: v.optional(v.number()), // set by the team; cleared only by the team
+    leaseUntil: v.optional(v.number()), // one fetch at a time for a student
+    leaseToken: v.optional(v.string()), // checked when the fetch lands
+    lastError: v.optional(v.string()),
+  })
+    .index("by_studentId", ["studentId"])
+    .index("by_key", ["key"]),
 
   // One row: the one at a time lease of the copy job, and the numbers the Sync status tab shows.
   sheetStatus: defineTable({

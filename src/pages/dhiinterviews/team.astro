@@ -8,6 +8,7 @@ import Frame from "../../layouts/Frame.astro";
 ---
 <Frame title="Team" description="The DhiRise team's list of saved student reports." noindex wide page="list">
   <link slot="head" rel="stylesheet" href="/dhiinterviews/css/team.css">
+  <link slot="head" rel="stylesheet" href="/dhiinterviews/css/avatar.css">
   <div class="tt">
     <div class="tt-bar">
       <h1>DhiRise team: saved reports</h1>
@@ -33,6 +34,7 @@ import Frame from "../../layouts/Frame.astro";
     </section>
   </div>
 
+  <script is:inline src="/dhiinterviews/js/avatar.js"></script>
   <script>
     import "../../lib/team";
   </script>

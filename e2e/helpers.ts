@@ -67,7 +67,7 @@ export async function openPhoneStep(page: Page) {
 export async function submitPhone(page: Page, phone = "9876543210", opts: { guardian?: boolean } = {}) {
   await page.fill("#phone", phone);
   if (opts.guardian) await page.locator("#guardian").check();
-  await page.locator("#submit").click();
+  await page.evaluate(() => (document.getElementById("submit") as HTMLButtonElement).click()); // a real click is blocked by <astro-dev-toolbar> at phone width on the dev server
 }
 
 export const answersOnDevice = (page: Page) => page.evaluate(() => (window as any).DhiStore.get().answers as Record<string, string>);
