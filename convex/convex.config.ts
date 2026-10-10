@@ -33,6 +33,9 @@ const app = defineApp({
     PICTURE_CONSENT_REQUIRED: v.optional(v.string()),
     // `true` lets live leaderboard rows carry pictures (scope row 12). Leave it off until the team can review pictures.
     LEADERBOARD_PICTURES_ENABLED: v.optional(v.string()),
+    // The private link to a student's report (spec 0010). Signs the link codes; a different value on dev and production. Unset means no
+    // link can be made or opened (so leave it unset on production until the share row, the notice and Stop sharing have shipped).
+    SHARE_LINK_SECRET: v.optional(v.string()),
   },
 });
 app.use(betterAuth);

@@ -1,7 +1,7 @@
 # 0010. Share buttons that send the report, with a public link
 
 **Date**: 2026-10-10
-**Status**: Proposed
+**Status**: In Progress
 
 ## Summary
 

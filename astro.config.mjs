@@ -7,7 +7,7 @@
 import { defineConfig } from 'astro/config';
 import { existsSync, readFileSync } from 'node:fs';
 
-// Local development only: send /api/auth/* (and /api/files, /api/render, /api/team, /api/avatar) to the Convex dev deployment, like functions/api does in
+// Local development only: send /api/auth/* (and /api/files, /api/render, /api/team, /api/avatar, /api/shared) to the Convex dev deployment, like functions/api does in
 // production. The address comes from .env.local, which `convex dev` writes (git ignored).
 const convexSite =
   process.env.CONVEX_SITE_URL ??
@@ -15,12 +15,26 @@ const convexSite =
     ? readFileSync('.env.local', 'utf8').match(/^CONVEX_SITE_URL=(\S+)/m)?.[1]
     : undefined);
 
+// Local development only: the same rewrite as public/_redirects (`/s/* → /dhiinterviews/shared`, status 200), so a private report link
+// opens under `pnpm dev` too. The address stays /s/<code>; the page is served in its place.
+/** @type {import('vite').Plugin} */
+const sharedRewrite = {
+  name: 'dhirise-shared-rewrite',
+  configureServer(server) {
+    server.middlewares.use((req, _res, next) => {
+      if (req.url && /^\/s\//.test(req.url)) req.url = '/dhiinterviews/shared.html';
+      next();
+    });
+  },
+};
+
 export default defineConfig({
   output: 'static',
   build: { format: 'file' },
   trailingSlash: 'ignore',
   compressHTML: false,
   vite: {
+    plugins: [sharedRewrite],
     server: {
       proxy: convexSite
         ? {
@@ -37,6 +51,8 @@ export default defineConfig({
             '/api/team': { target: convexSite, changeOrigin: true },
             // the stored Google profile picture (spec 0011), like functions/api/avatar
             '/api/avatar': { target: convexSite, changeOrigin: true },
+            // the private report link's data (spec 0010), like functions/api/shared
+            '/api/shared': { target: convexSite, changeOrigin: true },
           }
         : {},
     },

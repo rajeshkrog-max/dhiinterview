@@ -8,6 +8,7 @@ import { httpAction } from "./_generated/server";
 import { authComponent, createAuth } from "./auth";
 import { avatarImage } from "./avatarHttp";
 import { reportFile, renderPayload } from "./reportHttp";
+import { sharedPayload } from "./shareHttp";
 import { teamList, teamReport } from "./teamHttp";
 
 const http = httpRouter();
@@ -26,6 +27,9 @@ http.route({
 // The saved report PDF (spec 0006): the student's own download, and the data for the render page.
 http.route({ path: "/api/files/report", method: "GET", handler: reportFile });
 http.route({ path: "/api/render/payload", method: "GET", handler: renderPayload });
+
+// The private link to a report (spec 0010): the data the public page draws from, for a valid signed link code only.
+http.route({ path: "/api/shared/payload", method: "GET", handler: sharedPayload });
 
 // The team link to the saved report (spec 0008): the list and the PDF, for named Google accounts only.
 http.route({ path: "/api/team/list", method: "GET", handler: teamList });

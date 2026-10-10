@@ -1,0 +1,33 @@
+/* DhiRise · the share notice, the Instagram dialog and the Stop sharing line (spec 0010). Loaded on the report page after css/card.css and
+   css/report-student.css, whose colours (--gold, --muted, --white, --f-head) and buttons (.btn-gold, .btn-ghost) it reuses.
+   The overlay sits under the card's toast (z-index 50), so a toast is still seen over a dialog. Buttons are 44px tall or more. */
+
+.sh-lock{overflow:hidden}
+.sh-ov{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:16px;background:rgba(10,8,6,.74);
+  -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+.sh-dlg{width:min(100%,440px);max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);overflow:auto;padding:20px 18px;border-radius:20px;
+  background:#1c1813;border:1px solid rgba(233,185,92,.35);box-shadow:0 24px 60px -20px rgba(0,0,0,.9);color:var(--white)}
+.sh-dlg:focus{outline:none}
+.sh-title{margin:0 0 12px;font-family:var(--f-head);font-weight:700;font-size:22px;line-height:1.25}
+.sh-text{margin:0 0 12px;font-size:16px;line-height:1.5;color:var(--muted)}
+.sh-tick{display:flex;gap:12px;align-items:flex-start;margin:4px 0 12px;font-size:16px;line-height:1.4;cursor:pointer}
+.sh-tick input{flex:none;width:24px;height:24px;margin:0;accent-color:var(--gold)}
+.sh-tick input:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.sh-msg{min-height:1.4em;margin:0 0 8px;font-size:14px;line-height:1.4;color:var(--gold)}
+.sh-act{display:grid;gap:10px}
+.sh-act .btn-ghost{margin-top:0}
+.sh-qr{width:min(70vw,240px);margin:0 auto 14px;padding:8px;border-radius:14px;background:#fff}
+.sh-qr svg{display:block;width:100%;height:auto}
+
+/* the Stop sharing line, under the share row */
+.sh-ctl{text-align:center;font-size:14px;line-height:1.5;color:var(--muted)}
+.sh-ctl[hidden]{display:none}
+.sh-ctl-text{margin:0 0 6px}
+.sh-ctl-text:focus{outline:none}
+.sh-ctl-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.sh-ctl-btn{min-height:44px;padding:8px 16px;border-radius:12px;border:1px solid rgba(255,255,255,.3);background:transparent;color:var(--white);
+  font:inherit;font-size:15px;font-weight:600;cursor:pointer}
+.sh-ctl-danger{border-color:#e08a76;color:#f3b6a8}
+.sh-ctl-btn:focus-visible{outline:2px solid #fff;outline-offset:3px}
+.sh-ctl-btn[aria-busy="true"]{opacity:.7;cursor:progress}
+@media print{.sh-ov,.sh-ctl{display:none!important}}

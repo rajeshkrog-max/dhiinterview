@@ -5,7 +5,7 @@
 // Every version belongs to one kind (spec 0003, AC-14): the landing text works only for creating a profile,
 // and the phone text works only for a lead, so the two cannot be swapped.
 
-export type ConsentKind = "landing" | "lead";
+export type ConsentKind = "landing" | "lead" | "share";
 
 // v1 is frozen: consent rows already saved point at its exact text. Never edit it.
 export const CONSENT_VERSION_V1 = "v1";
@@ -65,6 +65,19 @@ export const LEAD_CONSENT_LINES: readonly string[] = [
   "By tapping Submit, you confirm that you have read this notice, and that a parent or guardian has agreed if you are under 18.",
 ];
 
+// The notice before a student's first private report link (spec 0010, AC-3). DRAFT WORDS: the owner has not approved them yet (a launch
+// blocker in spec 0010, follow up). The same lines are drawn in the notice and hashed by the server. The kind `share` works only for a link:
+// the landing and phone texts cannot stand in for it. A student under 18 also ticks SHARE_GUARDIAN_TICK, which is kept as `guardianPresent`.
+export const SHARE_CONSENT_VERSION = "share-v1";
+
+export const SHARE_CONSENT_LINES: readonly string[] = [
+  "When you share, DhiRise makes a private link to your report. Anyone who has the link can read your whole report and see your first name and your profile picture, and they can copy the link to others.",
+  "They cannot see your age, class, email, phone number or your private notes.",
+  "You can turn the link off at any time with Stop sharing, and it ends by itself after 90 days.",
+];
+
+export const SHARE_GUARDIAN_TICK = "I have checked with a parent or guardian.";
+
 // Every known version, by version string. Add a new key for new wording; keep the old ones.
 export const CONSENT_TEXTS: Readonly<Record<string, string>> = {
   [CONSENT_VERSION_V1]: CONSENT_LINES_V1.join("\n\n"),
@@ -72,6 +85,7 @@ export const CONSENT_TEXTS: Readonly<Record<string, string>> = {
   [CONSENT_VERSION_V3]: CONSENT_LINES_V3.join("\n\n"),
   [CONSENT_VERSION]: CONSENT_LINES.join("\n\n"),
   [LEAD_CONSENT_VERSION]: LEAD_CONSENT_LINES.join("\n\n"),
+  [SHARE_CONSENT_VERSION]: SHARE_CONSENT_LINES.join("\n\n"),
 };
 
 // The kind each version belongs to.
@@ -81,6 +95,7 @@ export const CONSENT_KINDS: Readonly<Record<string, ConsentKind>> = {
   [CONSENT_VERSION_V3]: "landing",
   [CONSENT_VERSION]: "landing",
   [LEAD_CONSENT_VERSION]: "lead",
+  [SHARE_CONSENT_VERSION]: "share",
 };
 
 // SHA 256 of the text with line endings turned into \n, as lowercase hex. Same code in the page and on the server.

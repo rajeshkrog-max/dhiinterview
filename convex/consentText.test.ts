@@ -13,6 +13,9 @@ import {
   CONSENT_LINES_V3,
   PICTURE_CONSENT_VERSIONS,
   PICTURE_LINE_MARK,
+  SHARE_CONSENT_LINES,
+  SHARE_CONSENT_VERSION,
+  SHARE_GUARDIAN_TICK,
   consentHash,
 } from "./consentText";
 
@@ -103,5 +106,31 @@ describe("consent text", () => {
       expect(CONSENT_TEXTS[version], version).toContain(PICTURE_LINE_MARK);
       expect(PICTURE_CONSENT_VERSIONS, version).toContain(version);
     }
+  });
+});
+
+describe("the share notice (spec 0010, AC-3)", () => {
+  test("covers AC-3: share-v1 is its own kind, is the lines joined by a blank line, and its draft words are pinned until the owner approves them", async () => {
+    expect(SHARE_CONSENT_VERSION).toBe("share-v1");
+    expect(CONSENT_KINDS[SHARE_CONSENT_VERSION]).toBe("share");
+    expect(CONSENT_TEXTS[SHARE_CONSENT_VERSION]).toBe(SHARE_CONSENT_LINES.join("\n\n"));
+    expect(await consentHash(CONSENT_TEXTS[SHARE_CONSENT_VERSION])).toBe("27854eb502790b316a2dbc1d5019210c580acc3e84ae8f59d54aaa18f3d01663");
+  });
+
+  test("covers AC-3: the notice says who can see what, how to turn it off, and that it ends; the tick for under 18s is the spec's words", () => {
+    const text = CONSENT_TEXTS[SHARE_CONSENT_VERSION];
+    expect(text).toMatch(/private link to your report/);
+    expect(text).toMatch(/Anyone who has the link can read your whole report/);
+    expect(text).toMatch(/first name and your profile picture/);
+    expect(text).toMatch(/copy the link to others/);
+    expect(text).toMatch(/cannot see your age, class, email, phone number or your private notes/);
+    expect(text).toMatch(/Stop sharing/);
+    expect(text).toMatch(/90 days/);
+    expect(SHARE_GUARDIAN_TICK).toBe("I have checked with a parent or guardian.");
+  });
+
+  test("covers AC-3: no other kind's text can be used as the share notice, and the share text is not a picture or landing version", () => {
+    expect(PICTURE_CONSENT_VERSIONS).not.toContain(SHARE_CONSENT_VERSION);
+    expect(Object.entries(CONSENT_KINDS).filter(([, k]) => k === "share").map(([v]) => v)).toEqual([SHARE_CONSENT_VERSION]);
   });
 });

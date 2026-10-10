@@ -275,11 +275,11 @@ describe("how the row is wired in (AC-9, AC-5)", () => {
     expect(html).toContain('href="css/picture-control.css"');
     expect(html.indexOf('src="js/avatar.js"')).toBeLessThan(html.indexOf('src="js/picture-control.js"'));
     expect(html.indexOf('src="js/picture-control.js"')).toBeLessThan(html.indexOf('src="js/report-student.js"'));
-    expect(read("public/dhiinterviews/js/report-student.js")).toMatch(/if \(!PRINT && window\.DhiPictureControl\) DhiPictureControl\.mount\(/);
+    expect(read("public/dhiinterviews/js/report-student.js")).toMatch(/if \(!HIDE && window\.DhiPictureControl\) DhiPictureControl\.mount\(/); // HIDE is print or public mode
   });
 
   test("covers AC-5: no other page loads the row, and the script never names a Google host", () => {
-    for (const p of ["landing", "done", "who", "challenge", "leaderboard", "question", "question2", "questions", "meet", "report-render"]) {
+    for (const p of ["landing", "done", "who", "challenge", "leaderboard", "question", "question2", "questions", "meet", "report-render", "shared"]) {
       expect(read(`src/pages/dhiinterviews/${p}.astro`), p).not.toContain("picture-control");
     }
     expect(read("public/dhiinterviews/js/picture-control.js")).not.toMatch(/googleusercontent|fetch\(|XMLHttpRequest|localStorage/);

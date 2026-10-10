@@ -31,7 +31,8 @@ describe("privacy page", () => {
     const flagNames = [...block[1].matchAll(/(\w+):\s*false/g)].map((m) => m[1]);
     expect(flagNames.length).toBeGreaterThanOrEqual(7);
     for (const f of flagNames) expect(page, f).not.toContain(f);
-    expect(words).not.toMatch(/\b(days|weeks|months|years)\b/i);
+    // no retention period for anyone's data. The one number is how long a report link lasts (spec 0010): a feature, not a retention time.
+    expect(words.replace(/ 90 days after the last time you tapped Share/g, " X")).not.toMatch(/\b(days|weeks|months|years)\b/i);
     expect(words).not.toMatch(/\b(region|sydney|singapore|mumbai|india only|data centre|data center)\b/i);
   });
 
@@ -71,7 +72,7 @@ describe("privacy page", () => {
     expect(words).toMatch(/profile picture from your Google account/);
     expect(words).toMatch(/We get your name, email and profile picture from it/);
     const numbers = [...page.matchAll(/<h2>(\d+)\. /g)].map((m) => Number(m[1]));
-    expect(numbers).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
-    expect(words).toMatch(/Last updated: 10 October 2026/);
+    expect(numbers).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(words).toMatch(/Last updated: 11 October 2026/);
   });
 });

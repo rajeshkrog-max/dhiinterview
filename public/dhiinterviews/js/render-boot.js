@@ -1,6 +1,6 @@
 /* Dhirise · the report render page's boot (spec 0006). Opened only by Cloudflare Browser Run, with a short lived signed
    token in the address fragment (#t=...), to draw the report the server turns into the saved PDF copy.
-   Needs loaded first: js/funnel-config.js, js/engine/questions.js, js/engine/reportText.js, js/card-export.js, js/avatar.js.
+   Needs loaded first: js/funnel-config.js, js/engine/questions.js, js/engine/reportText.js, js/card-export.js, js/card-image.js, js/avatar.js.
    It reads the token, fetches the student's data with a plain fetch (no sign in, no Convex client), stubs the few pieces of
    the student page that js/report-student.js reads (DhiStore, DhiSession), sets window.DHI_RENDER (the print flag),
    loads js/report-student.js, adds the Founding Card as an image, and marks #report:
@@ -34,7 +34,7 @@
   try { history.replaceState(null, "", location.pathname); } catch (e) {}      /* the token is not needed again */
 
   var T = window.DhiReportText;
-  if (!T || !window.DhiQuestions) { fail("script_missing"); return; }
+  if (!T || !window.DhiQuestions || !window.DhiCardImage) { fail("script_missing"); return; }
 
   fetch("/api/render/payload", { headers: { "x-render-token": token }, cache: "no-store", credentials: "omit" })
     .then(function (res) { if (!res.ok) throw new Error("payload_" + res.status); return res.json(); })
@@ -66,37 +66,7 @@
     document.head.appendChild(s);
   }
 
-  /* ---------- the Founding Card, as an image (the card, not the story) ---------- */
-  /* Mirrors js/card.js (STYLES and mix) and js/engine/identity.js (THEMES): style key → card style. identity.js is not
-     loaded here because it would also make and keep a founding id. tests/render-page.test.js fails if these drift. */
-  var CARD = {
-    v: { key: "explorer", tag: "THE CREATIVE EXPLORER", c: "#2f5f9e", sink: 0.04 },
-    p: { key: "achiever", tag: "THE FOCUSED ACHIEVER", c: "#3d7a3a", sink: 0.04 },
-    k: { key: "builder", tag: "THE STEADY BUILDER", c: "#b5452f", sink: 0.03 }
-  };
-  function mix(a, b, t) {
-    var x = parseInt(a.slice(1), 16), y = parseInt(b.slice(1), 16);
-    var ch = function (sh) { return Math.round(((x >> sh) & 255) * t + ((y >> sh) & 255) * (1 - t)); };
-    return "#" + ((1 << 24) | (ch(16) << 16) | (ch(8) << 8) | ch(0)).toString(16).slice(1);
-  }
-  function founding(data) {
-    var S = CARD[data.result.styleKey] || CARD.k;
-    var first = String(data.profile.name || "").trim().split(/\s+/)[0] || "";
-    first = first ? first.toLowerCase().replace(/(^|[-'’])(\S)/g, function (m, p, ch) { return p + ch.toUpperCase(); }) : "Student";
-    var shareUrl = String((window.DHI_FUNNEL || {}).shareUrl || "").replace(/^https?:\/\//, "").replace(/\/$/, "");
-    if (!window.DhiCardExport) return Promise.reject(new Error("card"));
-    return DhiCardExport.create({
-      key: S.key, c: S.c, winA: mix(S.c, "#fff8e6", 0.55), winB: mix(S.c, "#10122a", 0.85),
-      sink: S.sink, tag: S.tag, first: first, url: shareUrl
-    }).card().then(function (blob) {
-      if (!blob) throw new Error("card");
-      var img = new Image();
-      img.alt = "Your DhiRise Founding Card";
-      img.className = "fc-print";
-      img.src = URL.createObjectURL(blob);
-      return img.decode().then(function () { return img; });
-    });
-  }
+  /* The Founding Card as an image (the card, not the story) comes from js/card-image.js, which the public report page shares. */
 
   /* True when a face of every family is really loaded. (document.fonts.check() says true when no face is declared at all,
      which is exactly what happens if the Google Fonts stylesheet could not be reached.) */
@@ -132,7 +102,7 @@
 
   function afterDrawn(data) {
     if (finished) return;
-    founding(data).then(function (card) {
+    DhiCardImage.forData(data).then(function (card) {
       var wrap = document.createElement("section");
       wrap.className = "card fc-copy span2";
       wrap.setAttribute("aria-label", "Your DhiRise Founding Card");

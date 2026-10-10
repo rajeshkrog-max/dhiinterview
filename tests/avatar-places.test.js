@@ -14,7 +14,7 @@ describe("the saved PDF copy (AC-4, AC-17)", () => {
   const page = read("src/pages/dhiinterviews/report-render.astro");
 
   test("covers AC-4: the copy draws a 64px circle only when the payload carried a picture path, and never wires itself to the session", () => {
-    expect(report).toMatch(/if \(!PRINT\) pic = DhiAvatar\.mine\(\{ size: 64, name: profile\.name \}\);/);
+    expect(report).toMatch(/if \(!HIDE\) pic = DhiAvatar\.mine\(\{ size: 64, name: profile\.name \}\);/);
     expect(report).toMatch(/else if \(profile\.avatar\) pic = DhiAvatar\.make\(\{ url: profile\.avatar, name: profile\.name, size: 64 \}\);/);
     expect(code(report)).not.toMatch(/googleusercontent/);
   });

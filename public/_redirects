@@ -9,3 +9,7 @@
 # The funnel's own short addresses (these stay whatever the root becomes).
 /dhiinterviews /dhiinterviews/landing 302
 /dhiinterviews/ /dhiinterviews/landing 302
+
+# The private report link (spec 0010). Every /s/<code> address gets the same static page, with status 200 (a rewrite, so the address stays
+# as it is). The page holds no student data; js/shared-boot.js reads the code from the address and fetches the report.
+/s/* /dhiinterviews/shared 200

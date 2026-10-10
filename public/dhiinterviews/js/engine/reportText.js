@@ -393,8 +393,7 @@ window.DhiReportText = {
   joinSoon: "WhatsApp early access opens soon",
   openGroup: "Open the WhatsApp group",
   shareButton: "Share with a friend",
-  shareText: "I just found my study style with DhiRise. Try it:",
-  shareCopied: "Link copied",
+  shareNotReady: "Your card is still getting ready. Please try again in a moment.",
 
   /* the Download button (spec 0006): the PDF is made on our side, so these words are not in the PDF itself */
   downloadButton: "Download PDF",

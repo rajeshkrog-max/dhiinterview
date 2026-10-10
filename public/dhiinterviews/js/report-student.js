@@ -3,11 +3,16 @@
    Week 1 ticks are kept in localStorage "dhirise.path.v1" for this check only.
    Print mode (spec 0006): when js/render-boot.js has set window.DHI_RENDER the server is drawing the saved PDF copy. Then the
    page draws its final state with no animation, leaves out everything that comes from flags and everything interactive (the
-   flag passages, the teasers, the tick grid, the join and feedback cards, the trophy link), and calls DHI_RENDER.drawn(). */
+   flag passages, the teasers, the tick grid, the join and feedback cards, the trophy link), and calls DHI_RENDER.drawn().
+   Public mode (spec 0010): when js/shared-boot.js has set window.DHI_SHARED a stranger with the private link is reading the report. It
+   leaves out the same things print mode does (and the picture row, the notice, the Download button), keeps the normal animation, reads
+   and writes no storage, and calls DHI_SHARED.drawn(). It has no class, age, email or flag text to draw: the payload does not carry them. */
 (function () {
   "use strict";
   var T = window.DhiReportText, Q = window.DhiQuestions;
   var PRINT = window.DHI_RENDER || null;                      /* set only by the render page (js/render-boot.js) */
+  var SHARED = window.DHI_SHARED || null;                     /* set only by the public report page (js/shared-boot.js) */
+  var HIDE = PRINT || SHARED;                                 /* both leave out what is interactive, private or only for the signed in student */
   var check = DhiStore.get();
   if (!check.completedAt) {                                   /* only a finished check has a report */
     var missing = DhiStore.firstMissing();
@@ -98,7 +103,7 @@
   function styled(text) { return fill(text, { block: T.block[styleOrder[0]], pace: T.pace[styleOrder[0]] }); }
   function answerOf(said) { return said ? said.text : ""; }
   var first = cap(profile.name ? String(profile.name).trim().split(/\s+/)[0] : "");
-  var activeFlags = PRINT ? [] : T.flagOrder.filter(function (f) { return r.flags[f] === true; });   /* the copy never carries flag text, even if the data did */
+  var activeFlags = HIDE ? [] : T.flagOrder.filter(function (f) { return r.flags[f] === true; });   /* the copy never carries flag text, even if the data did */
 
   var fullKey = blend ? blendKey : styleOrder[0];          /* v, p, k, or a blend vp / vk / pk */
 
@@ -137,16 +142,19 @@
     logo.onerror = function () { logo.onerror = null; logo.src = "assets/dhirise-logo.png"; };
     var d = new Date(check.completedAt);
     var dateFormat = { day: "numeric", month: "short", year: "numeric" };
-    if (PRINT) dateFormat.timeZone = "Asia/Kolkata";           /* the server may be in another zone: the day must not shift */
+    if (HIDE) dateFormat.timeZone = "Asia/Kolkata";            /* the server (or a stranger's phone) may be in another zone: the day must not shift */
     var date = isNaN(d) ? "" : d.toLocaleDateString("en-IN", dateFormat);
     var title = el("h1", "title", first ? fill(T.title, { name: first }) : fill(T.title, { name: "Your" }).replace(/^Your's/, "Your"));
     /* spec 0011: with the picture feature on, the student's own circle (picture, or initials) leads the card and the DhiRise mark becomes
        a small label above the title, so there is one 64px circle beside one column of text, not three icons of different sizes. The name
-       is written in the title, so the circle is decorative. The saved copy (PRINT) draws it only when the server's payload carried a
-       picture path (profile.avatar): drawn at once, not lazily, and js/render-boot.js waits for it for at most 3 seconds (AC-17). */
+       is written in the title, so the circle is decorative. The saved copy (PRINT) and the public page (SHARED) draw it only when the
+       server's payload carried a picture path (profile.avatar): drawn at once, not lazily, and js/render-boot.js waits for it for at most
+       3 seconds (AC-17). On the public page it is the sharer's own picture from the same rule as everywhere else, or their initial when
+       the payload has none (spec 0010, AC-4). */
     var pic = null;
     if (window.DhiAvatar) {
-      if (!PRINT) pic = DhiAvatar.mine({ size: 64, name: profile.name });
+      if (!HIDE) pic = DhiAvatar.mine({ size: 64, name: profile.name });
+      else if (SHARED) pic = DhiAvatar.make({ url: profile.avatar || null, name: profile.name, size: 64 });   /* the picture, else the initial (spec 0010, AC-4) */
       else if (profile.avatar) pic = DhiAvatar.make({ url: profile.avatar, name: profile.name, size: 64 });
     }
     if (pic) {
@@ -158,10 +166,10 @@
     add(headText, title,
       el("p", "meta", [profile.class, date].filter(Boolean).join(" · ")),
       el("span", "pill", styleName));
-    if (!PRINT && window.DhiSession && DhiSession.reportCopy && window.DhiReportDownload) add(headText, downloadControl());   /* spec 0006: not in the saved copy */
+    if (!HIDE && window.DhiSession && DhiSession.reportCopy && window.DhiReportDownload) add(headText, downloadControl());   /* spec 0006: not in the saved copy or the public page */
     if (pic) add(h, pic, headText); else add(h, logo, headText);
     /* a small trophy: the Founding Circle leaderboard (not in the saved copy: a link is no use on paper) */
-    if (!PRINT) {
+    if (!HIDE) {
       var trophy = el("a", "head-trophy");
       trophy.href = "leaderboard.html";
       trophy.setAttribute("aria-label", "Founding Circle leaderboard");
@@ -170,7 +178,7 @@
     }
     add(root, h);
     /* spec 0011: the one time picture notice for a student who has not agreed yet, right under the heading */
-    if (!PRINT && window.DhiPictureNotice) DhiPictureNotice.mountAfter(h, profile);
+    if (!HIDE && window.DhiPictureNotice) DhiPictureNotice.mountAfter(h, profile);
   })();
 
   /* ---------- 2. Dhi starting score ---------- */
@@ -382,7 +390,7 @@
   (function path() {
     var KEY = "dhirise.path.v1";
     var saved = null;
-    try { saved = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
+    if (!SHARED) { try { saved = JSON.parse(localStorage.getItem(KEY)); } catch (e) {} }     /* the public page touches no storage (spec 0010, AC-13) */
     if (!saved || saved.completedAt !== check.completedAt) saved = { completedAt: check.completedAt, ticks: {} };
     function keep() { try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {} }
 
@@ -392,10 +400,10 @@
     function weekHead(i) { return fill(T.weekLabel, { n: i + 1 }) + " · " + plan[i].title; }
     var c = card("path", T.pathTitle);
     add(c, add(el("div", "week-head"), el("p", "week-title", weekHead(0)), el("span", "room-pill", "In Dhi · " + plan[0].room)));
-    add(c, el("p", "note week-how", (PRINT && T.weekHowCopy[styleOrder[0]]) || T.weekHow[styleOrder[0]]));
+    add(c, el("p", "note week-how", (HIDE && T.weekHowCopy[styleOrder[0]]) || T.weekHow[styleOrder[0]]));
     plan[0].actions.map(styled).forEach(function (text, ai) {
       var days = el("div", "days");
-      if (!PRINT) for (var d = 1; d <= 7; d++) (function (d) {
+      if (!HIDE) for (var d = 1; d <= 7; d++) (function (d) {
         var id = "a" + ai + "d" + d;
         var b = el("button", "tick", String(d));
         b.type = "button";
@@ -409,9 +417,9 @@
         });
         add(days, b);
       })(d);
-      add(c, add(el("div", "action"), el("p", "action-text", text), PRINT ? null : days));
+      add(c, add(el("div", "action"), el("p", "action-text", text), HIDE ? null : days));
     });
-    if (!PRINT) [1, 2].forEach(function (i) {                  /* the blurred weeks 2 and 3 teasers are not in the saved copy */
+    if (!HIDE) [1, 2].forEach(function (i) {                   /* the blurred weeks 2 and 3 teasers are not in the saved copy or the public page */
       var detail = el("p", "blur", plan[i].actions.map(styled).join(" · "));
       detail.setAttribute("aria-hidden", "true");
       add(c, add(el("div", "week-locked"),
@@ -457,7 +465,7 @@
   })();
 
   /* ---------- 11. join ---------- */
-  if (!PRINT) (function join() {
+  if (!HIDE) (function join() {
     var cfg = window.DHI_FUNNEL || {};
     var c = card("join", T.joinTitle);
     add(c, el("p", "lede", T.joinLine));
@@ -468,18 +476,18 @@
     share.type = "button";
     var status = el("p", "share-status");
     status.setAttribute("aria-live", "polite");
+    /* the same flow as the buttons under the Founding Card (spec 0010, AC-10): js/share-flow.js does the notice, the link and the sending */
     share.addEventListener("click", function () {
-      var url = new URL("landing.html", location.href).href;
-      if (navigator.share) { navigator.share({ title: "DhiRise", text: T.shareText, url: url }).catch(function () {}); return; }
-      var done = function () { status.textContent = T.shareCopied; setTimeout(function () { status.textContent = ""; }, 2500); };
-      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(T.shareText + " " + url).then(done, function () {});
+      if (window.DhiShare && DhiShare.go("any")) return;
+      status.textContent = T.shareNotReady;                         /* the card has not finished drawing yet */
+      setTimeout(function () { status.textContent = ""; }, 2500);
     });
     add(c, share, status);
     add(root, c);
   })();
 
   /* ---------- 11b. feedback: stars, a note, optional share; saved on the server (DhiSession.submitFeedback) ---------- */
-  if (!PRINT) (function feedback() {
+  if (!HIDE) (function feedback() {
     var c = card("feedback span2", T.feedbackTitle);
     var thanks = el("p", "thanks", T.feedbackThanks);
     thanks.setAttribute("aria-live", "polite");
@@ -553,13 +561,14 @@
   })();
 
   /* ---------- 11c. the picture row (spec 0011): Remove my picture / Use my Google picture; not in the saved copy ---------- */
-  if (!PRINT && window.DhiPictureControl) DhiPictureControl.mount(root, profile);
+  if (!HIDE && window.DhiPictureControl) DhiPictureControl.mount(root, profile);
 
   /* ---------- 12. footer ---------- */
   add(root, el("footer", "foot span2", T.footer));
 
   startAnimations();
   if (PRINT) { PRINT.drawn(); return; }                         /* the render page takes it from here */
+  if (SHARED) { SHARED.drawn(); return; }                       /* the public page adds the card and the banner; no leaves, no copy request */
   if (window.dhiriseLeaves) window.dhiriseLeaves({ mobile: 4, wide: 6 });
   /* ask the server for the saved PDF copy only now the report is on screen; fire and forget, a failure shows nothing (spec 0006) */
   if (window.DhiSession && DhiSession.reportCopy) requestAnimationFrame(function () { setTimeout(function () { DhiSession.reportCopy.request(); }, 0); });

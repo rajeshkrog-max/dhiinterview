@@ -13,5 +13,5 @@ Each `woff2` here is a Latin subset (Basic Latin, Latin 1, and the symbols the p
 
 Rules:
 - `public/_headers` caches these files for a year as immutable. If a font file changes, give it a new name (`v2`) and
-  update `css/frame.css`. Never replace a file in place.
+  update `css/frame.css` and `css/shared.css` (the public report page repeats the same three rules). Never replace a file in place.
 - Devanagari and other scripts are not included; text in them falls back to the system font.

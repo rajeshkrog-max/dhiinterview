@@ -12,13 +12,25 @@
 //    localStorage); the bridge calls `avatars.ensure` once per page load when the server says a fetch may be due, and re-reads `me`
 //    once, a few seconds later, so a first picture appears without a reload; `pictureControl()`, `removePicture()` and `restorePicture()`
 //    are the report page's own Remove / Use my Google picture row
+//  - the private report link (spec 0010): `share` holds the notice words, the link's state (memory only), `make` (the explicit Share tap)
+//    and `stop`; it is inert unless the deploy time config says `publicShare: true`
 //
 // Page scripts are written as <script type="text/dhi-deferred" src="...">; this file starts them, in order,
 // once the guard has let the page through. Sign in itself goes through the site's own /api/auth/* address.
 import { ConvexClient } from "convex/browser";
 import { ConvexError } from "convex/values";
 import { api } from "../../convex/_generated/api";
-import { CONSENT_LINES, CONSENT_TEXTS, CONSENT_VERSION, LEAD_CONSENT_VERSION, PICTURE_LINE_MARK, consentHash } from "../../convex/consentText";
+import {
+  CONSENT_LINES,
+  CONSENT_TEXTS,
+  CONSENT_VERSION,
+  LEAD_CONSENT_VERSION,
+  PICTURE_LINE_MARK,
+  SHARE_CONSENT_LINES,
+  SHARE_CONSENT_VERSION,
+  SHARE_GUARDIAN_TICK,
+  consentHash,
+} from "../../convex/consentText";
 import { MIN_NOTE_CHARS, isGenuine } from "../../convex/feedbackRules";
 import { authClient, createConvexClient } from "./auth-client";
 import { flatten, isFlat, startResult, type FlatResult, type ResultView } from "./result";
@@ -987,6 +999,91 @@ window.addEventListener("storage", (e) => {
   if (e.key === OWNER_KEY && e.newValue === null && mode === "protected") location.replace(LANDING);
 });
 
+// ---------- the private report link (spec 0010) ----------
+
+// The browser side of the switch (AC-17): the link feature is on only when the deploy time config says `publicShare: true`
+// (js/funnel-config.js, never set in the repo). Off means no notice, no link, no Stop sharing, and the share row sends the picture and the landing address.
+const shareEnabled = (): boolean => (window as unknown as { DHI_FUNNEL?: { publicShare?: unknown } }).DHI_FUNNEL?.publicShare === true;
+
+export type ShareInfo = {
+  /** The link is on right now: not switched off, and its end is still ahead of this device's clock. */
+  active: boolean;
+  /** The finished check has a report to share (AC-16). */
+  ready: boolean;
+  /** The student has agreed to the current notice (AC-3). */
+  consented: boolean;
+  /** Switched off by Stop sharing or by the team. */
+  off: boolean;
+  /** When the link ends (milliseconds since 1970), or null when there is no link yet. */
+  expiresAt: number | null;
+  /** The full address to share, only while `active`. Kept in memory for this page load, never in localStorage. */
+  url: string | null;
+};
+type ShareRaw = { ready: boolean; consented: boolean; off: boolean; expiresAt: number | null; code: string | null };
+
+let shareInfo: ShareInfo | null = null;
+const shareListeners = new Set<(info: ShareInfo | null) => void>();
+const shareUrl = (code: string): string => `${location.origin}/s/${code}`;
+
+function setShare(next: ShareInfo | null): void {
+  shareInfo = next;
+  shareListeners.forEach((fn) => fn(next));
+}
+
+// The server leaves the clock to the browser (a query must not read it), so "on" is worked out here.
+function infoFrom(s: ShareRaw): ShareInfo {
+  const active = !s.off && s.code !== null && s.expiresAt !== null && s.expiresAt > Date.now();
+  return { active, ready: s.ready, consented: s.consented, off: s.off, expiresAt: s.expiresAt, url: active && s.code ? shareUrl(s.code) : null };
+}
+
+// Where the student's link stands, fetched from the server. Reading it never moves the end date (AC-6). Null when the feature is off or
+// it cannot be found out right now; the caller then shares the picture with the landing address (AC-9).
+async function shareStatus(): Promise<ShareInfo | null> {
+  if (!shareEnabled()) return null;
+  try {
+    const c = await getClient();
+    if (!c) return null;
+    setShare(infoFrom(await withTimeout(c.query(api.shares.status, {}), 10000)));
+    return shareInfo;
+  } catch {
+    return null;
+  }
+}
+
+export type ShareMade = { ok: true; url: string; expiresAt: number } | { ok: false; code: string };
+
+// Makes the link, or keeps it going and moves its end to 90 days from now: only an explicit Share tap calls this (AC-6). `agreed` is sent only
+// by the page that has just shown the notice and had it accepted; the server records the consent from the fingerprint of the exact words.
+// A student under 18 also sends their tick. Every failure comes back as a code, never a throw; "offline" covers any network problem.
+async function shareMake(opts: { agreed?: boolean; guardianTick?: boolean } = {}): Promise<ShareMade> {
+  if (!shareEnabled()) return { ok: false, code: "off" };
+  const c = await getClient();
+  if (!c) return { ok: false, code: "offline" };
+  try {
+    const notice = opts.agreed ? { version: SHARE_CONSENT_VERSION, hash: await consentHash(CONSENT_TEXTS[SHARE_CONSENT_VERSION]) } : undefined;
+    const res = await withTimeout(c.mutation(api.shares.enable, { ...(notice ? { notice } : {}), ...(opts.guardianTick ? { guardianTick: true } : {}) }), 15000);
+    if (!res.ok) return { ok: false, code: res.code };
+    const url = shareUrl(res.code);
+    setShare({ active: true, ready: true, consented: true, off: false, expiresAt: res.expiresAt, url });
+    return { ok: true, url, expiresAt: res.expiresAt };
+  } catch (e) {
+    return { ok: false, code: codeOf(e) ?? "offline" };
+  }
+}
+
+// Stop sharing (AC-5): the old address stops working at once. Sharing again makes a new link.
+async function shareStop(): Promise<{ ok: true } | { ok: false; code: "offline" }> {
+  const c = await getClient();
+  if (!c) return { ok: false, code: "offline" };
+  try {
+    await withTimeout(c.mutation(api.shares.disable, {}), 10000);
+    if (shareInfo) setShare({ ...shareInfo, active: false, off: true, url: null });
+    return { ok: true };
+  } catch {
+    return { ok: false, code: "offline" };
+  }
+}
+
 // ---------- what the page scripts see ----------
 
 export const DhiSession = {
@@ -1040,6 +1137,21 @@ export const DhiSession = {
   restorePicture,
   /** Called when the picture path becomes known or changes after the page has drawn (a first fetch landed, or Remove). */
   onPicture: (fn: (url: string | null) => void) => pictureListeners.add(fn),
+  /**
+   * The private report link (spec 0010): `enabled` is the deploy time switch; `notice` is the exact words the student agrees to before the first
+   * link (and the tick for under 18s); `current` is the last known state (memory only); `status` reads it from the server; `make` is the one
+   * explicit Share tap (it makes the link or moves its end); `stop` is Stop sharing. Nothing here ever reaches localStorage.
+   */
+  share: {
+    enabled: shareEnabled,
+    notice: { version: SHARE_CONSENT_VERSION, lines: SHARE_CONSENT_LINES, tick: SHARE_GUARDIAN_TICK },
+    isMinor: (): boolean => (readCache()?.profile.age ?? 99) < 18,
+    current: (): ShareInfo | null => shareInfo,
+    status: shareStatus,
+    make: shareMake,
+    stop: shareStop,
+    onChange: (fn: (info: ShareInfo | null) => void) => shareListeners.add(fn),
+  },
   hasCache: () => readCache() !== null,
   /** The cached student, for "Continue as" when the server cannot be reached. */
   cachedName: () => readCache()?.profile.name ?? null,

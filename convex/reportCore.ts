@@ -27,15 +27,15 @@ export function afterCountedFailure(attemptsSoFar: number, now: number): Outcome
 
 // ---------- the signed render token ----------
 
-const enc = new TextEncoder();
+export const enc = new TextEncoder();
 
-function b64url(bytes: ArrayBuffer): string {
+export function b64url(bytes: ArrayBuffer): string {
   let s = "";
   for (const b of new Uint8Array(bytes)) s += String.fromCharCode(b);
   return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
-function fromB64url(s: string): Uint8Array<ArrayBuffer> | null {
+export function fromB64url(s: string): Uint8Array<ArrayBuffer> | null {
   if (!/^[A-Za-z0-9_-]+$/.test(s)) return null;
   try {
     const bin = atob(s.replace(/-/g, "+").replace(/_/g, "/") + "=".repeat((4 - (s.length % 4)) % 4));
@@ -47,7 +47,7 @@ function fromB64url(s: string): Uint8Array<ArrayBuffer> | null {
   }
 }
 
-const hmacKey = (secret: string, usage: "sign" | "verify") =>
+export const hmacKey = (secret: string, usage: "sign" | "verify") =>
   crypto.subtle.importKey("raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, [usage]);
 
 // `<studentId>.<checkId>.<expiryMs>.<signature>`. Convex ids contain no dots.

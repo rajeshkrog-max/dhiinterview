@@ -7,12 +7,14 @@ const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
 // code only: the comments describe what the file does not do, and would match the scans below
 const code = (text) => text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^---[\s\S]*?---/, "").replace(/^\s*\/\/.*$/gm, "");
 const boot = read("public/dhiinterviews/js/render-boot.js");
+// the Founding Card helper both the render page and the public report page (spec 0010) draw the card with
+const cardImage = read("public/dhiinterviews/js/card-image.js");
 const card = read("public/dhiinterviews/js/card.js");
 const identity = read("public/dhiinterviews/js/engine/identity.js");
 const page = read("src/pages/dhiinterviews/report-render.astro");
 
 describe("render page", () => {
-  test("covers AC-5: the Founding Card styles in render-boot.js match card.js and identity.js (they are copied, so they must not drift)", () => {
+  test("covers AC-5: the Founding Card styles in card-image.js match card.js and identity.js (they are copied, so they must not drift)", () => {
     // identity.js: v → explorer, p → achiever, k → builder
     const themes = Object.fromEntries([...identity.matchAll(/\b([vpk]): \{ key: "(\w+)"/g)].map((m) => [m[1], m[2]]));
     expect(themes).toEqual({ v: "explorer", p: "achiever", k: "builder" });
@@ -22,20 +24,23 @@ describe("render page", () => {
     );
     expect(Object.keys(styles).sort()).toEqual(["achiever", "builder", "explorer"]);
     for (const [k, key] of Object.entries(themes)) {
-      const own = new RegExp(`${k}: \\{ key: "${key}", tag: "([^"]+)", c: "(#[0-9a-f]{6})", sink: ([\\d.]+) \\}`).exec(boot);
-      expect(own, `render-boot.js has no card style for ${k}`).not.toBeNull();
+      const own = new RegExp(`${k}: \\{ key: "${key}", tag: "([^"]+)", c: "(#[0-9a-f]{6})", sink: ([\\d.]+) \\}`).exec(cardImage);
+      expect(own, `card-image.js has no card style for ${k}`).not.toBeNull();
       expect({ tag: own[1], c: own[2], sink: Number(own[3]) }).toEqual(styles[key]);
     }
     // the colour mix and the first name rule are the same too
     expect(card).toContain('mix(S.c, "#fff8e6", 0.55)');
     expect(card).toContain('mix(S.c, "#10122a", 0.85)');
-    expect(boot).toContain('mix(S.c, "#fff8e6", 0.55)');
-    expect(boot).toContain('mix(S.c, "#10122a", 0.85)');
+    expect(cardImage).toContain('mix(S.c, "#fff8e6", 0.55)');
+    expect(cardImage).toContain('mix(S.c, "#10122a", 0.85)');
+    // and the render page keeps no copy of its own any more
+    expect(boot).not.toMatch(/CARD\s*=|function mix/);
+    expect(boot).toContain("DhiCardImage.forData");
   });
 
   test("covers AC-5: the render page loads only the scripts it needs, and none that sign in, track, animate or play sound", () => {
     const scripts = [...page.matchAll(/<script[^>]*\ssrc="([^"]+)"/g)].map((m) => m[1]);
-    expect(scripts).toEqual(["js/funnel-config.js", "js/engine/questions.js", "js/engine/reportText.js", "js/card-export.js", "js/avatar.js", "js/render-boot.js"]);
+    expect(scripts).toEqual(["js/funnel-config.js", "js/engine/questions.js", "js/engine/reportText.js", "js/card-export.js", "js/card-image.js", "js/avatar.js", "js/render-boot.js"]);
     expect(code(page)).not.toMatch(/Guard|session|posthog|leaves|identity|challenge|music|card\.js|api\.js|store\.js/i);
   });
 
@@ -67,7 +72,7 @@ describe("the saved copy words", () => {
     // the style whose screen line talks about ticking has a copy line
     expect(/p: "Set a target each day and tick/.test(text)).toBe(true);
     expect(copy[1]).toMatch(/(^|[\s{,])p:/);
-    expect(read("public/dhiinterviews/js/report-student.js")).toMatch(/PRINT && T\.weekHowCopy\[styleOrder\[0\]\]/);
+    expect(read("public/dhiinterviews/js/report-student.js")).toMatch(/HIDE && T\.weekHowCopy\[styleOrder\[0\]\]/); // HIDE is print or public mode: neither has a tick grid
   });
 });
 
@@ -98,7 +103,7 @@ describe("report page", () => {
   });
 
   test("covers AC-6: the Download button is not in the saved copy, and the page script uses the shared rules", () => {
-    expect(report).toMatch(/if \(!PRINT && window\.DhiSession && DhiSession\.reportCopy && window\.DhiReportDownload\)/);
+    expect(report).toMatch(/if \(!HIDE && window\.DhiSession && DhiSession\.reportCopy && window\.DhiReportDownload\)/); // HIDE is print or public mode
     expect(read("src/pages/dhiinterviews/report-student.astro")).toMatch(/report-download\.js[\s\S]*report-student\.js/); // loaded first
   });
 });

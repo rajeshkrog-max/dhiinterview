@@ -27,7 +27,11 @@ const FRAME_PAGES = ["404.astro", "dhiinterviews/privacy.astro", "dhiinterviews/
 
 describe("the root address (AC-1, AC-2)", () => {
   const lines = read("public/_redirects").split("\n").map((l) => l.trim()).filter((l) => l && !l.startsWith("#"));
-  const sources = lines.map((l) => l.split(/\s+/)[0]);
+  // A line with status 200 is a rewrite (the private report link, spec 0010: /s/* is served the shared page), not a redirect; the root line and
+  // the two /dhiinterviews lines are the only redirects.
+  const rewrites = lines.filter((l) => l.split(/\s+/)[2] === "200");
+  const redirects = lines.filter((l) => l.split(/\s+/)[2] !== "200");
+  const sources = redirects.map((l) => l.split(/\s+/)[0]);
 
   test("covers AC-2: exactly one line has `/` as its source, and it is a temporary (302) redirect to the landing page", () => {
     const rootLines = lines.filter((l) => l.split(/\s+/)[0] === "/");
@@ -36,7 +40,8 @@ describe("the root address (AC-1, AC-2)", () => {
 
   test("covers AC-2: the two /dhiinterviews addresses stay, and nothing else redirects", () => {
     expect(sources.sort()).toEqual(["/", "/dhiinterviews", "/dhiinterviews/"]);
-    for (const l of lines) expect(l.split(/\s+/)[2], l).toBe("302");
+    for (const l of redirects) expect(l.split(/\s+/)[2], l).toBe("302");
+    expect(rewrites).toEqual(["/s/* /dhiinterviews/shared 200"]);
   });
 
   test("covers AC-2: the root has one source only (the redirect line), never a function as well", () => {

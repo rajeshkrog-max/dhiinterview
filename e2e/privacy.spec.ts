@@ -7,7 +7,7 @@ test("covers AC-1, AC-2, AC-3: the page opens without signing in, names the serv
   const res = await page.goto(PATH + "privacy.html");
   expect(res?.status()).toBe(200);
   await expect(page.locator("main h1")).toHaveText("Privacy at DhiRise");
-  await expect(page.locator("main h2")).toHaveCount(9); // the picture section is the fifth
+  await expect(page.locator("main h2")).toHaveCount(10); // the picture section is the fifth, the report link the sixth
   const text = await page.locator("main").innerText();
   for (const w of ["Cloudflare Browser Run", "Convex", "Google", "PDF copy"]) expect(text).toContain(w);
   const mails = await page.locator('a[href^="mailto:"]').evaluateAll((els) => els.map((e) => e.getAttribute("href")));

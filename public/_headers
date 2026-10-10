@@ -38,6 +38,22 @@
   Cache-Control: private, no-store
   Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-src blob:; object-src blob:; base-uri 'none'; form-action 'self'
 
+# The private report link (spec 0010): the page served for every /s/<code>. Never indexed, never cached, and the address is not sent on
+# to anything the page opens. The content security policy lets the page load only this site's own files, so nothing from a third party can
+# load on it (the card picture is a blob address; the report's charts are inline SVG with inline styles).
+# The shell's own address is kept out of search results too.
+/s/*
+  X-Robots-Tag: noindex
+  Referrer-Policy: no-referrer
+  Cache-Control: no-store
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'
+
+/dhiinterviews/shared
+  X-Robots-Tag: noindex
+
+/dhiinterviews/shared.html
+  X-Robots-Tag: noindex
+
 # The hosted fonts (spec 0009). Every file name carries a version (mukta-400.v1.woff2), so a changed font gets a new name (v2)
 # and never reaches a visitor as a stale cached file. Never replace a font file in place.
 /dhiinterviews/fonts/*

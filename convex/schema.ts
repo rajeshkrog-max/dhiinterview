@@ -43,7 +43,7 @@ export default defineSchema({
   // Only ever added to. The audit trail for what a student (and a guardian) agreed to.
   consents: defineTable({
     studentId: v.id("students"),
-    kind: v.union(v.literal("landing"), v.literal("lead")),
+    kind: v.union(v.literal("landing"), v.literal("lead"), v.literal("share")),
     textVersion: v.string(),
     ageAtConsent: v.number(),
     guardianPresent: v.boolean(),
@@ -204,6 +204,19 @@ export default defineSchema({
   })
     .index("by_studentId", ["studentId"])
     .index("by_key", ["key"]),
+
+  // The private link to a student's report (spec 0010). One row per student, patched in place; the link code is made from `_id` and
+  // `generation` and signed with SHARE_LINK_SECRET, so nothing secret is stored here. A new link is a new generation, and the old
+  // code stops working. Deleting the row ends the link at once (the erase request, scope row 15, must delete it).
+  reportShares: defineTable({
+    studentId: v.id("students"),
+    checkId: v.id("checks"),
+    generation: v.number(), // starts at 1; +1 each time a new link is made
+    consentId: v.optional(v.id("consents")), // the share consent this generation was made under; set from M2 on (spec 0010 says required, see shares.ts)
+    createdAt: v.number(), // when this generation started
+    expiresAt: v.number(), // min(last Share tap + 90 days, createdAt + 365 days)
+    offAt: v.optional(v.number()), // set by Stop sharing or by the team
+  }).index("by_studentId", ["studentId"]), // at most one row per student; also for erasing a student's data (scope row 15)
 
   // One row: the one at a time lease of the copy job, and the numbers the Sync status tab shows.
   sheetStatus: defineTable({

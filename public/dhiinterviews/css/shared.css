@@ -1,0 +1,39 @@
+/* DhiRise · the public report page (spec 0010). Loaded after css/report-student.css, which gives the report its look.
+   This file adds only: our own Mukta files (no Google Fonts on this page, AC-13), headings in Mukta until scope row 29 hosts the report's
+   heading font, the banner and the three messages above the report, and the Founding Card on top of it.
+   The @font-face rules repeat css/frame.css on purpose (that file styles a whole page frame this page does not use); a changed font
+   file gets a new name in both places (see fonts/README.md). */
+
+@font-face{font-family:"Mukta";font-weight:400;font-style:normal;font-display:swap;
+  src:local("Mukta Regular"),local("Mukta-Regular"),url("/dhiinterviews/fonts/mukta-400.v1.woff2") format("woff2");
+  unicode-range:U+0020-007E,U+00A0-00FF,U+2013,U+2014,U+2018,U+2019,U+201C,U+201D,U+2022,U+2026,U+2190,U+20B9}
+@font-face{font-family:"Mukta";font-weight:600;font-style:normal;font-display:swap;
+  src:local("Mukta SemiBold"),local("Mukta-SemiBold"),url("/dhiinterviews/fonts/mukta-600.v1.woff2") format("woff2");
+  unicode-range:U+0020-007E,U+00A0-00FF,U+2013,U+2014,U+2018,U+2019,U+201C,U+201D,U+2022,U+2026,U+2190,U+20B9}
+@font-face{font-family:"Mukta";font-weight:700;font-style:normal;font-display:swap;
+  src:local("Mukta Bold"),local("Mukta-Bold"),url("/dhiinterviews/fonts/mukta-700.v1.woff2") format("woff2");
+  unicode-range:U+0020-007E,U+00A0-00FF,U+2013,U+2014,U+2018,U+2019,U+201C,U+201D,U+2022,U+2026,U+2190,U+20B9}
+
+:root{--f-head:"Mukta",Georgia,serif}
+
+/* the banner and the messages sit above the report, in the same column */
+.sh-wrap{position:relative;z-index:2;max-width:1040px;margin:0 auto;
+  padding:calc(16px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) 0 calc(16px + env(safe-area-inset-left))}
+.sh-wrap:empty{display:none}
+.sh-banner,.sh-msg{display:grid;gap:12px;margin-bottom:0}
+.sh-banner-text{font-size:17px;font-weight:600;line-height:1.4}
+.sh-msg h1{margin:0;font-family:var(--f-head);font-weight:700;font-size:22px;line-height:1.25}
+.sh-msg p{font-size:16px;line-height:1.5;color:var(--muted)}
+.sh-banner .btn-gold,.sh-msg .btn-gold{text-decoration:none;cursor:pointer}
+@media (min-width:600px){
+  .sh-banner{grid-template-columns:1fr auto;align-items:center}
+  .sh-banner .btn-gold{width:auto}
+}
+/* while loading, and in the three message states, the report area takes no room */
+.shared[data-state="loading"] .report,.shared[data-state="gone"] .report,.shared[data-state="slow"] .report,.shared[data-state="error"] .report{display:none}
+.shared[data-state="report"] .report{padding-top:14px}
+
+/* the Founding Card, as an image on top of the report (the same image as the saved PDF copy) */
+.shared .fc-copy{padding:6px;text-align:center;background:transparent;border-color:transparent;box-shadow:none;
+  -webkit-backdrop-filter:none;backdrop-filter:none}
+.shared .fc-print{display:block;width:70%;max-width:320px;height:auto;margin:0 auto;border-radius:18px}
