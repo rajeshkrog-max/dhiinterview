@@ -766,6 +766,47 @@ describe("on by default, nobody asked (owner decision, 2026-10-10)", () => {
     expect(again.key).not.toBe(before.key);
     expect((await t.fetch(`/api/avatar/${again.key}`)).status).toBe(200);
   });
+
+  // Review re check, Minor 1: students who never come back must be cleaned up too, by the team's one off command.
+  test("dropUnagreed deletes the held file of a student who has not agreed, without that student coming back; a second run does nothing", async () => {
+    const t = makeBackend();
+    const s = await existingStudent(t); // agreed to v3 only
+    delete process.env.PICTURE_CONSENT_REQUIRED;
+    await ensureAndSync(t, s); // nobody was asked, so the picture was copied
+    expect(await files(t)).toBe(1);
+    process.env.PICTURE_CONSENT_REQUIRED = "true";
+    expect(await t.mutation(internal.avatars.dropUnagreed, {})).toEqual({ dropped: 1, done: true });
+    expect(await files(t)).toBe(0);
+    const row = (await rowOf(t))!;
+    expect(row.storageId).toBeUndefined();
+    expect(row.checkedAt).toBe(0);
+    expect(await t.mutation(internal.avatars.dropUnagreed, {})).toEqual({ dropped: 0, done: true });
+  });
+
+  test("dropUnagreed keeps the file of a student who has agreed, and does nothing in the default mode", async () => {
+    const t = makeBackend();
+    const s = await makeStudent(t); // agreed to v4
+    await ensureAndSync(t, s);
+    expect(await t.mutation(internal.avatars.dropUnagreed, {})).toEqual({ dropped: 0, done: true });
+    expect(await files(t)).toBe(1);
+    const t2 = makeBackend();
+    const old = await existingStudent(t2);
+    delete process.env.PICTURE_CONSENT_REQUIRED;
+    await ensureAndSync(t2, old);
+    expect(await t2.mutation(internal.avatars.dropUnagreed, {})).toEqual({ dropped: 0, done: true });
+    expect(await files(t2)).toBe(1);
+  });
+});
+
+describe("a student cannot set their own picture address (AC-10, AC-11)", () => {
+  test("Better Auth's update-user route is off: it answers 404, while an enabled route on the same prefix does not", async () => {
+    const t = makeBackend();
+    await makeStudent(t);
+    const headers = { "content-type": "application/json", origin: AUTH_ENV.BETTER_AUTH_URL };
+    const body = JSON.stringify({ image: "https://lh3.googleusercontent.com/a/attacker=s96-c" });
+    expect((await t.fetch("/api/auth/update-user", { method: "POST", headers, body })).status).toBe(404);
+    expect((await t.fetch("/api/auth/get-session", { method: "GET", headers })).status).not.toBe(404); // the route table is reachable
+  });
 });
 
 describe("Remove and Restore (AC-9)", () => {

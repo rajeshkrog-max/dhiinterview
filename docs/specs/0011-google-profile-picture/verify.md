@@ -5,7 +5,7 @@ Setup for the live steps: on the Convex DEV deployment run `pnpm exec convex env
 
 ## UI / manual
 - [ ] New student: sign in with Google, tick the v4 consent (it shows the picture line), finish the form, finish the check, open the report → the heading shows the Google photo in a 64px circle, and the image address is `/api/avatar/<22 characters>` on the site's own host, not a Google host (open DevTools, Network)   → AC-1, AC-3, AC-8
-- [ ] Reload the report within an hour → the picture loads from cache with no new Convex call (response has `Cache-Control: public, max-age=600`; the edge copy keeps 3000 seconds, so a Remove is gone within an hour)   → AC-8
+- [x] Reload the report within an hour → the picture loads from cache with no new Convex call (response has `Cache-Control: public, max-age=600`; the edge copy keeps 3000 seconds, so a Remove is gone within an hour)   → AC-8
 - [x] Same account with no photo, or sign in with an email test account → initials circle at the same size, no layout jump   → AC-3, AC-14
 - [x] Block the image request (DevTools, block `/api/avatar/*`) and reload → initials show, no broken image icon   → AC-3
 - [x] Open the image address in a private window (no sign in) → image shows; change one character of the key → 404 with the plain "Not found" body   → AC-8
@@ -57,7 +57,7 @@ Modes: the default mode has `PICTURE_CONSENT_REQUIRED` unset; the asked mode has
 
 ## Value sourcing rows (M2)
 - [ ] Circle initials → from the signed in student's name; a name that starts with an emoji shows the person shape   → AC-3
-- [ ] Circle picture path → from `students.me.picture` and kept in memory only; `localStorage` holds no `/api/avatar/` string   → AC-10
+- [x] Circle picture path → from `students.me.picture` and kept in memory only; `localStorage` holds no `/api/avatar/` string   → AC-10
 
 ## M4 (built): Remove, Restore, the team block and the privacy page
 Run in either mode. Commands that need an email use the student's own address.
@@ -67,7 +67,7 @@ Run in either mode. Commands that need an email use the student's own address.
 - [x] Tap "Yes, remove my picture": "Done. Your picture is removed." shows, initials appear on the report heading at once, and the row now offers "Use my Google picture"   → AC-9
 - [ ] After a Remove, open `/api/avatar/<the old key>` in a private window → 404; reload the report, landing, done, who and challenge pages → initials everywhere, and no fetch to Google is made (DevTools network)   → AC-9, AC-1
 - [ ] After a Remove, sign out and sign in again with Google, and wait over a week of clock (set `checkedAt` back on dev) → the picture stays off   → AC-9
-- [ ] Tap "Use my Google picture": the button shows as busy, "Getting your picture…" shows for about 6 seconds, then the photo appears with a different `/api/avatar/<key>` than before the Remove   → AC-9
+- [x] Tap "Use my Google picture": the button shows as busy, "Getting your picture…" shows for about 6 seconds, then the photo appears with a different `/api/avatar/<key>` than before the Remove   → AC-9
 - [ ] Restore twice more within an hour, then a fourth Remove and Restore → the fourth does not fetch straight away (3 an hour); the next page load fetches it   → AC-9
 - [ ] Asked mode, a student who has not agreed: no picture row on the report (only the notice)   → AC-2, AC-9
 - [ ] `profilePicture: false` in `funnel-config.js`: no picture row on the report   → AC-16

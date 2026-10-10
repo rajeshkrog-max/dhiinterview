@@ -51,6 +51,7 @@ pnpm exec vitest run --project convex    # convex-test suites (convex/*.test.ts)
 - Production is `abundant-caiman-975`, dev is `proper-camel-616` (`.env.local`). The browser tests refuse to run against production.
 - A picture check is limited to one every 10 minutes for each student, so a fetch right after a team unblock or a sign in can wait up to 10 minutes (Restore has its own limit of 3 an hour). Nothing needs doing by hand: the next page load asks again. The Pages forwarder keeps an image at the edge for 50 minutes and tells a browser to keep it for 10 (Pages Functions ignore `_headers`, so its headers are set in code), so a removed picture can stay visible for at most an hour.
 - Block or unblock a picture from a terminal: `npx convex run avatars:adminBlock '{"email":"student@example.com"}'` (and `adminUnblock`). Add `--prod` only on purpose.
+- After switching to the asked mode (`PICTURE_CONSENT_REQUIRED` set), run `npx convex run avatars:dropUnagreed` once (add `--prod` on purpose). It deletes the copied pictures of students who have not agreed, including those who never come back; `ensure` does the same for each student who does.
 
 ## Related specs
 

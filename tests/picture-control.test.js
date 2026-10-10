@@ -163,8 +163,25 @@ describe("Use my Google picture (AC-9)", () => {
     const { card } = await open();
     button(card, "Use my Google picture").click();
     await flush();
-    expect(card.textContent).toContain("We could not find a picture to show.");
+    expect(card.textContent).toContain("Your picture is on its way.");
     expect(card.textContent).not.toContain("Your picture is back.");
+  });
+
+  // Review re check, Minor 2: a Restore that ends with no button must not leave the keyboard on nothing.
+  test("covers AC-9: when a Restore ends with no button, focus moves to the status line", async () => {
+    makeSession("restore");
+    session.restorePicture = vi.fn(async () => {
+      session.control = "none";
+      return { ok: true };
+    });
+    const { card } = await open();
+    const live = all(card).find((e) => e.attrs.role === "status");
+    expect(live.tabIndex).toBe(-1);
+    const use = button(card, "Use my Google picture");
+    use.focus();
+    use.click();
+    await flush();
+    expect(globalThis.document.activeElement).toBe(live);
   });
 
   // Found by /check verify and the review: the row used to be redrawn at once, which built a new button with no aria-busy and dropped the focus.
@@ -179,7 +196,8 @@ describe("Use my Google picture (AC-9)", () => {
     const waiting = button(card, "Use my Google picture");
     expect(waiting).toBe(before); // not rebuilt
     expect(waiting.attrs["aria-busy"]).toBe("true");
-    expect(waiting.disabled).toBe(true);
+    expect(waiting.attrs["aria-disabled"]).toBe("true");
+    expect(waiting.disabled).not.toBe(true); // `disabled` can pull focus away in some browsers
     expect(globalThis.document.activeElement).toBe(before);
     expect(card.textContent).toContain("Getting your picture");
     session.control = "remove";

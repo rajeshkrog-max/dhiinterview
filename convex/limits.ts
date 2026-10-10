@@ -20,7 +20,9 @@ export const rateLimiter = new RateLimiter(components.rateLimiter, {
   // day across everyone (key "all"). Weekly re-checks also take a token from the 4000 a day pool, so a first fetch is never crowded out.
   avatarCheck: { kind: "token bucket", rate: 1, period: 10 * MINUTE, capacity: 1 },
   // Both are written by every fetch that is scheduled, so a launch day burst would conflict on one document. 10 shards spread the
-  // writes; each shard holds a tenth of the day's count, so the total stays the same.
+  // writes; each shard holds a tenth of the day's count, so the total is the same, but near the cap a call can be refused while another
+  // shard still has room, so the real day cap is a little under 5000 and the 1000 kept for first fetches is approximate. A refused
+  // fetch just stays due, and it has already used the student's 10 minute token, so it waits for the next check.
   avatarDay: { kind: "fixed window", rate: 5000, period: DAY, shards: 10 },
   avatarRecheckDay: { kind: "fixed window", rate: 4000, period: DAY, shards: 10 },
   // The student's own Restore (spec 0011, AC-9) fetches again at once, so it cannot sit behind the 10 minute check above (a Remove

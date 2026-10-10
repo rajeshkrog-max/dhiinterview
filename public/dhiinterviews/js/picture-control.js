@@ -20,7 +20,7 @@
     removed: "Done. Your picture is removed.",
     restoring: "Getting your picture…",
     restored: "Your picture is back.",
-    notYet: "We could not find a picture to show. If your Google account has one, it will appear the next time you open DhiRise.",
+    notYet: "Your picture is on its way. It will appear the next time you open DhiRise.",
     reload: "Please reload this page and try again.",
     offline: "We could not do that. Please check your connection and try again."
   };
@@ -65,6 +65,7 @@
     var msg = el("p", "pc-msg");
     msg.setAttribute("role", "status");
     msg.setAttribute("aria-live", "polite");
+    msg.tabIndex = -1;     /* focus lands here when a redraw leaves the row with no button */
     var actions = el("div", "pc-actions");
     add(card, head, text, msg, actions);
     add(root, card);
@@ -80,7 +81,6 @@
       if (kind === "none" && !message) { card.hidden = true; return; }
       card.hidden = false;
       actions.textContent = "";
-      msg.textContent = message;
       var first = null;
 
       if (kind === "remove" && confirming) {
@@ -106,7 +106,7 @@
       } else {
         text.textContent = "";
       }
-      if (focusFirst && first) first.focus();
+      if (focusFirst) (first || msg).focus();
     }
 
     function doRemove(btn) {
@@ -121,13 +121,14 @@
       });
     }
 
-    /* The button stays where it is (disabled and marked busy) while the picture is fetched, so a keyboard or screen reader student keeps
-       their place; the row is redrawn only when the answer is in. */
+    /* The button stays where it is (marked busy and aria-disabled, never `disabled`, which can pull focus away in some browsers) while
+       the picture is fetched, so a keyboard or screen reader student keeps their place; the row is redrawn only when the answer is in.
+       If the redraw leaves no button, focus moves to the status line. */
     function doRestore(btn) {
       if (busy) return;
       busy = true;
       btn.setAttribute("aria-busy", "true");
-      btn.disabled = true;
+      btn.setAttribute("aria-disabled", "true");
       say(SAYS.restoring);
       S.restorePicture().then(function (res) {
         busy = false;

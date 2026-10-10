@@ -35,6 +35,13 @@ function placeholderKey(): string {
   return newKey();
 }
 
+// Deletes the file a row holds for a student who has not agreed, and sends the row back to "never landed" (so a later agreement
+// fetches afresh). The lease goes too, so a fetch still away cannot land afterwards.
+async function dropHeld(ctx: MutationCtx, row: Doc<"avatars">): Promise<void> {
+  if (row.storageId) await ctx.storage.delete(row.storageId);
+  await ctx.db.patch("avatars", row._id, { ...NO_FILE, checkedAt: 0, updatedAt: Date.now(), lastError: undefined });
+}
+
 /**
  * Called once per page load by the browser bridge, and only when `students.me` says a fetch may be due. Reads the picture address
  * from the signed in account (never from the request), decides again on the server, and schedules at most one fetch. It takes the
@@ -53,19 +60,7 @@ export const ensure = mutation({
     if (!(await isPictureAgreed(ctx, student._id))) {
       // AC-1: nothing is fetched before the student agrees. A file held from the time nobody was asked (a later switch to the asked
       // mode) is dropped here, and the row goes back to "never landed" so a later agreement fetches it afresh.
-      if (row?.storageId) {
-        await ctx.storage.delete(row.storageId);
-        await ctx.db.patch("avatars", row._id, {
-          storageId: undefined,
-          contentType: undefined,
-          size: undefined,
-          sha256: undefined,
-          etag: undefined,
-          checkedAt: 0,
-          updatedAt: Date.now(),
-          lastError: undefined,
-        });
-      }
+      if (row?.storageId) await dropHeld(ctx, row);
       return NOTHING;
     }
     if (row?.removedAt || row?.blockedAt) return NOTHING;
@@ -243,6 +238,29 @@ export const adminUnblock = internalMutation({
     const row = await avatarRow(ctx, student._id);
     if (row?.blockedAt) await ctx.db.patch("avatars", row._id, { blockedAt: undefined, updatedAt: Date.now() });
     return { ok: true };
+  },
+});
+
+/**
+ * For the team, once, after switching to the asked mode (`PICTURE_CONSENT_REQUIRED` set): `npx convex run avatars:dropUnagreed`
+ * (add `--prod` for production). Walks every picture row in pages and deletes the file of each student who has not agreed, so
+ * students who never come back are cleaned up too (`ensure` does the same lazily for those who do). It schedules itself for the next
+ * page until the end, takes no input, and does nothing in the default mode (everyone has agreed). Logs counts only.
+ */
+export const dropUnagreed = internalMutation({
+  args: { cursor: v.optional(v.union(v.string(), v.null())) },
+  returns: v.object({ dropped: v.number(), done: v.boolean() }),
+  handler: async (ctx, args) => {
+    const page = await ctx.db.query("avatars").paginate({ numItems: 50, cursor: args.cursor ?? null });
+    let dropped = 0;
+    for (const row of page.page) {
+      if (!row.storageId || (await isPictureAgreed(ctx, row.studentId))) continue;
+      await dropHeld(ctx, row);
+      dropped++;
+    }
+    if (!page.isDone) await ctx.scheduler.runAfter(0, internal.avatars.dropUnagreed, { cursor: page.continueCursor });
+    console.log(`avatars.dropUnagreed: dropped ${dropped} of ${page.page.length} rows`);
+    return { dropped, done: page.isDone };
   },
 });
 
