@@ -176,6 +176,16 @@ describe("the report in public mode (AC-4, AC-15)", () => {
   });
 });
 
+describe("caching of the site's own files", () => {
+  test("covers a deploy reaching visitors at once: scripts, styles and pages revalidate every time, instead of Cloudflare's default 4 hours", () => {
+    for (const path of ["/dhiinterviews/js/*", "/dhiinterviews/css/*", "/dhiinterviews/:page"]) {
+      expect(rule(path), path).toMatch(/^\s*Cache-Control: no-cache\s*$/m);
+    }
+    expect(rule("/dhiinterviews/fonts/*")).toMatch(/max-age=31536000, immutable/); // versioned font names keep their long cache
+    expect(rule("/dhiinterviews/team")).toMatch(/private, no-store/);               // the stricter rule is still there for the private pages
+  });
+});
+
 describe("the Pages forwarder for the payload (AC-7, AC-13)", () => {
   afterEach(() => vi.unstubAllGlobals());
   const ENV = { CONVEX_SITE_URL: "https://convex.example" };

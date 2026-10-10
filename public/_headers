@@ -6,6 +6,19 @@
   Content-Security-Policy: frame-ancestors 'none'
   Referrer-Policy: strict-origin-when-cross-origin
 
+# The site's own scripts, styles and pages are not named by version, and Cloudflare Pages by default lets a browser keep them for 4 hours
+# without asking, so a deploy did not reach a returning visitor for hours (found 2026-10-11 with the Copy link button). `no-cache` makes
+# the browser ask each time and get a quick "not changed" when nothing is new. Fonts (versioned names, below) and the hashed /_astro/ files
+# keep their long cache. Where another rule below sets a stricter Cache-Control for a page, the two values are joined and the stricter one wins.
+/dhiinterviews/js/*
+  Cache-Control: no-cache
+
+/dhiinterviews/css/*
+  Cache-Control: no-cache
+
+/dhiinterviews/:page
+  Cache-Control: no-cache
+
 # The report copy render page (spec 0006): opened only by Cloudflare Browser Run with a signed token in the address fragment.
 /dhiinterviews/report-render
   X-Robots-Tag: noindex
