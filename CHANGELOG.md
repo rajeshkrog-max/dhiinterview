@@ -2,7 +2,7 @@
 
 ## 2026-10-11 · Private report link and share buttons that send the report (spec 0010)
 
-On production this is deployed but switched off: the share row is hidden (`publicShare` is not in `funnel-config.js`) and the server switch `PUBLIC_SHARE_ENABLED` is unset. Students see no change except the new privacy page section.
+Deployed to production and switched on the same day by the owner: `PUBLIC_SHARE_ENABLED=true` on the server and `publicShare: true` in the deploy time `funnel-config.js` (not committed). The lawyer check for students under 18, the preview artwork and the real phone checks were still owed when it went live. To switch it off at once, unset `PUBLIC_SHARE_ENABLED` on production.
 
 **What students will see once it is switched on**
 - The three buttons under the Founding Card, and the report's own Share button, share the card picture with a text that holds the student's own private link. The first tap shows the notice "Before you share" (words `share-v1`). A student under 18 must also tick "I have checked with a parent or guardian." The first tap makes the link and asks for a second tap, because Safari spends the tap's permission on the wait.

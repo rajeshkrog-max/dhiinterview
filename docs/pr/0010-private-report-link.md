@@ -1,10 +1,10 @@
 # Add the private report link for the share buttons (spec 0010)
 
-_Draft PR text for branch `feat/report-copy-and-privacy`, written 2026-10-11. Not opened on GitHub. The code is already deployed to production with the feature switched off._
+_Draft PR text for branch `feat/report-copy-and-privacy`, written 2026-10-11. Not opened on GitHub. The code is already deployed to production and switched on._
 
 ## What
 
-Students can share their report as a private link. The share buttons send the Founding Card picture with a text that holds `/s/<code>`, a stranger who opens it sees a read only copy of the report, and the student can end the link at any time. On production the whole feature is switched off on the server and hidden in the browser.
+Students can share their report as a private link. The share buttons send the Founding Card picture with a text that holds `/s/<code>`, a stranger who opens it sees a read only copy of the report, and the student can end the link at any time. It is switched on in production, with a server switch (`PUBLIC_SHARE_ENABLED`) and a browser switch (`publicShare`) that must both be on.
 
 ## Why
 
@@ -28,10 +28,10 @@ Implements `docs/specs/0010-share-report-public-link/index.md` (scope row 32). T
 
 ## Risk & rollout
 
-- **Deployed, switched off.** Production has the code and `SHARE_LINK_SECRET`, but `PUBLIC_SHARE_ENABLED` is unset and `publicShare` is not in `funnel-config.js`. `shares.enable` answers `unavailable` and every code gets the one 404.
-- **Live now even when off:** privacy page section 6 and one new table index. No migration. Students see no change in the buttons.
-- **To switch on:** set `PUBLIC_SHARE_ENABLED=true` on production, add `publicShare: true` to `funnel-config.js`, deploy again. To switch off: unset the setting. Rollback of a single student's link: `npx convex run shares:adminOff '{"email":"..."}' --prod`.
-- **Owed before switching on:** a lawyer's check on public sharing for students under 18, the 1200 by 630 preview picture, and the live phone checks.
+- **Deployed and switched on (2026-10-11, the owner's decision).** Production has the code, `SHARE_LINK_SECRET` and `PUBLIC_SHARE_ENABLED=true`, and the live build has `publicShare: true` (put into `funnel-config.js` at deploy time, not committed).
+- **Also live:** privacy page section 6 and one new table index. No migration.
+- **To switch off at once:** unset `PUBLIC_SHARE_ENABLED` on production. Rollback of a single student's link: `npx convex run shares:adminOff '{"email":"..."}' --prod`.
+- **Still owed, though it is live:** a lawyer's check on public sharing for students under 18, the 1200 by 630 preview picture, and the live phone checks.
 - **Accepted residual risks:** the picture address can still be served for up to 50 minutes from the edge after a link ends, and a link that simply expires (nobody pressed Stop sharing) does not change the picture address. Anonymous reads have no edge limit, so a flood costs one Pages call and one Convex write each time.
 
 ## Notes for reviewers
