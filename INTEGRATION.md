@@ -218,7 +218,7 @@ Navigation: Report → Challenge → Leaderboard → back to Report (the trophy 
 window.DHI_CHALLENGE = {
   name: "DhiRise Founding Circle Challenge",
   endsAt: "2026-10-30T23:59:00+05:30",
-  prize: { title: "Gift hamper worth ₹2,999", items: ["Shoes", "Headphones", "Apparel"],
+  prize: { title: "Gift hamper worth up to ₹5,000", items: ["Shoes", "Headphones", "Apparel"],
            image: "assets/challenge/prize.webp", imageFallback: "assets/challenge/prize.svg" },
   minFeedbackChars: 30, leaderboardSize: 50, milestones: [1, 5, 10, 25], maxInviteShows: 2
 };

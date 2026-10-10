@@ -48,6 +48,7 @@ Stored in `docs/specs/`. Format: `docs/specs/NNNN-title.md`. Handover docs live 
 - Never commit student data (`recovery/`, `Dhirise_Session_*.json`, report PDFs are git ignored). Students under 18 need a parent or guardian's consent.
 - The legacy interviewer tool (`index.html`, `panel.html`, `report.html`, `result.html`, `js/app.js`, `js/data.js`, `js/panel.js`, `js/report*.js`, `js/result.js`, `js/config.js`, `backup-before-parent-report/`) is kept but not used. The funnel must never load a legacy file.
 - Every word students read is kind and plain. Copy lives in `js/engine/reportText.js`, `js/engine/storyText.js` and `js/engine/questions.js`, not in the page scripts.
+- The Google profile picture (spec 0011) is copied once into our own storage and shown only from `/api/avatar/<key>`; no screen contacts Google for it. Pages draw it through `DhiAvatar` (`js/avatar.js`) and keep its path in memory, never in `localStorage`. It is not on the question pages, the Founding Card, the Sheet or analytics. Keep `PROFILE_PICTURE_ENABLED=false` on production until the v4 consent words, the legal check and the privacy page wording are settled.
 
 ## Agent skills
 

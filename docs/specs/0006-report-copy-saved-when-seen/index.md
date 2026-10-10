@@ -196,6 +196,7 @@ Build approach: Tracer Bullet. Prove one thin real thread first (Browser Run ope
 
 ## Follow-up
 
+- [ ] Changed by spec [0011](../0011-google-profile-picture/index.md): the render payload gets `profile.avatar` (a same origin path); the render page loads it eagerly and waits at most 3 seconds, then marks the report ready with initials. `REPORT_VERSION` is not bumped.
 - [ ] **Needs your wording:** add Cloudflare Browser Run as a sub processor to the privacy notice and consent text in `convex/consentText.ts`. Consent text is versioned, so this is a new text version, and it should ship before real students use the report. Students who already consented would see the new version where the app asks for it.
 - [ ] You chose "everything on the page"; this spec reads that as the report cards plus the Founding Card, and leaves out the parts AC-5 lists. Say so if you wanted anything else in the file.
 - [ ] Scope row 22's "done when" mentions team members fetching a copy; this spec makes it the student only, and row 23 adds the team. Reword row 22 now that this spec is written.

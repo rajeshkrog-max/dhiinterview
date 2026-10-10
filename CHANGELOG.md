@@ -1,5 +1,34 @@
 # Changelog
 
+## 2026-10-10 · Google profile picture across the screens (spec 0011)
+
+**What students see**
+- Each student's Google profile picture, and nothing else from their Google profile, is copied once into DhiRise's own storage at a small size and shown next to their name. It shows on the landing "Continue as" state and the report heading (64px), and on the done, who and challenge pages and the leaderboard "you" card (40px). With no picture, a picture that fails to load, or a removed one, an initial in a coloured circle of the same size shows instead. Test accounts always show the initial.
+- No picture on the question pages, the meet page, the Founding Card, the Sheet copy or analytics.
+- The saved PDF copy draws the picture (64px) when the student has one. The render page waits for it at most 3 seconds, then keeps the initial. A student with no picture keeps the old heading. `REPORT_VERSION` is unchanged, so existing copies are not redrawn.
+- Team pages: each list row has a 28px circle, and the report viewer shows a 40px circle with the name and class above the PDF. The strict policy of those pages is unchanged.
+- Leaderboard rows can carry an `avatar` (28px in the list, 40px on the podium), only while `LEADERBOARD_PICTURES_ENABLED` is on, which is off by default. Today's board has only demo rows, which keep their owls. The live board is scope row 12.
+- Report page: a new "Your picture" row. "Remove my picture" asks first, and the confirm text says the picture can stay in browser copies for up to an hour and in report copies and share links already made. "Use my Google picture" brings it back with a new key.
+- Privacy page: new section 5, "Your Google profile picture" (who sees it, how to remove it, what a removal cannot reach, and that a copy made very early may have no picture). Sections 6 to 9 are renumbered. Last updated 10 October 2026.
+
+**How it works**
+- New `avatars` table and `convex/avatars.ts` (`ensure`, `sync`, `apply`, `remove`, `restore`, and the internal `adminBlock` and `adminUnblock`). The only request to Google is the `sync` action: https, a `lh[0-9].googleusercontent.com` host, no redirects, a 5 second limit, a 200 KB limit, and the file type read from the first bytes. Nothing a browser can call takes an id, an email or an address.
+- The picture is refreshed at each Google sign in (`overrideUserInfoOnSignIn`) and by one quiet check when the app opens after 7 days. No scheduled job. Limits: one check per student every 10 minutes, 5000 fetches a day (4000 for rechecks), and 3 restores an hour.
+- `GET /api/avatar/<key>` with a Pages forwarder (`functions/api/avatar/`). The key is random and new whenever the image changes. An unknown, removed, blocked or switched off key all answer the same 404. A 200 is cached for one hour.
+- Consent text v4 adds a line that names the saved picture (draft words, not yet approved by the owner).
+- Owner decision, 2026-10-10: the picture is on by default and nobody is asked. `PICTURE_CONSENT_REQUIRED=true` brings back the asked flow (a one time notice, with a 14 day reminder after "Not now"). `PROFILE_PICTURE_ENABLED=false` holds the whole feature off, and `profilePicture: false` in `funnel-config.js` hides it in the browser.
+- The team can take a picture off after a complaint: `npx convex run avatars:adminBlock '{"email":"..."}'`, and `avatars:adminUnblock` to clear it.
+
+**Tests**
+- 584 unit tests pass (plus one expected failure that pins a known defect, see below). `pnpm test:e2e` passes in full, with a new `e2e/picture.spec.ts` (the circle on each own screen, the fallback to the initial, a late picture and a Remove, the browser switch, the leaderboard rows) and new cases in the team and render page specs.
+- Older browser specs were brought up to date: they accept the clean address (`/landing`), read the consent version and line count from `convex/consentText.ts` (v4, 8 lines), expect the 9 section privacy page, and click the phone step through the page because the Astro dev toolbar blocks a real click.
+
+**Owed before production**
+- Keep `PROFILE_PICTURE_ENABLED=false` on production until the v4 words are approved, a lawyer has checked showing a child's picture to others with no separate agreement, and the privacy wording is settled (the review found it says the sign up ticks cover the picture, which is not true for students who agreed under v1 to v3).
+- Not built yet: the public shared report banner (spec 0010), live leaderboard rows (row 12) and the erase of a student's picture (row 15).
+- Known defects: the Restore button is not marked busy while it waits, and the cleanup of held pictures after a switch to the asked mode never runs from a real browser (see `docs/reviews/2026-10-10-feat-report-copy-and-privacy.md`).
+- Still to check by hand: a real Google account on a phone and a laptop.
+
 ## 2026-10-07 · Founding Circle Challenge (referrals)
 
 **Step 1: Config and data layer**

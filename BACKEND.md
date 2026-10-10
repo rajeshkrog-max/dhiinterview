@@ -326,7 +326,7 @@ Only the provider's public client id / anon key may be in front-end code (sectio
 ## 8. Referral challenge rules (exact)
 
 - **Name:** DhiRise Founding Circle Challenge. **Ends 2026-10-30 23:59 IST** (`2026-10-30T23:59:00+05:30`); the server clock decides.
-- **Prize:** the top referrer wins a gift hamper worth ₹2,999 (shoes, headphones, apparel).
+- **Prize:** the top referrer wins a gift hamper worth up to ₹5,000 (shoes, headphones, apparel).
 - **Code format:** the first 3 letters of the first name in capitals (A–Z only, padded with `X` if shorter), plus 4 characters from
   `ABCDEFGHJKLMNPQRSTUVWXYZ23456789` (no O, 0, I, 1). Regex: `^[A-Z]{3}[A-HJ-NP-Z2-9]{4}$`. Example `RAJ7K2Q`. Unique (retry on clash). Created on join.
 - **Link:** `shareUrl + "/landing.html?ref=" + code`. `?ref=` pre-fills the code field; the code is kept until sign-in.
@@ -382,7 +382,7 @@ Until then, an admin view or CSV export of `leads where wants_community and what
 |---|---|---|
 | `name` | "DhiRise Founding Circle Challenge" | |
 | `endsAt` | `2026-10-30T23:59:00+05:30` | the server must enforce the same date |
-| `prize.title` / `items` | "Gift hamper worth ₹2,999" / Shoes, Headphones, Apparel | |
+| `prize.title` / `items` | "Gift hamper worth up to ₹5,000" / Shoes, Headphones, Apparel | |
 | `prize.image` / `imageFallback` | `assets/challenge/prize.webp` / `prize.svg` | `prize.webp` is an 800 px copy of the original `prize.png` |
 | `minFeedbackChars` | 30 | the server must use the same value |
 | `leaderboardSize` | 50 | |

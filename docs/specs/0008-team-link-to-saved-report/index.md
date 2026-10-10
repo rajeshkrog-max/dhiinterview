@@ -166,6 +166,7 @@ Approach: Tracer Bullet (the project default). Prove one thin real thread first,
 
 ## Follow-up
 
+- [ ] Changed by spec [0011](../0011-google-profile-picture/index.md): the team list rows and the report viewer show the student's profile picture from `/api/avatar/<key>` (same origin, so the strict policy is unchanged).
 - [ ] Owner: the list of team Google emails for `TEAM_EMAILS` on production, and each added as a Google sign in test user until the app is published.
 - [ ] Owner: approve or change the consent v3 line and the privacy page sentence before milestone 4 ships.
 - [ ] Row 15 (export and deletion): deleting a student must also delete their saved PDF; the privacy page already promises the PDF copy goes with an erasure request. `reportViews` rows stay (ids and a team email only) and row 15 is their only deleter. Until row 15 exists, an erasure is a manual job in the Convex dashboard.
