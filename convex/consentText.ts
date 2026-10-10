@@ -65,8 +65,8 @@ export const LEAD_CONSENT_LINES: readonly string[] = [
   "By tapping Submit, you confirm that you have read this notice, and that a parent or guardian has agreed if you are under 18.",
 ];
 
-// The notice before a student's first private report link (spec 0010, AC-3). DRAFT WORDS: the owner has not approved them yet (a launch
-// blocker in spec 0010, follow up). The same lines are drawn in the notice and hashed by the server. The kind `share` works only for a link:
+// The notice before a student's first private report link (spec 0010, AC-3). The owner approved these words in chat on 2026-10-11
+// ("I approve things as of now"); a change to a word is a new version. The same lines are drawn in the notice and hashed by the server. The kind `share` works only for a link:
 // the landing and phone texts cannot stand in for it. A student under 18 also ticks SHARE_GUARDIAN_TICK, which is kept as `guardianPresent`.
 export const SHARE_CONSENT_VERSION = "share-v1";
 
