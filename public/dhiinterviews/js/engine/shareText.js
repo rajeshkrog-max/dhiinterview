@@ -30,8 +30,19 @@
     toastIg: "Saved! Open Instagram → Story → choose this image.",
     toastFb: "Image saved. Add it to your Facebook post.",
     toastIgCopied: "Picture shared and your report link is copied. Paste it in your story or caption.",
+    toastShared: "Shared. Your report link is copied too. If the app left it out, paste it with your picture.",
     toastSaved: "Image saved. Attach it in any chat or post.",
     toastTextCopied: "Copied. Paste it in any chat.",
+
+    /* the Copy link button: the student's own private report link, to paste anywhere (a chat, a post, a bio) */
+    copyLabel: "Copy link",
+    copyAria: "Copy my report link",
+    copyButton: "Copy my report link",
+    toastLinkCopied: "Your report link is copied. Paste it in any chat or post.",
+    toastAddressCopied: "The DhiRise address is copied. Paste it in any chat or post.",
+    toastCopyFailed: "Could not copy. Please try again.",
+    readyCopy: "Your report link is ready. Tap Copy link again to copy it.",
+    linkFailedCopy: "We could not make your report link, so the DhiRise address was copied instead.",
 
     /* the Instagram dialog on a computer (AC-2) */
     igTitle: "Post to Instagram from your phone",

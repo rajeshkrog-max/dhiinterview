@@ -492,7 +492,15 @@
       status.textContent = T.shareNotReady;                         /* the card has not finished drawing yet */
       setTimeout(function () { status.textContent = ""; }, 2500);
     });
-    add(c, share, status);
+    /* the student's own private report link, copied to paste anywhere (the same flow, so the notice and the link come first when needed) */
+    var copyLink = el("button", "btn-ghost", (window.DhiShareText && DhiShareText.copyButton) || "Copy my report link");
+    copyLink.type = "button";
+    copyLink.addEventListener("click", function () {
+      if (window.DhiShare && DhiShare.go("copy")) return;
+      status.textContent = T.shareNotReady;
+      setTimeout(function () { status.textContent = ""; }, 2500);
+    });
+    add(c, share, copyLink, status);
     add(root, c);
   })();
 

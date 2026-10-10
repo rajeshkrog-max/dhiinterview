@@ -91,18 +91,22 @@
         '<stop offset="0" stop-color="#F58529"/><stop offset=".5" stop-color="#DD2A7B"/><stop offset="1" stop-color="#8134AF"/></linearGradient></defs>' +
         '<rect class="fs-stroke" x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle class="fs-stroke" cx="12" cy="12" r="4.4"/>' +
         '<circle class="fs-fill" cx="17.4" cy="6.6" r="1.25"/></svg>',
+    copy: '<svg viewBox="0 0 24 24" aria-hidden="true"><path class="fs-stroke" stroke-linecap="round" d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1"/>' +
+        '<path class="fs-stroke" stroke-linecap="round" d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1"/></svg>',
     fb: '<svg viewBox="0 0 24 24" aria-hidden="true"><path class="fs-fill" d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg>'
   };
   var NETS = [
     { id: "wa", label: "WhatsApp" },
     { id: "ig", label: "Instagram" },
-    { id: "fb", label: "Facebook" }
+    { id: "fb", label: "Facebook" },
+    { id: "copy", label: "Copy link" }                          /* copies the student's own private report link (js/share-flow.js) */
   ];
   var shareRow = el("div", "fc-share");
   NETS.forEach(function (n) {
-    var node = n.id === "ig" ? el("button", "fs fs-" + n.id) : el("a", "fs fs-" + n.id);
-    if (n.id === "ig") node.type = "button"; else { node.target = "_blank"; node.rel = "noopener"; }    /* js/share-flow.js sets the address */
-    node.setAttribute("aria-label", "Share on " + n.label);
+    var isButton = n.id === "ig" || n.id === "copy";
+    var node = isButton ? el("button", "fs fs-" + n.id) : el("a", "fs fs-" + n.id);
+    if (isButton) node.type = "button"; else { node.target = "_blank"; node.rel = "noopener"; }    /* js/share-flow.js sets the address */
+    node.setAttribute("aria-label", n.id === "copy" ? "Copy my report link" : "Share on " + n.label);
     var ico = el("span", "fs-ico"); ico.innerHTML = ICON[n.id];
     add(node, ico, el("span", "fs-label", n.label));
     n.node = node;

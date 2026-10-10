@@ -77,6 +77,7 @@ const dialog = (page: Page) => page.getByRole("dialog");
 const wa = (page: Page) => page.locator(".fc-share .fs-wa");
 const ig = (page: Page) => page.locator(".fc-share .fs-ig");
 const fb = (page: Page) => page.locator(".fc-share .fs-fb");
+const copyBtn = (page: Page) => page.locator(".fc-share .fs-copy");
 const control = (page: Page) => page.locator(".sh-ctl");
 const LANDING = /landing\.html/;
 const PUBLIC = /^http:\/\/localhost:4321\/s\/[A-Za-z0-9]+\.\d+\.[A-Za-z0-9_-]{22}$/;
@@ -132,6 +133,17 @@ test.describe.serial("a student of 18 or more, from the first tap to Stop sharin
     await context.close();
   });
 
+  test("covers AC-3: before the student has agreed, Copy link shows the notice first and copies nothing", async ({ browser }) => {
+    const { context, page } = await openReport(browser, { state: adult });
+    await tap(copyBtn(page));
+    await expect(dialog(page)).toBeVisible();
+    await tap(dialog(page).getByRole("button", { name: "Not now" }));
+    await expect(dialog(page)).toHaveCount(0);
+    expect(await copied(page)).toEqual([]);
+    expect(await shares(page)).toEqual([]);
+    await context.close();
+  });
+
   test("covers AC-3, AC-18: Share makes the link, the dialog closes with 'ready, tap again', and the Stop sharing line shows the end date in India time", async ({ browser }) => {
     const { context, page } = await openReport(browser, { state: adult });
     await tap(wa(page));
@@ -155,6 +167,8 @@ test.describe.serial("a student of 18 or more, from the first tap to Stop sharin
     link = urlIn(sent.text);
     expect(link).toMatch(PUBLIC);
     await expect(dialog(page)).toHaveCount(0); // no notice the second time
+    expect(await copied(page)).toEqual([link]); // apps that keep only the picture still get the link by paste
+    await expect(toast(page)).toContainText("Your report link is copied too");
     await context.close();
 
     const s = await stranger(browser, link);
@@ -174,11 +188,34 @@ test.describe.serial("a student of 18 or more, from the first tap to Stop sharin
 
   test("covers AC-10: the report's own Share button uses the same flow: the picture and the same public link", async ({ browser }) => {
     const { context, page } = await openReport(browser, { state: adult });
-    await tap(page.locator(".join .btn-ghost"));
+    await tap(page.getByRole("button", { name: "Share with a friend" }));
     await expect.poll(async () => (await shares(page)).length, { timeout: 30_000 }).toBe(1);
     const sent = (await shares(page))[0];
     expect(sent.files).toEqual(["image/png:ok"]);
     expect(urlIn(sent.text)).toBe(link);
+    expect(await copied(page)).toEqual([link]); // the link is also copied, for apps that keep only the picture
+    await context.close();
+  });
+
+  test("covers AC-1 (a student asked for it): Copy link puts the student's own public link on the clipboard, shares no picture, and says so", async ({ browser }) => {
+    const { context, page } = await openReport(browser, { state: adult });
+    await expect(copyBtn(page)).toBeVisible();
+    expect(await copyBtn(page).getAttribute("aria-label")).toBe("Copy my report link");
+    await tap(copyBtn(page));
+    await expect.poll(async () => (await copied(page)).length, { timeout: 30_000 }).toBe(1);
+    expect(await copied(page)).toEqual([link]);
+    await expect(toast(page)).toContainText("Your report link is copied");
+    expect(await shares(page)).toEqual([]);
+    await context.close();
+  });
+
+  test("covers AC-1, AC-10: the report's own 'Copy my report link' button copies the same link", async ({ browser }) => {
+    const { context, page } = await openReport(browser, { state: adult });
+    await tap(page.locator(".join .btn-ghost", { hasText: "Copy my report link" }));
+    await expect.poll(async () => (await copied(page)).length, { timeout: 30_000 }).toBe(1);
+    expect(await copied(page)).toEqual([link]);
+    await expect(toast(page)).toContainText("Your report link is copied");
+    expect(await shares(page)).toEqual([]);
     await context.close();
   });
 

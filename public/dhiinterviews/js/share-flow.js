@@ -123,7 +123,7 @@
         go.setAttribute("aria-busy", "true");
         S0.make({ agreed: true, guardianTick: minor && tick.checked }).then(function (res) {
           go.removeAttribute("aria-busy");
-          if (res.ok) { close(); refreshHrefs(); B.toast(fill(n.id === "any" ? T.readyAny : T.ready, { net: n.label })); return; }
+          if (res.ok) { close(); refreshHrefs(); B.toast(readyText(n)); return; }
           msg.textContent = res.code === "needs_guardian" ? T.noticeNeedTick : res.code === "consent_text_changed" ? T.consentChanged : T.noticeFailed;
         });
       });
@@ -181,6 +181,9 @@
   function act(n, ev, link, resume) {
     var text = fill(link ? T.postReport : T.postCheck, { style: B.style, link: link || landing() });
     var none = Promise.resolve();
+    if (n.id === "copy") {                                                  /* the link itself, to paste anywhere; no picture, no share sheet */
+      return copy(link || landing()).then(function (ok) { B.toast(ok ? (link ? T.toastLinkCopied : T.toastAddressCopied) : T.toastCopyFailed); });
+    }
     if (n.id === "any" && !canFiles) {
       if (navigator.share) return navigator.share({ title: T.shareTitle, text: text }).catch(function () {});
       return copy(text).then(function (ok) { if (ok) B.toast(T.toastTextCopied); });
@@ -189,14 +192,14 @@
       if (ev) ev.preventDefault();                                          /* the share sheet instead of the link */
       if (!resume && n.node && n.node.getAttribute("aria-busy")) return none;   /* a second tap while it works; `resume`: go() already holds the busy mark */
       if (n.node) B.busy(n.node, true);
-      if (n.id === "ig" && link) copy(link);                                /* Instagram ignores text, so the link is copied in the tap */
+      if (link) copy(link);                                                 /* many apps keep only the picture and drop the text, so the link is always copied in the tap too */
       return B.story().then(function (blob) {
         if (!blob) return;
         var file = null;
         try { file = new File([blob], B.base + "_story.png", { type: "image/png" }); } catch (err) {}
         if (!file || !navigator.canShare({ files: [file] })) { saveStory(n, blob); return; }
         return navigator.share({ files: [file], title: T.shareTitle, text: text }).then(
-          function () { if (n.id === "ig" && link) B.toast(T.toastIgCopied); },
+          function () { if (link) B.toast(n.id === "ig" ? T.toastIgCopied : T.toastShared); },
           function (err) { if (!err || err.name !== "AbortError") saveStory(n, blob); }
         );
       }).catch(function () {}).then(function () { if (n.node) B.busy(n.node, false); });
@@ -212,7 +215,7 @@
 
   /* the picture is shared and a line says the link could not be added (AC-9) */
   function fallback(n) {
-    return act(n, null, null, true).then(function () { B.toast(T.linkFailed); });
+    return act(n, null, null, true).then(function () { B.toast(n.id === "copy" ? T.linkFailedCopy : T.linkFailed); });
   }
 
   function refreshHrefs() {
@@ -224,7 +227,8 @@
     });
   }
 
-  function ready(n) { refreshHrefs(); B.toast(fill(n.id === "any" ? T.readyAny : T.ready, { net: n.label })); }
+  function readyText(n) { return n.id === "copy" ? T.readyCopy : fill(n.id === "any" ? T.readyAny : T.ready, { net: n.label }); }
+  function ready(n) { refreshHrefs(); B.toast(readyText(n)); }
 
   /* ---------- one tap on WhatsApp, Instagram, Facebook, or the report's own Share button ("any") ---------- */
   function go(id, ev) {

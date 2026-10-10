@@ -111,9 +111,20 @@ describe("the flow", () => {
     expect(flow).toContain('new URL("report-student.html", location.href).href'); // the student's own report, not the public link
   });
 
-  test("covers AC-1: on a phone Instagram copies the link inside the tap, before the share sheet", () => {
-    expect(flow).toMatch(/if \(n\.id === "ig" && link\) copy\(link\);/);
-    expect(flow.indexOf('if (n.id === "ig" && link) copy(link);')).toBeLessThan(flow.indexOf("B.story().then(function (blob) {"));
+  test("covers AC-1: on a phone every picture share copies the link inside the tap, before the share sheet (many apps keep only the picture)", () => {
+    expect(flow).toMatch(/if \(link\) copy\(link\);/);
+    expect(flow).not.toMatch(/n\.id === "ig" && link\) copy/);
+    expect(flow.indexOf("if (link) copy(link);")).toBeLessThan(flow.indexOf("B.story().then(function (blob) {"));
+  });
+
+  test("covers AC-1: the Copy link button is a fourth button in the row, copies only the link (no picture, no share sheet), and the report has its own", () => {
+    const cardJs = read("public/dhiinterviews/js/card.js");
+    expect(cardJs).toContain('{ id: "copy", label: "Copy link" }');
+    expect(cardJs).toContain('"Copy my report link"');
+    const copyBranch = flow.slice(flow.indexOf('if (n.id === "copy") {'), flow.indexOf('if (n.id === "any" && !canFiles)'));
+    expect(copyBranch).toContain("copy(link || landing())");
+    expect(copyBranch).not.toMatch(/navigator\.share|B\.story/);
+    expect(read("public/dhiinterviews/js/report-student.js")).toContain('DhiShare.go("copy")');
   });
 
   test("covers AC-13: the flow keeps the link in memory only: no localStorage, sessionStorage or cookie anywhere in the share code", () => {
