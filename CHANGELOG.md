@@ -1,5 +1,44 @@
 # Changelog
 
+## 2026-10-11 · Private report link and share buttons that send the report (spec 0010)
+
+On production this is deployed but switched off: the share row is hidden (`publicShare` is not in `funnel-config.js`) and the server switch `PUBLIC_SHARE_ENABLED` is unset. Students see no change except the new privacy page section.
+
+**What students will see once it is switched on**
+- The three buttons under the Founding Card, and the report's own Share button, share the card picture with a text that holds the student's own private link. The first tap shows the notice "Before you share" (words `share-v1`). A student under 18 must also tick "I have checked with a parent or guardian." The first tap makes the link and asks for a second tap, because Safari spends the tap's permission on the wait.
+- On a laptop, WhatsApp opens WhatsApp Web with the link, Facebook opens its sharer with the link, and Instagram saves the picture and shows a dialog with a QR code that opens the report on a phone, plus a copy button. If the QR file does not load, the dialog shows the words and the button only.
+- Under the share row a line says "Your link is on until <date> (India time)." with a Stop sharing button. Stop sharing asks first, then ends the link. Sharing again makes a new link; the old one stays dead. A link lasts 90 days from the last Share tap and never more than 365 days from when it was made.
+- A stranger who opens `/s/<code>` sees the report with the Founding Card on top, the banner "<first name> shared this DhiRise report with you." and a "Take your own check" button. There is no Download, join card, feedback box, week ticks, trophy link or picture row. The sharer's picture (or first initial) shows beside the title. Only the first name, the date and the result are sent: no last name, class, age, email or phone.
+- The public page draws the radar and the learning style but no mood donut and no quoted answers. Both can give away the low mood and self doubt notes, so the server does not send them (found by the review, see below). The student's own report is unchanged.
+- Every link that does not work (a changed character, off, ended, an old generation, a switched off server) shows the same "This link is off or has ended" message and gives the same 404, so nothing says why.
+- Privacy page: new section 6, "Your report link", and the sections are numbered 1 to 10. This is live now. Owner approval of the `share-v1` words and of section 6 was given in chat on 2026-10-11 ("I approve things as of now").
+
+**How it works**
+- New `reportShares` table (one row for each student) and `convex/shares.ts`: `enable`, `status`, `disable`, and the internal `adminOff` and `publicRead`. The code is `<shareId>.<generation>.<signature>`, signed with HMAC SHA 256 by `SHARE_LINK_SECRET`, so nothing secret is stored. A new generation gives a new code. No function takes a student id.
+- `GET /api/shared/payload` (a Pages forwarder in `functions/api/shared/`) takes the code in the `x-share-token` header, never in the address. Nothing is cached or indexed. `/s/*` is rewritten to one static page with its own strict policy in `public/_headers`.
+- Two settings must both be present for any link to work: `SHARE_LINK_SECRET` (set on dev and production to the same value) and `PUBLIC_SHARE_ENABLED=true` (set on dev only). With the second one off, `enable` answers `unavailable`, `status` shows no code, and every code gets the one 404. Browsers also need `publicShare: true` in `funnel-config.js`.
+- New `share` consent kind with the `share-v1` notice, recorded with the student's age and the under 18 tick.
+- Limits: 20 links made or renewed an hour for each student; 600 reads a minute for each link; made up codes share one bucket of 600 a minute, so a flood never makes a key for each code. Both read buckets are in 16 shards that share one clock minute. When many readers lose the race on the limit rows, the route answers 429 `slow_down` and logs one fixed line, never a 500. The cap is a little under 600 a minute and never above.
+- Stop sharing and the team's switch (`npx convex run shares:adminOff '{"email":"..."}'`, add `--prod` on purpose) also give the student's picture a new address, so the picture address in an old payload stops working (an image the edge already holds can last up to 50 minutes).
+- The Pages forwarder answers 502 with the private headers when it cannot reach Convex.
+- The QR maker is `qrcode-generator` 2.0.4 (MIT), kept in `public/dhiinterviews/js/vendor/` with its licence and loaded only when the Instagram dialog opens.
+
+**Review and fixes**
+- An independent review (`docs/reviews/2026-10-11-feat-report-copy-and-privacy-share-link.md`, by a second model) found that the public payload still gave the sensitive notes away through the mood split and the quoted answers, that the only switch was in the browser, and that the picture address outlived the link. All three are fixed and tested. The smaller items are fixed except the two noted below.
+- The first live check (40 readers at once) gave 500 errors on the limit rows. After sharding and the shared minute, 700 reads in about 11 seconds gave 599 answers then 429, another link was not affected, and 700 made up codes made one key.
+
+**Tests**
+- 697 unit tests pass. `e2e/shared.spec.ts` (12) and `e2e/share-row.spec.ts` (17) pass against the dev deployment.
+- New unit tests cover the lost race, the shared window (the test fails without `start: 0`), 300 reads started together, the server switch, the stripped fields and the picture address change.
+
+**Owed before it is switched on**
+- A lawyer's check on public sharing for students under 18.
+- The 1200 by 630 preview picture (a stand in logo is live).
+- The live check on a real Android phone and an iPhone, and on a real Pages preview (the headers were seen on `dhirise.com`).
+- To switch on: set `PUBLIC_SHARE_ENABLED=true` on production, add `publicShare: true` to `funnel-config.js` and deploy again.
+- Row 15 must delete `reportShares` rows. Not done: an edge limit for anonymous reads (a Cloudflare rule per address would cap the cost of a flood), and the shell's own address `/dhiinterviews/shared` still has only `noindex`.
+- Dev holds a few fake load test students and links.
+
 ## 2026-10-10 · Google profile picture across the screens (spec 0011)
 
 **What students see**

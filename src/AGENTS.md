@@ -17,6 +17,7 @@ The Astro side of the funnel (static output, no server rendering). Each page in 
 | `pages/dhiinterviews/*.astro` | One page each. Page scripts are written as `<script is:inline type="text/dhi-deferred" src="js/...">`; `session.ts` starts them, in order, after the guard lets the page through. |
 | `../functions/api/` | The Cloudflare Pages Functions that forward `/api/auth/*` to Convex, the health check, and two GET only forwarders for the report copy: `files/` (`/api/files/report`, the student's own PDF) and `render/` (`/api/render/payload`, read by Browser Run with a signed token). |
 | `../functions/api/avatar/` | The GET only forwarder for the profile picture (`/api/avatar/<key>`). It checks the key shape before forwarding, sends no cookies, sets every header in code (`nosniff`, `noindex`, the sandbox policy, `ETag`) and keeps an image at the edge for 50 minutes and in a browser for 10 (an hour in all, at most). |
+| `pages/dhiinterviews/shared.astro` | The shell of the private report link (spec 0010): every `/s/<code>` is rewritten to it (`public/_redirects`), with its own strict policy in `public/_headers`. `public/dhiinterviews/js/shared-boot.js` sends the code in the `x-share-token` header to `/api/shared/payload` (`functions/api/shared/`, GET only, 502 when Convex is unreachable) and draws `report-student.js` in its public mode (`window.DHI_SHARED`: no donut, no quoted answers, no controls, no storage). The share row on the report is `js/share-flow.js` with `DhiSession.share`. |
 | `pages/dhiinterviews/report-render.astro` | The page Cloudflare Browser Run opens to draw the saved PDF (spec 0006). No sign in, no Guard, no tracking. `public/dhiinterviews/js/render-boot.js` reads the token from the `#t=` fragment, fetches the payload with a header, draws `report-student.js` in its print mode and sets `data-ready` or `data-error`. |
 
 ## Commands
@@ -48,6 +49,6 @@ pnpm run deploy:pages    # convex deploy, then build, then wrangler pages deploy
 
 ## Related specs
 
-[0001 stack](../docs/specs/0001-adopt-astro-convex-cloudflare-stack/index.md) · [0002 sign in and saved check](../docs/specs/0002-google-sign-in-and-saved-check/index.md) · [0005 results](../docs/specs/0005-results-and-report-from-saved-data/index.md) · [0006 report copy](../docs/specs/0006-report-copy-saved-when-seen/index.md) · [0011 profile picture](../docs/specs/0011-google-profile-picture/index.md)
+[0001 stack](../docs/specs/0001-adopt-astro-convex-cloudflare-stack/index.md) · [0002 sign in and saved check](../docs/specs/0002-google-sign-in-and-saved-check/index.md) · [0005 results](../docs/specs/0005-results-and-report-from-saved-data/index.md) · [0006 report copy](../docs/specs/0006-report-copy-saved-when-seen/index.md) · [0010 private report link](../docs/specs/0010-share-report-public-link/index.md) · [0011 profile picture](../docs/specs/0011-google-profile-picture/index.md)
 
 _Drafted by /audit from the repo, worth a quick human pass. Edit freely: once a line stops matching this draft, later runs treat it as curated and will flag rather than overwrite it._
