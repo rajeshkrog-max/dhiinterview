@@ -9,6 +9,17 @@ export const SHARE_DAYS = 90; // a link ends this long after the last explicit S
 export const SHARE_MAX_DAYS = 365; // ... and never later than this long after it was made
 export const SHARE_MAKE_PER_HOUR = 20; // links made or renewed an hour, for each student (AC-11)
 export const SHARE_READ_PER_MINUTE = 600; // reads a minute, for each link (key = the share id), and for all bad codes together (AC-11)
+export const SHARE_READ_SHARDS = 16; // every read writes its link's bucket, so a busy link is spread over this many documents (see limits.ts)
+export const SHARE_BAD_SHARDS = 16; // the same for the one bucket that every made up code writes
+
+/**
+ * True for the error Convex throws when a mutation lost its race on the same documents on every retry (the rate limit rows, when many
+ * readers arrive at once). The public route turns it into 429 slow_down; any other error is a real fault and stays a 500.
+ */
+export function isWriteConflict(e: unknown): boolean {
+  const message = e instanceof Error ? e.message : typeof e === "string" ? e : "";
+  return /changed while this mutation was being run|docs\.convex\.dev\/error#1\b/.test(message);
+}
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const SIG_BYTES = 16;

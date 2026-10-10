@@ -5,6 +5,7 @@ import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { newKey } from "./avatarCore";
 import { CONSENT_TEXTS, LEAD_CONSENT_VERSION, SHARE_CONSENT_VERSION, consentHash } from "./consentText";
+import { sharedPayload } from "./shareHttp";
 import { SHARE_DAYS, makeShareCode, verifyShareCode } from "./shareCore";
 import { makeBackend, opt, profileInput, signInAs, type Backend } from "../tests/convexTestUtils";
 
@@ -313,17 +314,22 @@ describe("GET /api/shared/payload", () => {
     expect(Object.keys(row).filter((k) => /version/i.test(k))).toEqual([]);
   });
 
-  test("covers AC-11: a link is read 600 times a minute at most; the 601st answers 429, another link is not affected, and the next minute starts again", async () => {
+  test("covers AC-11: a link is read 600 times a minute at most; by the 601st it answers 429, another link is not affected, and the next minute starts again", async () => {
     const t = makeBackend();
     const a = await link(await student(t, { name: "Asha Rao" }));
     const b = await link(await student(t, { name: "Bala Iyer" }));
-    for (let i = 0; i < 600; i++) {
+    // The bucket is in 16 shards, so the 429 can come a little before the 600th read (each shard holds a sixteenth), never after the 601st.
+    let answered = 0;
+    let slow: Response | undefined;
+    for (let i = 0; i < 601 && !slow; i++) {
       const res = await read(t, a.code);
-      if (res.status !== 200) throw new Error(`read ${i + 1} answered ${res.status}`);
+      if (res.status === 200) answered += 1;
+      else slow = res;
     }
-    const slow = await read(t, a.code);
-    expect(slow.status).toBe(429);
-    expect(JSON.parse(await body(slow))).toEqual({ code: "slow_down" });
+    expect(slow?.status).toBe(429);
+    expect(JSON.parse(await body(slow!))).toEqual({ code: "slow_down" });
+    expect(answered).toBeGreaterThan(450);
+    expect(answered).toBeLessThanOrEqual(600);
     expect((await read(t, b.code)).status).toBe(200);
     vi.setSystemTime(Date.now() + 61_000);
     expect((await read(t, a.code)).status).toBe(200);
@@ -342,6 +348,45 @@ describe("GET /api/shared/payload", () => {
     expect(slow).toBeLessThan(700); // and the first ones were answered
     expect((await read(t, real.code)).status).toBe(200); // a good link has its own bucket
   }, 120_000);
+
+  // convex-test runs one mutation at a time, so it cannot lose a race on a document the way the real deployment does (the live check in
+  // verify.md does that, 40 readers at once). These two tests keep what it can: many requests started together all end in 200, 404 or
+  // 429 with the one 404 body, and the route's answer to a lost race.
+  test("covers AC-7, AC-11: 300 reads started together, good and made up codes mixed, answer only 200, 404 or 429, and every 404 has the same body", async () => {
+    const t = makeBackend();
+    const real = await link(await student(t));
+    const codes = Array.from({ length: 300 }, (_, i) => (i % 2 === 0 ? real.code : `${"k".repeat(32)}.1.${String(i).padStart(22, "A")}`));
+    const answers = await Promise.all(codes.map(async (c) => {
+      const res = await read(t, c);
+      return { status: res.status, text: await body(res) };
+    }));
+    expect(new Set(answers.map((a) => a.status)).size).toBeGreaterThan(1);
+    for (const a of answers) {
+      expect([200, 404, 429]).toContain(a.status);
+      if (a.status === 404) expect(a.text).toBe(UNAVAILABLE);
+      if (a.status === 429) expect(JSON.parse(a.text)).toEqual({ code: "slow_down" });
+    }
+    expect(answers.filter((a) => a.status === 200).length).toBeGreaterThan(100);
+  }, 120_000);
+
+  test("covers AC-11: when the rate limit rows are lost to other readers on every retry, the route answers 429 slow_down for a good code and a bad one, never a 500", async () => {
+    const t = makeBackend();
+    const real = await link(await student(t));
+    const conflict = new Error(
+      'Uncaught Error: Documents read from or written to the "rateLimits" table changed while this mutation was being run and on every subsequent retry. Another call to this mutation changed the document with ID "x". See https://docs.convex.dev/error#1',
+    );
+    const call = async (code: string | undefined, error: unknown) => {
+      const ctx = { runMutation: async () => { throw error; } };
+      const req = new Request("https://example.test/api/shared/payload", { headers: code === undefined ? {} : { "x-share-token": code } });
+      return await (sharedPayload as unknown as { _handler: (c: unknown, r: Request) => Promise<Response> })._handler(ctx, req);
+    };
+    for (const code of [real.code, `${"k".repeat(32)}.1.${"A".repeat(22)}`, undefined]) {
+      const res = await call(code, conflict);
+      expect([res.status, await body(res)]).toEqual([429, JSON.stringify({ code: "slow_down" })]);
+      expect(res.headers.get("cache-control")).toBe("no-store");
+    }
+    await expect(call(real.code, new Error("something else broke"))).rejects.toThrow("something else broke"); // a real fault is not hidden
+  });
 });
 
 const consents = (t: Backend) => t.run(async (ctx) => (await ctx.db.query("consents").collect()).filter((c) => c.kind === "share"));
