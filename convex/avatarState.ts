@@ -3,9 +3,9 @@
 // Owns `isPictureAgreed` (AC-1), the feature switch (AC-16) and `pictureFor` (the path rule of "Where the picture is delivered").
 // Nothing here returns the Google address, the storage id or the ETag (AC-10).
 import type { Doc, Id } from "./_generated/dataModel";
-import { env } from "./_generated/server";
+import { env, type MutationCtx } from "./_generated/server";
 import { PICTURE_CONSENT_VERSIONS } from "./consentText";
-import { NOTICE_AGAIN_MS, immediateReason, picturePath, pictureAddress, recheckAt } from "./avatarCore";
+import { NOTICE_AGAIN_MS, immediateReason, newKey, picturePath, pictureAddress, recheckAt } from "./avatarCore";
 import type { Reader } from "./helpers";
 
 // Setting values are read trimmed and ignoring case, so `False`, ` false` and `TRUE` mean what they say (spec 0011, Configuration required).
@@ -45,6 +45,16 @@ export async function isPictureAgreed(ctx: Reader, studentId: Id<"students">): P
 
 export async function avatarRow(ctx: Reader, studentId: Id<"students">): Promise<Doc<"avatars"> | null> {
   return await ctx.db.query("avatars").withIndex("by_studentId", (q) => q.eq("studentId", studentId)).unique();
+}
+
+/**
+ * Gives the student's picture a new random address, so any copy of the old `/api/avatar/<key>` (held by someone who opened a shared report)
+ * stops working. Called when a report link is stopped or switched off (review 2026-10-11). The student's own screens read the new path
+ * from `students.me`; an image the edge already holds can still be served for up to 50 minutes. Nothing to do when there is no picture row.
+ */
+export async function rotatePictureKey(ctx: MutationCtx, studentId: Id<"students">): Promise<void> {
+  const row = await avatarRow(ctx, studentId);
+  if (row) await ctx.db.patch("avatars", row._id, { key: newKey() });
 }
 
 /** The path (`/api/avatar/<key>`) for a row a screen may draw, or null. Does not look at the switch or the consent. */

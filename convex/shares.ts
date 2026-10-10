@@ -11,10 +11,11 @@ import { v } from "convex/values";
 import { env, internalMutation, mutation, query, type MutationCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { CONSENT_KINDS, CONSENT_TEXTS, SHARE_CONSENT_VERSION, consentHash } from "./consentText";
+import { rotatePictureKey } from "./avatarState";
 import { ADULT_AGE, requireStudent, type Reader } from "./helpers";
 import { rateLimiter } from "./limits";
 import { findResult } from "./resultsCore";
-import { expiryFor, makeShareCode } from "./shareCore";
+import { expiryFor, makeShareCode, shareSecret } from "./shareCore";
 import { buildSharePayload } from "./sharePayload";
 
 // The student's share consent for the CURRENT notice version, or null. A new notice version asks again; turning the link off and on does not.
@@ -44,7 +45,7 @@ export const enable = mutation({
   returns: v.union(v.object({ ok: v.literal(true), code: v.string(), expiresAt: v.number() }), v.object({ ok: v.literal(false), code: enableRefusal })),
   handler: async (ctx, args) => {
     const { student, check } = await requireStudent(ctx);
-    const secret = env.SHARE_LINK_SECRET;
+    const secret = shareSecret(env);
     if (!secret) return { ok: false as const, code: "unavailable" as const };
     const allowed = await rateLimiter.limit(ctx, "shareMake", { key: student._id });
     if (!allowed.ok) return { ok: false as const, code: "rate_limited" as const };
@@ -108,7 +109,7 @@ export const status = query({
     const ready = check.completedAt !== undefined && (await findResult(ctx, check._id)) !== null;
     const consented = (await currentConsent(ctx, student._id)) !== null;
     const row = await ctx.db.query("reportShares").withIndex("by_studentId", (q) => q.eq("studentId", student._id)).unique();
-    const secret = env.SHARE_LINK_SECRET;
+    const secret = shareSecret(env);
     const code = row && secret && row.offAt === undefined ? await makeShareCode(secret, row._id, row.generation) : null;
     return { ready, consented, off: row?.offAt !== undefined, expiresAt: row ? row.expiresAt : null, code };
   },
@@ -122,7 +123,10 @@ export const disable = mutation({
   handler: async (ctx) => {
     const { student } = await requireStudent(ctx);
     const row = await ctx.db.query("reportShares").withIndex("by_studentId", (q) => q.eq("studentId", student._id)).unique();
-    if (row && row.offAt === undefined) await ctx.db.patch("reportShares", row._id, { offAt: Date.now() });
+    if (row && row.offAt === undefined) {
+      await ctx.db.patch("reportShares", row._id, { offAt: Date.now() });
+      await rotatePictureKey(ctx, student._id); // the picture address in the old payload stops working too
+    }
     return { ok: true as const };
   },
 });
@@ -138,7 +142,10 @@ export const adminOff = internalMutation({
     if (!student) return { ok: false };
     const row = await ctx.db.query("reportShares").withIndex("by_studentId", (q) => q.eq("studentId", student._id)).unique();
     if (!row) return { ok: false };
-    if (row.offAt === undefined) await ctx.db.patch("reportShares", row._id, { offAt: Date.now() });
+    if (row.offAt === undefined) {
+      await ctx.db.patch("reportShares", row._id, { offAt: Date.now() });
+      await rotatePictureKey(ctx, student._id);
+    }
     return { ok: true };
   },
 });

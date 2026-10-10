@@ -36,6 +36,9 @@ const app = defineApp({
     // The private link to a student's report (spec 0010). Signs the link codes; a different value on dev and production. Unset means no
     // link can be made or opened (so leave it unset on production until the share row, the notice and Stop sharing have shipped).
     SHARE_LINK_SECRET: v.optional(v.string()),
+    // The server side switch of the private report link (review 2026-10-11): links are made and opened only when this is `true` (also `1`,
+    // `yes`, `on`). Unset means off, whatever the browser's `publicShare` says, so nobody can make a link by calling `shares.enable` themselves.
+    PUBLIC_SHARE_ENABLED: v.optional(v.string()),
   },
 });
 app.use(betterAuth);

@@ -1145,7 +1145,8 @@ export const DhiSession = {
   share: {
     enabled: shareEnabled,
     notice: { version: SHARE_CONSENT_VERSION, lines: SHARE_CONSENT_LINES, tick: SHARE_GUARDIAN_TICK },
-    isMinor: (): boolean => (readCache()?.profile.age ?? 99) < 18,
+    /* unknown counts as a minor: with no cached profile the notice still shows the guardian tick, so the server's "needs_guardian" never asks for a box that is not there */
+    isMinor: (): boolean => (readCache()?.profile.age ?? 0) < 18,
     current: (): ShareInfo | null => shareInfo,
     status: shareStatus,
     make: shareMake,

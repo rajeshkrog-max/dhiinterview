@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { newKey } from "./avatarCore";
+import { rateLimiter } from "./limits";
 import { CONSENT_TEXTS, LEAD_CONSENT_VERSION, SHARE_CONSENT_VERSION, consentHash } from "./consentText";
 import { sharedPayload } from "./shareHttp";
 import { SHARE_DAYS, makeShareCode, verifyShareCode } from "./shareCore";
@@ -20,11 +21,13 @@ beforeEach(() => {
   vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval", "Date"] });
   Object.assign(process.env, AUTH_ENV);
   process.env.SHARE_LINK_SECRET = SECRET;
+  process.env.PUBLIC_SHARE_ENABLED = "true";
 });
 afterEach(() => {
   vi.useRealTimers();
   for (const k of Object.keys(AUTH_ENV)) delete process.env[k];
   delete process.env.SHARE_LINK_SECRET;
+  delete process.env.PUBLIC_SHARE_ENABLED;
   delete process.env.PICTURE_CONSENT_REQUIRED;
 });
 
@@ -167,6 +170,27 @@ describe("shares.enable", () => {
     expect(await shares(t)).toHaveLength(0);
   });
 
+  test("covers AC-17 (server side switch): with PUBLIC_SHARE_ENABLED off or unset, a signed in student calling enable directly makes no link, status shows no code, and a link made while it was on stops opening", async () => {
+    const t = makeBackend();
+    const s = await student(t);
+    const made = await link(s); // switch on: a link exists
+    expect((await s.as.query(api.shares.status, {})).code).toBe(made.code);
+    for (const off of [undefined, "", "false", "0", "no", "off", "TRUEish"]) {
+      if (off === undefined) delete process.env.PUBLIC_SHARE_ENABLED;
+      else process.env.PUBLIC_SHARE_ENABLED = off;
+      expect(await enable(s, { notice: await notice() })).toEqual({ ok: false, code: "unavailable" });
+      expect((await s.as.query(api.shares.status, {})).code).toBeNull();
+      const res = await read(t, made.code);
+      expect([res.status, await body(res)]).toEqual([404, UNAVAILABLE]); // the same 404 as any dead link
+    }
+    process.env.PUBLIC_SHARE_ENABLED = " True "; // read trimmed and ignoring case
+    expect((await read(t, made.code)).status).toBe(200);
+    const other = await student(t);
+    delete process.env.PUBLIC_SHARE_ENABLED;
+    expect(await enable(other, { notice: await notice() })).toEqual({ ok: false, code: "unavailable" });
+    expect((await shares(t)).length).toBe(1); // nothing was written for the second student
+  });
+
   test("covers AC-11: 20 an hour for each student, counted before the finished check is looked at, and other students are not affected", async () => {
     const t = makeBackend();
     const s = await student(t, { finish: false });
@@ -214,6 +238,27 @@ describe("GET /api/shared/payload", () => {
     walk(data);
     for (const bad of ["email", "age", "class", "phone", "authUserId", "studentId", "checkId", "wantedVersion"]) expect(names).not.toContain(bad);
     expect(text).not.toMatch(/example\.com|Rao/);
+  });
+
+  test("covers AC-4, AC-12 (review blocker): the mood split and the student's quoted answers are not sent, because they give the sensitive flags away", async () => {
+    const t = makeBackend();
+    const r = await link(await student(t, { name: "Asha Rao" }));
+    // the saved result does hold them, so this test means something
+    const saved = await t.run(async (ctx) => (await ctx.db.query("results").first())!.detail as { state: Record<string, number>; top: { said: unknown }[]; bottom: { said: unknown }[] });
+    expect(Object.keys(saved.state).length).toBeGreaterThan(0);
+    expect([...saved.top, ...saved.bottom].some((a) => a.said)).toBe(true);
+    const text = await body(await read(t, r.code));
+    const data = JSON.parse(text);
+    expect(data.result.state).toEqual({});
+    expect(data.result.top.length).toBeGreaterThan(0);
+    for (const a of [...data.result.top, ...data.result.bottom]) {
+      expect(a.said).toBeNull();
+      expect(typeof a.area).toBe("string"); // the rest of the area is still there
+      expect(typeof a.score).toBe("number");
+    }
+    for (const s of [...saved.top, ...saved.bottom].map((a) => (a.said as { text?: string } | null)?.text).filter((x): x is string => !!x)) {
+      expect(text).not.toContain(s);
+    }
   });
 
   test("covers AC-4, spec 0011: the sharer's picture path is in the payload when the student has one, from pictureFor, and never the Google address", async () => {
@@ -347,6 +392,29 @@ describe("GET /api/shared/payload", () => {
     expect(slow).toBeGreaterThan(0); // 700 is more than the 600 a minute the bucket allows
     expect(slow).toBeLessThan(700); // and the first ones were answered
     expect((await read(t, real.code)).status).toBe(200); // a good link has its own bucket
+  }, 120_000);
+
+  test("covers AC-11: both read buckets are sharded and start every window on the same clock minute (the settings the live race fix depends on)", () => {
+    for (const name of ["shareRead", "shareBad"] as const) {
+      const config = rateLimiter.limits?.[name] as { kind: string; rate: number; period: number; shards?: number; start?: number } | undefined;
+      expect(config).toMatchObject({ kind: "fixed window", rate: 600, period: 60_000, start: 0 });
+      expect(config?.shards).toBeGreaterThanOrEqual(16);
+    }
+  });
+
+  test("covers AC-11: the shards share one window, so a link is never answered more than 600 times in one clock minute, however the reads are spread", async () => {
+    // Without a shared start every shard picks its own random window and resets at its own moment, so a burst spread over half a minute
+    // was let through about 650 times on dev. Here the reads start at the top of a minute, pause for half of it, and must still stop at 600.
+    const t = makeBackend();
+    const a = await link(await student(t));
+    vi.setSystemTime(Math.ceil(Date.now() / 60_000) * 60_000 + 1_000);
+    let answered = 0;
+    for (let i = 0; i < 700; i++) {
+      if (i === 350) vi.setSystemTime(Date.now() + 30_000);
+      if ((await read(t, a.code)).status === 200) answered += 1;
+    }
+    expect(answered).toBeGreaterThan(450);
+    expect(answered).toBeLessThanOrEqual(600);
   }, 120_000);
 
   // convex-test runs one mutation at a time, so it cannot lose a race on a document the way the real deployment does (the live check in
@@ -566,6 +634,47 @@ describe("Stop sharing and the team's switch (AC-5, AC-14)", () => {
     await expect(t.mutation(api.shares.disable, {})).rejects.toMatchObject({ data: { code: "not_signed_in" } });
   });
 
+  test("covers AC-5, AC-14 (review major): Stop sharing and the team's switch give the picture a new address, so the one in an old payload stops answering", async () => {
+    const t = makeBackend();
+    const s = await student(t);
+    const addPicture = async () =>
+      await t.run(async (ctx) => {
+        const studentId = (await ctx.db.query("students").first())!._id;
+        const storageId = await ctx.storage.store(new Blob([new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 1, 2])], { type: "image/jpeg" }));
+        const key = newKey();
+        await ctx.db.insert("avatars", { studentId, key, storageId, contentType: "image/jpeg", size: 6, sha256: "abc", sourceUrl: "https://lh3.googleusercontent.com/a/x", checkedAt: Date.now(), updatedAt: Date.now() });
+        return key;
+      });
+    const keyOf = async () => await t.run(async (ctx) => (await ctx.db.query("avatars").first())!.key);
+    const email = await t.run(async (ctx) => (await ctx.db.query("students").first())!.email);
+
+    // Stop sharing
+    const key1 = await addPicture();
+    const made = await link(s);
+    expect((await (await read(t, made.code)).json()).profile.avatar).toBe(`/api/avatar/${key1}`);
+    expect((await t.fetch(`/api/avatar/${key1}`)).status).toBe(200);
+    await s.as.mutation(api.shares.disable, {});
+    expect((await t.fetch(`/api/avatar/${key1}`)).status).toBe(404); // the old address is dead
+    const key2 = await keyOf();
+    expect(key2).not.toBe(key1);
+    await s.as.mutation(api.shares.disable, {}); // twice changes nothing more
+    expect(await keyOf()).toBe(key2);
+    expect((await t.fetch(`/api/avatar/${key2}`)).status).toBe(200); // the student's own screens use the new address
+
+    // the team's switch
+    const again = await link(s);
+    expect((await (await read(t, again.code)).json()).profile.avatar).toBe(`/api/avatar/${key2}`);
+    await t.mutation(internal.shares.adminOff, { email });
+    expect((await t.fetch(`/api/avatar/${key2}`)).status).toBe(404);
+    expect(await keyOf()).not.toBe(key2);
+
+    // a student with no picture is not a problem
+    const t2 = makeBackend();
+    const s2 = await student(t2);
+    await link(s2);
+    expect(await s2.as.mutation(api.shares.disable, {})).toEqual({ ok: true });
+  });
+
   test("covers AC-14: the team switches a student's link off by email from a terminal; it is not a browser function", async () => {
     const t = makeBackend();
     const s = await student(t);
@@ -616,7 +725,9 @@ describe("what the code can and cannot do", () => {
   });
 
   test("covers AC-7, AC-11: the code travels in a header only, never in a log line, and the route is a GET", () => {
-    for (const f of ["shares.ts", "shareHttp.ts", "shareCore.ts", "sharePayload.ts"]) expect(code(source(f)), f).not.toMatch(/console\./);
+    // the one allowed line is the fixed words logged when a read loses its race on the rate limit rows: no code, no id, no argument
+    const lostRace = /console\.warn\("share read lost its race on the rate limit rows"\);/;
+    for (const f of ["shares.ts", "shareHttp.ts", "shareCore.ts", "sharePayload.ts"]) expect(code(source(f)).replace(lostRace, ""), f).not.toMatch(/console\./);
     const http = code(source("shareHttp.ts"));
     expect(http).toContain('req.headers.get("x-share-token")');
     expect(http).not.toMatch(/req\.url|searchParams|pathname/);

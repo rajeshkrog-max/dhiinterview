@@ -5,7 +5,7 @@
 // Over the limit, or too many readers at once for the rate limit rows to keep up, answers 429 `slow_down`, never a 500 (AC-11).
 import { env, httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
-import { UNAVAILABLE_BODY, isWriteConflict, verifyShareCode } from "./shareCore";
+import { UNAVAILABLE_BODY, isWriteConflict, shareSecret, verifyShareCode } from "./shareCore";
 
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), {
@@ -14,7 +14,7 @@ const json = (status: number, body: unknown) =>
   });
 
 export const sharedPayload = httpAction(async (ctx, req) => {
-  const ids = await verifyShareCode(env.SHARE_LINK_SECRET, req.headers.get("x-share-token"));
+  const ids = await verifyShareCode(shareSecret(env), req.headers.get("x-share-token"));
   let out;
   try {
     out = await ctx.runMutation(internal.shares.publicRead, ids ? { shareId: ids.shareId, generation: ids.generation } : {});
@@ -22,6 +22,7 @@ export const sharedPayload = httpAction(async (ctx, req) => {
     // Many readers at once can lose the race on the rate limit rows on every retry (AC-11). Answer like any other over the limit
     // request (the same for a good and a bad code, so AC-7 holds); every other error is a real fault and stays a 500.
     if (!isWriteConflict(e)) throw e;
+    console.warn("share read lost its race on the rate limit rows"); // a count only: a steady stream of these means real contention, not a flood
     return json(429, { code: "slow_down" });
   }
   if (out.status === "ok") return json(200, out.payload);

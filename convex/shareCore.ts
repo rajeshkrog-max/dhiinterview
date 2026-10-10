@@ -13,6 +13,16 @@ export const SHARE_READ_SHARDS = 16; // every read writes its link's bucket, so 
 export const SHARE_BAD_SHARDS = 16; // the same for the one bucket that every made up code writes
 
 /**
+ * The secret that signs and checks link codes, or undefined while the private link is switched off on the server. Everything that makes,
+ * shows or opens a link reads the secret through this, so with `PUBLIC_SHARE_ENABLED` unset no link can be made, no code verifies and every
+ * request gets the one 404 (AC-7, AC-17). Read the switch trimmed and ignoring case: `true`, `1`, `yes` or `on` turn it on.
+ */
+export function shareSecret(e: { SHARE_LINK_SECRET?: string; PUBLIC_SHARE_ENABLED?: string }): string | undefined {
+  const on = ["true", "1", "yes", "on"].includes((e.PUBLIC_SHARE_ENABLED ?? "").trim().toLowerCase());
+  return on && e.SHARE_LINK_SECRET ? e.SHARE_LINK_SECRET : undefined;
+}
+
+/**
  * True for the error Convex throws when a mutation lost its race on the same documents on every retry (the rate limit rows, when many
  * readers arrive at once). The public route turns it into 429 slow_down; any other error is a real fault and stays a 500.
  */

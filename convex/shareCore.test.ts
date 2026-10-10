@@ -1,6 +1,6 @@
 // The pure rules of the private report link (spec 0010): the signed code and the end date. No database.
 import { describe, expect, test } from "vitest";
-import { SHARE_DAYS, SHARE_MAX_DAYS, expiryFor, makeShareCode, verifyShareCode } from "./shareCore";
+import { SHARE_DAYS, SHARE_MAX_DAYS, expiryFor, isWriteConflict, makeShareCode, verifyShareCode } from "./shareCore";
 
 const SECRET = "a-long-random-test-secret";
 const ID = "kh7c8m2n9p4q5r6s7t8v9w0x1y2z3a4b";
@@ -66,5 +66,22 @@ describe("how long a link lives (AC-6)", () => {
     const created = 1_000 * DAY;
     expect(expiryFor(created + 300 * DAY, created)).toBe(created + SHARE_MAX_DAYS * DAY); // 300 + 90 would be 390
     expect(expiryFor(created + 364 * DAY, created)).toBe(created + 365 * DAY);
+  });
+});
+
+describe("a lost write race (AC-11)", () => {
+  const convexMessage =
+    'Uncaught Error: Documents read from or written to the "rateLimits" table changed while this mutation was being run and on every subsequent retry. Another call to this mutation changed the document with ID "x". See https://docs.convex.dev/error#1';
+
+  test("covers AC-11: the error Convex throws when a mutation loses its race on every retry is recognised, as an Error or as text", () => {
+    expect(isWriteConflict(new Error(convexMessage))).toBe(true);
+    expect(isWriteConflict(convexMessage)).toBe(true);
+    expect(isWriteConflict(new Error("Documents changed while this mutation was being run"))).toBe(true);
+  });
+
+  test("covers AC-11: every other error, and anything that is not an error, stays a real fault", () => {
+    for (const other of [new Error("Server Error"), new Error("rateLimits table is missing"), new Error("See https://docs.convex.dev/error#10"), "boom", null, undefined, 42, {}]) {
+      expect(isWriteConflict(other)).toBe(false);
+    }
   });
 });

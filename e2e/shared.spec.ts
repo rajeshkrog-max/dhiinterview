@@ -18,7 +18,8 @@ type G = Record<string, any>;
 const g = globalThis as unknown as G;
 
 // The payload the server sends: the first name, the date, the seed and the result with every flag false. Same scoring and words as the page.
-async function makePayload(over: { avatar?: string; name?: string } = {}) {
+// `unstripped` keeps the mood split and the quoted answers the server now leaves out, to prove the page ignores them anyway.
+async function makePayload(over: { avatar?: string; name?: string; unstripped?: boolean } = {}) {
   g.window = g;
   for (const f of ["questions.js", "score.js", "reportText.js"]) await import(pathToFileURL(resolve(ENGINE, f)).href);
   const seed = "seed-shared-test";
@@ -32,7 +33,13 @@ async function makePayload(over: { avatar?: string; name?: string } = {}) {
       completedAt: "2026-10-09T20:30:00.000Z",
       seed,
       profile: { name: over.name ?? "Asha", ...(over.avatar ? { avatar: over.avatar } : {}) },
-      result: { ...r, flags, engineVersion: 1, scoredAt: 1 },
+      result: {
+        ...r,
+        flags,
+        ...(over.unstripped ? {} : { state: {}, top: r.top.map((a: object) => ({ ...a, said: null })), bottom: r.bottom.map((a: object) => ({ ...a, said: null })) }),
+        engineVersion: 1,
+        scoredAt: 1,
+      },
     },
   };
 }
@@ -82,6 +89,27 @@ test("covers AC-4: no Download, no join card, no feedback box, no teasers, no we
   for (const w of [T.feedbackTitle, T.joinTitle, T.downloadButton, "WhatsApp", "Share with a friend"]) expect(text).not.toContain(w);
   // only the banner's one button and nothing else can be pressed inside the report
   await expect(page.locator("#report").locator("button, input, textarea, select")).toHaveCount(0);
+});
+
+test("covers AC-4, AC-12 (review blocker): the page draws no mood donut and quotes no answer of the student, even if the payload still carried them", async ({ browser }) => {
+  for (const unstripped of [false, true]) {
+    const ctx = await newContext(browser);
+    const page = await ctx.newPage();
+    const { payload, T } = await makePayload({ unstripped });
+    await serve(page, 200, payload);
+    await page.goto(PAGE);
+    await expect(state(page)).toHaveAttribute("data-state", "report");
+    await expect(page.locator(".radar"), "the radar stays").toHaveCount(1);
+    for (const cls of [".donut", ".donut-wrap", ".legend", ".state-box", ".said"]) await expect(page.locator(cls), cls).toHaveCount(0);
+    const text = await page.locator("body").innerText();
+    for (const w of [T.noticedLabel, T.states.low, T.states.calm]) expect(text).not.toContain(w);
+    if (unstripped) expect(payload.result.state.low).toBeGreaterThanOrEqual(0); // the payload really held the split
+    // the working and the growth cards still read well without the quoted lines
+    await expect(page.locator(".arow")).not.toHaveCount(0);
+    await expect(page.locator(".overview-grid.solo")).toHaveCount(1);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)).toBeLessThanOrEqual(0);
+    await ctx.close();
+  }
 });
 
 test("covers AC-4: with no class, age, email or phone in the payload there is none on the page, and the date is the Kolkata day", async ({ browser }) => {

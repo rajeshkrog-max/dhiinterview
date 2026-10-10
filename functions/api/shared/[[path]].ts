@@ -28,7 +28,13 @@ export const onRequest = async ({ request, env }: { request: Request; env: Env }
   const token = request.headers.get("x-share-token");
   if (token && token.length <= MAX_TOKEN) headers.set("x-share-token", token);
 
-  const upstream = await fetch(new URL(PAYLOAD_PATH, env.CONVEX_SITE_URL), { method: "GET", headers, redirect: "manual" });
+  let upstream: Response;
+  try {
+    upstream = await fetch(new URL(PAYLOAD_PATH, env.CONVEX_SITE_URL), { method: "GET", headers, redirect: "manual" });
+  } catch {
+    // The site could not reach Convex: a plain 502 with the private headers, which the page shows as "We could not open this report" with a retry.
+    return new Response(JSON.stringify({ code: "unavailable_upstream" }), { status: 502, headers: { "content-type": "application/json", ...PRIVATE } });
+  }
   const out = new Headers({ "content-type": upstream.headers.get("content-type") ?? "application/json", ...PRIVATE });
   return new Response(upstream.body, { status: upstream.status, headers: out });
 };

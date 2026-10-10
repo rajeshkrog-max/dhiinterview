@@ -246,6 +246,15 @@
       });
     });
 
+    /* the public page draws no donut: the mood split holds the exact rule of the low mood flag, so the server sends it empty (convex/sharePayload.ts) */
+    if (SHARED) {
+      add(wrap, add(el("div", "radar-box"), svg));
+      wrap.className += " solo";
+      add(c, wrap);
+      add(root, c);
+      return;
+    }
+
     /* donut */
     var keys = ["calm", "restless", "low"], DR = 46, DC = 2 * Math.PI * DR;
     var dsvg = S("svg", { viewBox: "0 0 120 120", "class": "donut", "aria-hidden": "true" });
@@ -297,8 +306,9 @@
     /* the words for one area at its band, with the student's own answer in "what we noticed" */
     function words(item) {
       var a = (T.areas[item.area] || {})[item.band] || {};
+      /* the public page never quotes the student's own answer (it can be the option behind a sensitive flag), so it has no "what we noticed" line */
       return { title: a.title || "", matters: a.matters || "", step: a.step || "",
-        noticed: a.noticed ? fill(pick(a.noticed, item.area), { answer: answerOf(item.said) }) : "" };
+        noticed: a.noticed && !SHARED ? fill(pick(a.noticed, item.area), { answer: answerOf(item.said) }) : "" };
     }
 
     var w = card("working", T.workingTitle);
@@ -308,7 +318,7 @@
         add(el("p", "arow-head"), el("span", null, T.axes[t.area]), el("b", null, T.bands[t.band])),
         bar(t.score),
         el("p", "atitle", x.title),
-        el("p", "said", x.noticed)));
+        x.noticed ? el("p", "said", x.noticed) : null));
     });
     add(root, w);
 
@@ -319,7 +329,7 @@
         add(el("p", "arow-head"), el("span", null, T.axes[b.area]), el("b", null, T.bands[b.band])),
         bar(b.score),
         el("p", "atitle", x.title),
-        add(el("p", "kv"), el("span", "k", T.noticedLabel), el("span", null, x.noticed)),
+        x.noticed ? add(el("p", "kv"), el("span", "k", T.noticedLabel), el("span", null, x.noticed)) : null,
         add(el("p", "kv"), el("span", "k", T.mattersLabel), el("span", null, x.matters)),
         add(el("p", "kv"), el("span", "k", T.stepLabel), el("span", null, x.step))));
     });

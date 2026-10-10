@@ -39,6 +39,7 @@ type Env = {
   readonly LEADERBOARD_PICTURES_ENABLED: string | undefined;
   readonly PICTURE_CONSENT_REQUIRED: string | undefined;
   readonly PROFILE_PICTURE_ENABLED: string | undefined;
+  readonly PUBLIC_SHARE_ENABLED: string | undefined;
   readonly REPORT_RENDER_BASE_URL: string | undefined;
   readonly REPORT_RENDER_SECRET: string | undefined;
   readonly SHARE_LINK_SECRET: string | undefined;

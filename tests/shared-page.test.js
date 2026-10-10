@@ -207,6 +207,16 @@ describe("the Pages forwarder for the payload (AC-7, AC-13)", () => {
     }
   });
 
+  test("covers AC-11 (review minor): when the site cannot reach Convex the answer is a 502 with the private headers and no code, never a bare error page", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => { throw new TypeError("network down"); }));
+    const res = await call("/api/shared/payload", { headers: { "x-share-token": "abc.1.sig" } });
+    expect(res.status).toBe(502);
+    expect(await res.text()).toBe('{"code":"unavailable_upstream"}');
+    expect(res.headers.get("cache-control")).toBe("no-store");
+    expect(res.headers.get("x-robots-tag")).toBe("noindex");
+    expect(res.headers.get("content-type")).toBe("application/json");
+  });
+
   test("covers AC-13: only a GET is answered, and only for the payload path; every other path is the same 404 as a dead link", async () => {
     const up = vi.fn(async () => new Response("{}"));
     vi.stubGlobal("fetch", up);
