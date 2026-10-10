@@ -43,6 +43,8 @@ pnpm run deploy:pages    # convex deploy, then build, then wrangler pages deploy
 
 ## Gotchas
 
+- `pnpm build` ends with `scripts/version-assets.mjs`, which adds `?v=<fingerprint of that file>` to every `js/` and `css/` address in the built pages. Do not add it by hand or load a script from a page without going through the build: Cloudflare Pages lets browsers keep unversioned files for 4 hours, and a zone setting on the domain overrides `Cache-Control` for `.js` and `.css` files (seen 2026-10-11), so the changing address is what makes a deploy reach a returning visitor. The pages themselves send `no-cache` (`public/_headers`). Files loaded by a script at run time (the vendored QR maker) are not fingerprinted.
+
 - The guard reveals the page before the page's own scripts run, so a test must wait for the engine globals (`DhiStore`, `DhiMusic`) as `e2e/helpers.ts` does.
 - Sign out wipes every `dhirise.*` key except the music setting and a waiting referral code, and only after the server confirms the session ended (offline sign out changes nothing).
 - Browser tests create throwaway fake students on the dev deployment (needs `TEST_SIGNIN_ENABLED=true` there) and refuse to run against production.

@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "astro dev --port 4321",
-    "build": "astro build",
+    "build": "astro build && node scripts/version-assets.mjs",
     "preview": "astro preview",
     "astro": "astro",
     "deploy:pages": "convex deploy --cmd-url-env-var-name PUBLIC_CONVEX_URL --cmd \"pnpm build\" && wrangler pages deploy dist --project-name dhirise --branch main",
