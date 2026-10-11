@@ -39,6 +39,9 @@ const app = defineApp({
     // The server side switch of the private report link (review 2026-10-11): links are made and opened only when this is `true` (also `1`,
     // `yes`, `on`). Unset means off, whatever the browser's `publicShare` says, so nobody can make a link by calling `shares.enable` themselves.
     PUBLIC_SHARE_ENABLED: v.optional(v.string()),
+    // The live Founding Circle Challenge (spec 0015). `true` (also `1`, `yes`, `on`) lets students join and records referrals. Unset means off:
+    // nobody can join, no referral is made and the job does nothing. Leave it unset on production until the words and the lawyer check are in.
+    CHALLENGE_LIVE: v.optional(v.string()),
   },
 });
 app.use(betterAuth);

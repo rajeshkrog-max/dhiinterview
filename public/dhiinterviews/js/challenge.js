@@ -59,13 +59,17 @@
     var me = a[0] || {}, rank = a[1] || {};
     if (api.isOver()) return closed();
     if (!me.name) return signedOut();
-    if (me.joined) return api.getMyReferral().then(function (ref) { ticket(ref, rank, false); });
+    if (me.joined) return api.getMyReferral().then(function (ref) { ticket(ref, rank, false); manage(me.hideName, me.style); });
+    if (me.open === false) return notOpen();                 /* the server switch is off: joining is not available yet */
     joinForm(me);
   }).catch(function () {});
 
   function closed() {
     var a = el("a", "cp-link", "See winners →"); a.href = "leaderboard.html";
     add(body, el("p", "cp-note", "The challenge has closed. Thank you for helping us find the Founding Circle."), a);
+  }
+  function notOpen() {
+    add(body, el("p", "cp-note", "The challenge has not opened yet. Please check back soon."));
   }
   function signedOut() {
     var a = el("a", "cp-gold", "Take the DhiRise check"); a.href = "landing.html";
@@ -74,8 +78,10 @@
 
   function joinForm(me) {
     var minor = Number(me.age) > 0 && Number(me.age) < 18;
-    var agree = tickRow("cpAgree", "I agree to the rules");
-    var parent = minor ? tickRow("cpParent", "My parent or guardian agrees") : null;
+    var words = api.joinWords();                             /* the exact words the server records (challenge-v1), from the bridge */
+    var agree = tickRow("cpAgree", (words && words.rulesTick) || "I agree to the rules.");
+    var parent = minor ? tickRow("cpParent", (words && words.parentTick) || "My parent or guardian agrees.") : null;
+    var hide = tickRow("cpHide", hideLabel(me.style));
     var btn = el("button", "cp-gold", "Scratch to join"); btn.type = "button"; btn.disabled = true;
     var msg = el("p", "cp-msg"); msg.setAttribute("aria-live", "polite");
     function sync() { btn.disabled = !(agree.box.checked && (!parent || parent.box.checked)); }
@@ -84,20 +90,63 @@
     btn.addEventListener("click", function () {
       if (btn.disabled) return;
       btn.disabled = true; btn.setAttribute("aria-busy", "true");
-      api.joinChallenge({ parentConsent: !!(parent && parent.box.checked) }).then(function (res) {
+      var hidden = hide.box.checked;
+      api.joinChallenge({ rulesAccepted: agree.box.checked, parentConsent: !!(parent && parent.box.checked), hideName: hidden }).then(function (res) {
         if (!res || !res.ok) {
           btn.removeAttribute("aria-busy"); sync();
-          msg.textContent = res && res.reason === "ended" ? "The challenge has closed." :
-            res && res.reason === "parentConsent" ? "Please tick that your parent or guardian agrees." : "Something went wrong. Please try again.";
+          var why = res && res.reason;
+          msg.textContent = why === "ended" ? "The challenge has closed." :
+            why === "parentConsent" ? "Please tick that your parent or guardian agrees." :
+            why === "rules" ? "Please tick that you agree to the rules." :
+            why === "no_result" ? "Please finish your DhiRise check first, then come back to join." :
+            why === "not_open" ? "The challenge has not opened yet. Please check back soon." :
+            why === "rate_limited" ? "That was a few tries in a row. Please wait a little and try again." :
+            "Something went wrong. Please try again.";
           return;
         }
         return Promise.all([api.getMyReferral(), api.getMyRank()]).then(function (a) {
           body.textContent = "";
           ticket(a[0], a[1], true);
+          manage(hidden, me.style);
         });
       }).catch(function () { btn.removeAttribute("aria-busy"); sync(); msg.textContent = "Something went wrong. Please try again."; });
     });
-    add(body, agree.row, parent && parent.row, btn, msg);
+    var said = el("div", "cp-words");                        /* what joining means, in plain words, above the ticks */
+    if (words) words.lines.forEach(function (line) { add(said, el("p", null, line)); });
+    add(body, said, agree.row, parent && parent.row, hide.row, btn, msg);
+  }
+  function hideLabel(style) { return "Show me as Anonymous" + (style ? " " + style : "") + " on the leaderboard"; }
+
+  /* ---------- after joining: hide my name, and leave ---------- */
+  function manage(hidden, style) {
+    var box = el("div", "cp-manage");
+    var hide = tickRow("cpHideNow", hideLabel(style)); hide.box.checked = !!hidden;
+    var status = el("p", "cp-msg"); status.setAttribute("aria-live", "polite");
+    hide.box.addEventListener("change", function () {
+      var want = hide.box.checked;
+      api.setHideName(want).then(function (r) {
+        if (r && r.ok) { status.textContent = want ? "Saved. You will show as Anonymous." : "Saved. Your first name will show."; return; }
+        hide.box.checked = !want;                           /* nothing changed on the server: show the old choice again */
+        status.textContent = r && r.reason === "ended" ? "The challenge has closed, so this can no longer change." : "We could not save that. Please try again.";
+      });
+    });
+    var leave = el("button", "cp-ghost", "Leave the challenge"); leave.type = "button";
+    var sure = false, sureT = 0;
+    leave.addEventListener("click", function () {
+      if (!sure) {                                          /* a second tap confirms; it resets after a few seconds */
+        sure = true; leave.textContent = "Tap again to leave. Your code will stop working.";
+        sureT = setTimeout(function () { sure = false; leave.textContent = "Leave the challenge"; }, 6000);
+        return;
+      }
+      clearTimeout(sureT);
+      leave.disabled = true;
+      api.leaveChallenge().then(function (r) {
+        if (r && r.ok) { location.reload(); return; }
+        leave.disabled = false; sure = false; leave.textContent = "Leave the challenge";
+        status.textContent = "We could not do that. Please check your connection and try again.";
+      });
+    });
+    add(body, add(box, hide.row, status, leave));
   }
   function tickRow(id, label) {
     var box = el("input"); box.type = "checkbox"; box.id = id;

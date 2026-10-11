@@ -181,6 +181,7 @@ test.describe("the list (AC-1, AC-2, AC-10)", () => {
     await page.fill("#ref", "");
     await page.click("#findBtn");
     await expect(page.locator("#msg")).toHaveText("No saved report found"); // an empty code is not an error page
+    await expect.poll(() => asked.length).toBe(4); // the message was already there from the step before, so wait for this request itself
 
     await page.click("#showAll");
     await expect(page.locator("#rows li")).toHaveCount(2);

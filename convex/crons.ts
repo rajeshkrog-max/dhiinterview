@@ -12,4 +12,6 @@ crons.daily("queue Sheet rows whose content changed", { hourUTC: 20, minuteUTC: 
 // deletes stored files no row holds.
 crons.interval("make due report copies", { minutes: 1 }, internal.reportMake.runIfDue, {});
 crons.daily("delete unattached report files", { hourUTC: 21, minuteUTC: 30 }, internal.reportCopy.sweep, {});
+// The live challenge (spec 0015): every 5 minutes settle pending referrals and recount. Does nothing while CHALLENGE_LIVE is off.
+crons.interval("settle challenge referrals", { minutes: 5 }, internal.challengeBoard.run, {});
 export default crons;

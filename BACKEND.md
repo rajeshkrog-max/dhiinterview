@@ -51,7 +51,7 @@ landing.html ──► meet.html ──► question.html (Q1) ──► question
 |---|---|---|---|---|
 | Landing | `landing.html`, `js/gate.js`, `css/landing.css` | Name, age (10–25), class (Class 8–12, College), optional referral code, consent sheet (must scroll to the end, then "I agree"), "Continue with Gmail". **⚠ Mocked today:** no Google sign-in happens. | Gate record (name, age, class, consent + exact consent text). Referral use if the code is valid and not their own. | `localStorage dhirise.gate.v1`; `sessionStorage dhirise.ref` until sign-in; challenge mock keys (section 3) |
 | Meet | `meet.html`, `js/meet.js`, `js/music.js` | Reads what DhiRise is, taps "Start the check". Background music starts (mute button). | Music mute choice and play position | `localStorage dhirise.music.muted`, `sessionStorage dhirise.music.pos` |
-| Q1–Q18 | `question.html` + `js/q1.js`, `question2.html` + `js/q2.js`, `questions.html?q=N` + `js/questions.js`; shared `js/question.js`, `js/engine/screen.js`, `js/engine/questions.js`, `js/leaves.js` | Picks one of 4 options. Options are **shuffled per student** (seeded by name + start date). A tip card shows; Next unlocks after 10 s. Q18's button says Finish. | One answer per question, stored as an **option id** (`q4o2` = question 4, 2nd option as written in `js/engine/questions.js`), never a screen position. `startedAt` on first load, `completedAt` on Finish (only if all 18 are answered). | `localStorage dhirise.check.v1` |
+| Q1–Q18 | `question.html`, `question2.html`, `questions.html?q=N` (all three are the same one page screen: `js/questions.js` opens the question the address names, Next and Back then swap it in place with `history.pushState`, no reload); `js/qbg.js` (blur fade between the background images); shared `js/question.js`, `js/engine/screen.js`, `js/engine/questions.js`, `js/leaves.js` | Picks one of 4 options. Options are **shuffled per student** (seeded by name + start date). A tip card shows; Next unlocks after 10 s. Q18's button says Finish. | One answer per question, stored as an **option id** (`q4o2` = question 4, 2nd option as written in `js/engine/questions.js`), never a screen position. `startedAt` on first load, `completedAt` on Finish (only if all 18 are answered). | `localStorage dhirise.check.v1` |
 | Done | `done.html`, `js/done.js`, `js/engine/identity.js` | Watches a ~7 s "constellation" reveal ("You are The Focused Achiever"), sees a teaser (style, Dhi starting score, two locked cards), taps "Unlock my full report", enters a **+91 mobile** (10 digits starting 6–9, shown 3-3-4) with a **pre-ticked "Add me to Dhi early access on WhatsApp"** box, then Submit. | The **lead** (section 9) including a **Founding ID** `DR-XXXX`. **⚠ Needs decision:** there is no Skip, so the phone number is effectively required to see the report. | `localStorage dhirise.lead.v1`, `dhirise.founding.v1`; optional POST to `leadEndpoint` |
 | Who you are | `who.html`, `js/who.js`, `js/engine/storyText.js` | Swipes 6 story slides built from their answers, then "See my full report". | Nothing | none |
 | Report | `report-student.html`, `js/report-student.js`, `js/engine/reportText.js`, `js/card.js`, `js/card-export.js`, `js/challenge-ui.js` | Founding Card (save PNG, share to WhatsApp / Instagram / Facebook), full report, 21-day path (tappable ticks), feedback (1–5 stars + text, at least 30 characters, optional "share anonymously"). After valid feedback: the challenge invite overlay. | Report completion, feedback, Week 1 ticks, invite show count | `dhirise.reportFeedback.v1`, `dhirise.path.v1`, `dhirise.challenge.v1`, `dhirise.challenge.mock.v1`, `dhirise.challenge.invite.v1`; optional POST to `feedbackEndpoint` |
@@ -212,7 +212,7 @@ Flags like `selfDoubt` and `lowMood` are **sensitive**. They are shown to the st
 
 ## 5. `js/api.js` contract
 
-`js/api.js` is the **only** place the referral challenge reads or writes data. Every function returns a Promise. **⚠ Mocked today:** all of them use localStorage plus 30 hard-coded demo leaderboard rows (`demo: true`). Each function has a `// BACKEND: replace with fetch to …` comment. Replace the bodies with `fetch` calls and the pages keep working unchanged.
+`js/api.js` is the **only** place the referral challenge reads or writes data. Every function returns a Promise. **Live on the Convex backend (spec 0015):** the challenge calls go through `DhiSession.challenge` (`src/lib/session.ts` → `convex/challenge.ts`), the leaderboard and the student's own rank included (spec 0018, scope row 12); there is no localStorage mock and there are no demo rows. The `GET /api/...` routes in the table below are the original design; what runs today is the Convex functions named in each `// BACKEND:` note in `js/api.js`.
 
 Proposed REST API (JSON, cookie or bearer session from Google sign-in; all routes need a signed-in student unless marked public):
 
@@ -225,8 +225,8 @@ Proposed REST API (JSON, cookie or bearer session from Google sign-in; all route
 | `submitFeedback({rating, text})` | `POST /api/feedback` | `{ "rating": 4, "text": "…", "canShare": false }` | `{ ok: true, genuine: true, minChars: 30 }` | 400 rating not 1–5 |
 | `joinChallenge({parentConsent})` | `POST /api/challenge/join` | `{ "parentConsent": true }` | `{ ok: true, code: "ASH7K2Q" }` | `{ ok: false, reason: "parentConsent" \| "ended" }` |
 | `getMyReferral()` | `GET /api/referral/me` | none | `{ code, link, valid, pending }` | 404 if not joined |
-| `getLeaderboard()` | `GET /api/challenge/leaderboard` (public) | none | `[ { rank, displayName, cls, style, valid } ]`, top 50 | none |
-| `getMyRank()` | `GET /api/challenge/rank` | none | `{ rank, valid, pending, toNext, nextRank }` (`rank: null` if not joined) | 401 |
+| `getLeaderboard()` | live: `challenge.leaderboard` (signed in students only; not public) | none | `[ { rank, displayName, cls, style, valid, avatar, me } ]`, top 50, or `null` when it cannot be had; `boardInfo()` has `computedAt` and `frozen` | `not_signed_in` |
+| `getMyRank()` | live: `challenge.me` (`rank`, `toNext`, `nextRank` written by the 5 minute job) | none | `{ rank, valid, pending, toNext, nextRank }` (`rank`, `toNext`, `nextRank` are `null` until the student has a valid referral) | `not_signed_in` |
 | `isGenuine(text)` | none (local) | | boolean hint for the form; the server decides | |
 | `isOver()` | none (local) | | `Date.now() > endsAt`; the server decides | |
 
@@ -428,7 +428,7 @@ or `python -m http.server 8081`, then open `http://localhost:8081/landing.html`.
 ## 13. Known limitations
 
 - **"X% of students chose this"** on tip cards (`peerSeed` in `js/engine/questions.js`) and **"X% of students share your style"** (`peers` in `js/engine/reportText.js`) are **estimates written by hand**, not real data. Replace them with real aggregates once there is data.
-- **Leaderboard demo rows:** `js/api.js` adds 30 fake students (`demo: true`). Remove them when the backend serves real rows.
+- **Leaderboard demo rows:** removed with spec 0018 (2026-10-11); the board is the rows the 5 minute job wrote.
 - **Referrals only work inside one browser** today (the mock "server" is localStorage).
 - **Founding ID** (`DR-XXXX`) is random in the browser, **not a global sequence and not guaranteed unique**. **⚠ Needs decision:** if it should be "Founder #0123", issue it on the server.
 - **Identity is the typed name** until Google sign-in exists (two students with the same name on one device would collide).

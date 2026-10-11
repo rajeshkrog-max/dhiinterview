@@ -37,6 +37,13 @@ export const rateLimiter = new RateLimiter(components.rateLimiter, {
   // a little under 600. `start: 0` makes every shard's window begin on the same clock minute: without it each shard picks its own random
   // start, they reset at different moments, and a 12 second burst was let through 650 times. If readers still lose the race, shareHttp
   // answers 429 slow_down.
+  // Joining the challenge (spec 0017, AC-8): 5 tries an hour for each student (key = student id). Taken before the rules and ticks are
+  // checked, so a refused try still counts; a switch off or an ended challenge answers first and uses no token.
+  challengeJoin: { kind: "token bucket", rate: 5, period: HOUR, capacity: 5 },
+  // The public code check (spec 0016, AC-2): 28 a minute for each visitor (key = the forwarder's hashed address). Four shards of 7, with
+  // `start: 0` so they reset together (see the note on shareRead), so the real cap is a little under 28. One visitor's key can never use up
+  // another visitor's tokens.
+  referralCheck: { kind: "fixed window", rate: 28, period: MINUTE, shards: 4, start: 0 },
   shareMake: { kind: "fixed window", rate: SHARE_MAKE_PER_HOUR, period: HOUR },
   shareRead: { kind: "fixed window", rate: SHARE_READ_PER_MINUTE, period: MINUTE, shards: SHARE_READ_SHARDS, start: 0 },
   shareBad: { kind: "fixed window", rate: SHARE_READ_PER_MINUTE, period: MINUTE, shards: SHARE_BAD_SHARDS, start: 0 },

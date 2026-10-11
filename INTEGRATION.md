@@ -229,6 +229,8 @@ window.DHI_CHALLENGE = {
 Every function returns a Promise. Each has a `// BACKEND: replace with fetch to …` comment with the suggested route.
 Swap the bodies for `fetch` calls and the pages keep working unchanged.
 
+**Status (2026-10-11, spec 0015 milestone 1):** `getMe`, `joinChallenge` and `getMyReferral` are live. They call `DhiSession.challenge` (`src/lib/session.ts`, `convex/challenge.ts`), not fetch routes, and `getMe` now also returns `open`, `hideName`, `valid`, `pending` (without `joinedAt`, `parentConsent` or `usedCode`). `joinChallenge` needs `rulesAccepted: true` and answers `reason` `rules`, `parentConsent`, `ended`, `not_open`, `no_result`, `rate_limited` or `offline`. `recordReferralUse`, `markReportComplete` and `submitFeedback` are gone: the server records a referral when the friend's profile is created and decides validity itself in a job that runs every 5 minutes (`convex/challengeBoard.ts`). `validateCode` is live too (milestone 2): it calls `GET /api/referral/validate?code=` and answers `ok`, or `reason` `format`, `unknown`, `ended` or `unchecked` (could not be checked; there is no `self`). New: `setHideName(bool)` and `leaveChallenge()`. `getLeaderboard` and `getMyRank` are still the demo mock until spec 0018. The table below is the original contract.
+
 | Function | Input | Output | Suggested route |
 |---|---|---|---|
 | `getMe()` | none | `{ name, firstName, email, age, class, style, code, joined, joinedAt, parentConsent, usedCode, finished, reportComplete, feedbackGiven }` | `GET /api/me` |
@@ -238,8 +240,8 @@ Swap the bodies for `fetch` calls and the pages keep working unchanged.
 | `submitFeedback({ rating, text })` | rating 1–5, text | `{ ok, genuine, minChars }` | `POST /api/feedback` |
 | `joinChallenge({ parentConsent })` | `parentConsent: boolean` (required when age < 18) | `{ ok: true, code }` or `{ ok: false, reason: "parentConsent" \| "ended" }` | `POST /api/challenge/join` |
 | `getMyReferral()` | none | `{ code, link, valid, pending }`; `link = shareUrl + "/landing.html?ref=" + code` | `GET /api/referral/me` |
-| `getLeaderboard()` | none | `[{ rank, displayName, cls, style, valid, me? }]`, top `leaderboardSize` | `GET /api/challenge/leaderboard` |
-| `getMyRank()` | none | `{ rank, valid, pending, toNext, nextRank }` (`rank: null` until joined; `toNext` = referrals needed to pass `nextRank`) | `GET /api/challenge/rank` |
+| `getLeaderboard()` | none | `[{ rank, displayName, cls, style, valid, avatar, me }]`, top `leaderboardSize`, or `null` when it cannot be had (`boardInfo()` gives `computedAt` and `frozen`) | live: `challenge.leaderboard` (signed in students only) |
+| `getMyRank()` | none | `{ rank, valid, pending, toNext, nextRank }` (`rank`, `toNext`, `nextRank` are `null` until the student has a valid referral; `toNext` = referrals needed to pass `nextRank`) | live: `challenge.me` |
 | `isGenuine(text)` | text | boolean (page-side hint only; the server decides) | none |
 | `isOver()` | none | boolean, from the local clock (the server decides for real) | none |
 
@@ -270,7 +272,7 @@ The **top 10 are reviewed by hand** before the winner is announced (see `terms.h
 - **Ties: whoever reached that count earliest ranks higher** (store `reached_at` for each referral that becomes valid, and compare the time each person's latest valid referral was made).
 - Show only first name + initial of the surname, class and style (`Builder` / `Achiever` / `Explorer`). Never show email or phone.
 - Freeze the board at `endsAt`. The page says "Updated every 5 minutes", so caching for up to 5 minutes is fine.
-- Mock note: the mock breaks ties by list order (demo rows first). Remove the 30 `demo: true` rows in `api.js` when the backend serves real data.
+- The board is live (spec 0018): ties go to the earlier `lastValidAt`, then the earlier join, and the 30 demo rows are gone.
 
 ### Data tables (add to d)
 

@@ -36,7 +36,7 @@ test.beforeAll(async ({ browser }, testInfo) => {
   expect(await page.evaluate(() => (window as any).DhiSession.submitLead({ phone: "9876543210", wantsCommunity: false, guardianPresent: false }))).toMatchObject({ ok: true });
   await page.goto(PATH + "challenge.html");
   await page.waitForFunction(() => !!(window as any).DhiApi);
-  expect(await page.evaluate(() => (window as any).DhiApi.joinChallenge({ parentConsent: true }))).toMatchObject({ ok: true });
+  expect(await page.evaluate(() => (window as any).DhiApi.joinChallenge({ rulesAccepted: true, parentConsent: true }))).toMatchObject({ ok: true });
   signedIn = await ctx.storageState();
   await ctx.close();
 
@@ -232,11 +232,17 @@ test.describe("where there is no circle at all (AC-5)", () => {
 });
 
 // ---------- leaderboard rows carry a picture only when the server sends a path (spec 0011, AC-4 and AC-5) ----------
-// The live board (scope row 12) is not built: the mock api.js has only demo rows and the student's own row. These cases give the page the
-// rows the real answer will have, by wrapping api.js's getLeaderboard, so the drawing rules are locked in before row 12 arrives.
+// The dev board holds only the few throwaway students these tests make, so these cases give the page eight rows of the shape the live board
+// answers with (rank, displayName, cls, style, valid, avatar, me), by replacing api.js's getLeaderboard after it loads. What the page draws from
+// them is what is locked in here; the real board is checked in challenge.spec.ts.
 const ROW_PNG_PATH = "/api/avatar/ZyXwVuTsRqPoNmLkJiHgFe";
+// A script appended to api.js: `avatars` maps a rank to the path (or null) that row carries; every other row has none.
+const boardScript = (avatars: Record<number, string | null>) =>
+  `;(function(){var A=${JSON.stringify(avatars)},S=["Builder","Achiever","Explorer"];` +
+  `window.DhiApi.getLeaderboard=function(){var rows=[];for(var i=1;i<=8;i++){rows.push({rank:i,displayName:"Student "+i,cls:"Class 10",style:S[i%3],valid:9-i,avatar:typeof A[i]==="string"?A[i]:null,me:false});}return Promise.resolve(rows);};` +
+  `window.DhiApi.boardInfo=function(){return{computedAt:Date.now(),frozen:false,endsAt:Date.parse("2026-10-30T23:59:00+05:30")};};})();`;
 
-async function openBoard(browser: Browser, avatars: Record<number, string | null>, demo: boolean) {
+async function openBoard(browser: Browser, avatars: Record<number, string | null>) {
   const context = await browser.newContext({ viewport: { width: 390, height: 800 }, storageState: signedIn });
   const page = await context.newPage();
   const asked: string[] = [];
@@ -247,12 +253,10 @@ async function openBoard(browser: Browser, avatars: Record<number, string | null
     if (u.pathname.startsWith("/api/avatar/")) asked.push(u.pathname);
   });
   await page.route("**/api/avatar/**", (route) => route.fulfill({ status: 200, contentType: "image/png", body: PNG }));
-  // api.js is served with a small wrapper after it: ranks 1 to 3 (podium) and some list rows get the given avatars, and `demo` says whether they count as demo rows
+  // api.js is served with the board script after it: ranks 1 to 3 (podium) and some list rows get the given avatars
   await page.route("**/js/api.js", async (route) => {
     const res = await route.fetch();
-    const body = await res.text();
-    const wrap = `;(function(){var g=window.DhiApi.getLeaderboard,A=${JSON.stringify(avatars)},D=${demo};window.DhiApi.getLeaderboard=function(){return g().then(function(rows){return rows.map(function(r){var a=A[r.rank];return a===undefined?r:Object.assign({},r,{avatar:a,demo:D&&r.demo});});});};})();`;
-    await route.fulfill({ response: res, body: body + wrap });
+    await route.fulfill({ response: res, body: (await res.text()) + boardScript(avatars) });
   });
   await page.goto(PATH + "leaderboard.html");
   await page.locator("#lbList .lb-row").first().waitFor({ timeout: 30_000 });
@@ -261,8 +265,8 @@ async function openBoard(browser: Browser, avatars: Record<number, string | null
 const pics = (page: Page, where: string) => page.locator(`${where} .dhi-avatar`);
 
 test.describe("leaderboard rows (AC-4, AC-5)", () => {
-  test("covers AC-5: today's demo rows keep their owls, with no picture circle and no picture request", async ({ browser }) => {
-    const { page, context, asked } = await openBoard(browser, {}, true);
+  test("covers AC-5: rows without a picture keep their owls, with no picture circle and no picture request", async ({ browser }) => {
+    const { page, context, asked } = await openBoard(browser, {});
     await expect(page.locator("#lbPodium .lb-av")).toHaveCount(3);
     await expect(page.locator("#lbList .lb-av").first()).toBeVisible();
     await expect(pics(page, "#lbPodium")).toHaveCount(0);
@@ -272,7 +276,7 @@ test.describe("leaderboard rows (AC-4, AC-5)", () => {
   });
 
   test("covers AC-4: a real row with a path shows a 28px picture in the list and a 40px one on the podium, in the owl's own box", async ({ browser }) => {
-    const { page, context, asked } = await openBoard(browser, { 1: ROW_PNG_PATH, 5: ROW_PNG_PATH }, false);
+    const { page, context, asked } = await openBoard(browser, { 1: ROW_PNG_PATH, 5: ROW_PNG_PATH });
     const podium = pics(page, "#lbPodium");
     await expect(podium).toHaveCount(1);
     await expect(podium.first()).toHaveClass(/dhi-avatar--40\b.*dhi-avatar--photo/);
@@ -289,7 +293,7 @@ test.describe("leaderboard rows (AC-4, AC-5)", () => {
   });
 
   test("covers AC-4: a row with avatar null, or one the page has never heard of, keeps the owl", async ({ browser }) => {
-    const { page, context } = await openBoard(browser, { 1: null, 4: null }, false);
+    const { page, context } = await openBoard(browser, { 1: null, 4: null });
     await expect(pics(page, "#lbPodium")).toHaveCount(0);
     await expect(pics(page, "#lbList")).toHaveCount(0);
     await expect(page.locator("#lbPodium .lb-av")).toHaveCount(3);
@@ -297,7 +301,7 @@ test.describe("leaderboard rows (AC-4, AC-5)", () => {
   });
 
   test("covers AC-4 and AC-10: only a same origin /api/avatar/ path becomes a picture; any other address falls back to the initial and is never contacted", async ({ browser }) => {
-    const { page, context, hosts } = await openBoard(browser, { 1: "https://evil.example/x.png", 4: "//evil.example/x.png", 5: "javascript:alert(1)" }, false);
+    const { page, context, hosts } = await openBoard(browser, { 1: "https://evil.example/x.png", 4: "//evil.example/x.png", 5: "javascript:alert(1)" });
     await expect(pics(page, "#lbPodium").first()).toHaveClass(/dhi-avatar--c[0-5]/);
     await expect(pics(page, "#lbPodium").first().locator("img")).toHaveCount(0);
     await expect(pics(page, "#lbList").first().locator("img")).toHaveCount(0);
@@ -311,7 +315,7 @@ test.describe("leaderboard rows (AC-4, AC-5)", () => {
     await page.route("**/api/avatar/**", (route) => route.fulfill({ status: 404, body: "Not found" }));
     await page.route("**/js/api.js", async (route) => {
       const res = await route.fetch();
-      await route.fulfill({ response: res, body: (await res.text()) + `;(function(){var g=window.DhiApi.getLeaderboard;window.DhiApi.getLeaderboard=function(){return g().then(function(rows){return rows.map(function(r){return r.rank===4?Object.assign({},r,{avatar:"${ROW_PNG_PATH}",demo:false}):r;});});};})();` });
+      await route.fulfill({ response: res, body: (await res.text()) + boardScript({ 4: ROW_PNG_PATH }) });
     });
     await page.goto(PATH + "leaderboard.html");
     await page.locator("#lbList .lb-row").first().waitFor({ timeout: 30_000 });
@@ -330,7 +334,7 @@ test.describe("leaderboard rows (AC-4, AC-5)", () => {
     await page.route("**/js/funnel-config.js", (route) => route.fulfill({ status: 200, contentType: "text/javascript", body: 'window.DHI_FUNNEL = { whatsappInvite: "", shareUrl: "", profilePicture: false };' }));
     await page.route("**/js/api.js", async (route) => {
       const res = await route.fetch();
-      await route.fulfill({ response: res, body: (await res.text()) + `;(function(){var g=window.DhiApi.getLeaderboard;window.DhiApi.getLeaderboard=function(){return g().then(function(rows){return rows.map(function(r){return Object.assign({},r,{avatar:"${ROW_PNG_PATH}",demo:false});});});};})();` });
+      await route.fulfill({ response: res, body: (await res.text()) + boardScript(Object.fromEntries([1, 2, 3, 4, 5, 6, 7, 8].map((n) => [n, ROW_PNG_PATH]))) });
     });
     await page.goto(PATH + "leaderboard.html");
     await page.locator("#lbList .lb-row").first().waitFor({ timeout: 30_000 });

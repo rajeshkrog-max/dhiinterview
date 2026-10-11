@@ -45,7 +45,7 @@ Answers live in the browser's localStorage, so to start fresh use a private wind
 |---|---|
 | `landing.html`, `js/gate.js`, `css/landing.css` | Sign-in and consent |
 | `meet.html`, `js/meet.js` | Meet Dhi |
-| `question.html`, `question2.html`, `questions.html`, `js/q1.js`, `js/q2.js`, `js/questions.js`, `js/question.js`, `js/leaves.js`, `css/question.css` | Question screens, tip card, falling leaves |
+| `question.html`, `question2.html`, `questions.html`, `js/questions.js`, `js/qbg.js`, `js/question.js`, `js/leaves.js`, `css/question.css` | Question screens, tip card, falling leaves |
 | `done.html`, `js/done.js`, `css/done.css` | Constellation reveal, teaser, join (lead capture) |
 | `js/music.js`, `assets/music/hero.mp3` | Background music from the landing page to question 18, with the mute button |
 | `js/card.js`, `css/card.css` | The Founding Card at the top of the report (flip, shine, tilt) |
@@ -56,7 +56,7 @@ Answers live in the browser's localStorage, so to start fresh use a private wind
 | `leaderboard.html`, `js/leaderboard.js`, `css/leaderboard.css` | Leaderboard |
 | `terms.html`, `css/terms.css` | Challenge terms |
 | `js/challenge-config.js` | Challenge name, end date, prize, rules numbers |
-| `js/api.js` | The challenge data layer: the only place challenge data is read/written. **Mocked with localStorage + demo rows today** |
+| `js/api.js` | The challenge data layer: the only place challenge data is read/written. Calls the Convex backend through `DhiSession.challenge`; no mock and no demo rows |
 | `assets/challenge/` | `prize.png` (original), `prize.webp` (used), `prize.svg` (fallback) |
 | `assets/report/` | `slide1–6.png` (originals) and `web/` (the WebP + JPG copies `who.html` uses); `tools/prepare_report_slides.py` rebuilds them |
 | `js/engine/identity.js` | Style theme and name, the Founding ID (`dhirise.founding.v1`), sound effects |

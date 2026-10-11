@@ -5,6 +5,8 @@ recovery/
 /*.pdf
 Dhirise_Session_*.json
 Dhirise_Report_*.pdf
+# the winner review CSV holds students' emails and what they wrote (tools/WINNER-REVIEW.md): never commit it
+review-*.csv
 
 # local settings and secrets
 *.local.js

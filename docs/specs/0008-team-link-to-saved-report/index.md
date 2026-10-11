@@ -16,10 +16,10 @@ Named members of the DhiRise team get a private page that lists students whose s
 - As a student, I want the notice I agree to and the privacy page to say that the team can open my report, so that I am not surprised.
 
 **Acceptance criteria**:
-- **AC-1**: A signed in Google account whose email is in `TEAM_EMAILS` opens `/dhiinterviews/team.html` and sees every student who has a stored report copy, newest first, 50 at a time with a Load more button. Each row shows name, class, the date the copy was made in India time (`Asia/Kolkata`, whatever zone the viewer is in) and an Open link. The page shows no phone, email, score or flag.
+- **AC-1**: A signed in Google account whose email is in `TEAM_EMAILS` opens `/dhiinterviews/team.html` and sees every student who has a stored report copy, newest first by when their first copy became ready (it does not move when a copy is replaced, spec 0013), 50 at a time with a Load more button. Each row shows name, class, that first copy date in India time (`Asia/Kolkata`, whatever zone the viewer is in) and an Open link. The page shows no phone, email, score or flag.
 - **AC-2**: A box on the list finds one student by reference code (the code in column A of the Sheet). Spaces around a pasted code are ignored. A code that is empty, unknown or not valid shows "No saved report found", never an error page.
 - **AC-3**: Open, from the list or from the Sheet link `{BETTER_AUTH_URL}/dhiinterviews/team-report.html?s=<reference code>`, shows that student's saved PDF inside the team page, in the browser tab. A Download button saves it as `DhiRise-report-<first name>.pdf`. The bytes served are exactly the stored file, and the page checks they start with `%PDF-` before showing them.
-- **AC-4**: A signed out visitor sees a Sign in with Google button, and after Google returns, lands on the same page or report (the report code is kept). If Google refuses the sign in (`?signin=error`), the page says so in plain words. A signed in account that is not in `TEAM_EMAILS` (a student, or any other Google account) sees a plain refusal and gets a refusal from every team route, with no student data in it, and a Sign out button so they can use another account. When `TEAM_EMAILS` is unset or empty, everyone is refused. In production the account's email must be verified by Google; on dev, when `TEST_SIGNIN_ENABLED` is `"true"`, the fake test sign in is accepted without that check.
+- **AC-4**: A signed out visitor sees a Sign in with Google button, and after Google returns, lands on the same page or report (the report code is kept). If Google refuses the sign in (`?signin=error`), the page says so in plain words. A signed in account that is not in `TEAM_EMAILS` (a student, or any other Google account) sees a plain refusal and gets a refusal from every team route, with no student data in it, and a Sign out button so they can use another account. When `TEAM_EMAILS` is unset or empty, everyone is refused. In production the account's email must be verified by Google; on dev, when `TEST_SIGNIN_ENABLED` is `"true"`, the fake test sign in is accepted without that check, but only for fake `@example.com` addresses (spec 0013 corrected this wording; `mayEnterTeam` already works this way).
 - **AC-5**: Every PDF the team route serves adds one `reportViews` row (student, saved copy, its `sha256` and `reportVersion`, team email, time). The row is written only after the stored file is confirmed to exist, so there is a row for every PDF served and, rarely, one for a delivery that failed on the way. Only erasure of a student (scope row 15) may delete these rows; no other app code edits or deletes them. A refused, rate limited or not found request adds no row and writes one console line with the team email and the reason, never a student field.
 - **AC-6**: One team member can open at most 200 PDFs in a fixed hour window. The 201st is refused with `rate_limited` and a plain message that says when to try again. A reload of the viewer is a new open and counts. Using the list and the reference code box costs nothing.
 - **AC-7**: "Ready" means the student's report row has a stored file; a copy waiting to be replaced by a newer version can still be opened. A student with no stored file is not on the list, and their link answers "This report copy is not ready", not an error, as does a missing or invalid code and a student who no longer exists.
@@ -59,7 +59,7 @@ Changed table: `reportFiles` gets index `by_readyAt` (`readyAt`) so the list rea
 
 | Endpoint | Method | Key inputs | Key outputs | Auth | Key errors |
 |---|---|---|---|---|---|
-| `/api/team/list` | GET | `cursor` (opt), `ref` (opt) | `{ rows: [{ studentId, name, class, madeAt }], next }` (50 rows, `next` is null on the last page) | team | 400 `bad_request` (a cursor that is not valid), 401 signed out, 403 `not_team` |
+| `/api/team/list` | GET | `cursor` (opt), `ref` (opt) | `{ rows: [{ studentId, name, class, firstCopyAt }], next }` (50 rows, `next` is null on the last page) | team | 400 `bad_request` (a cursor that is not valid), 401 signed out, 403 `not_team` |
 | `/api/team/report` | GET | `s` (the reference code) | the PDF, `inline`, `private, no-store`, `nosniff` | team | 401, 403, 404 `not_ready` (also a missing or invalid `s`), 429 `rate_limited` with the time to try again |
 
 There is no `/api/team/me`: the list and report routes already answer 401 and 403, and the pages learn their state from those answers.
@@ -78,7 +78,7 @@ Open links from the list open in a new tab. Convex side: `convex/team.ts` (the t
 |---|---|---|
 | every team route | who the caller is | the signed in account, found with `getSignedInUser` (the same helper the student routes use), email lowercase |
 | every team route | whether the caller may enter | the email is in the `TEAM_EMAILS` list (split on commas, trimmed, lowercase, empty and duplicate entries dropped, read on every request; unset or empty means nobody) AND (the account's `emailVerified` is true OR `TEST_SIGNIN_ENABLED` is `"true"`) |
-| list | rows, newest first | `reportFiles` through `by_readyAt` using `.gt("readyAt", 0)`, descending, only rows with a `storageId`, 50 per page, cursor from the previous page; `next` is null when done |
+| list | rows, newest first | `reportFiles` through `by_firstCopyAt` (spec 0013; was `by_readyAt`), descending, only rows with a `storageId`, 50 per page, cursor from the previous page; `next` is null when done |
 | list | name and class | the `students` row of each `studentId` |
 | list | "date the copy was made" | `reportFiles.readyAt` (set when the copy is attached or replaced), formatted with `Intl` in `Asia/Kolkata` |
 | list | the Open link | `/dhiinterviews/team-report.html?s=` plus the encoded `studentId` |
@@ -122,7 +122,7 @@ Open links from the list open in a new tab. Convex side: `convex/team.ts` (the t
 - Auth and permission: signed out gets 401, a student and any other Google account get 403, an unset `TEAM_EMAILS` refuses everyone, a removed email is refused at once, an unverified email is refused in production but the fake test sign in works on dev, verifies **AC-4**, **AC-9**.
 - Safety: a student named `<img src=x onerror=alert(1)>` appears as text on the list and the viewer, verifies **AC-10**.
 - Privacy: no phone or email appears in a list response, an error or a log line, verifies **AC-10**; the privacy page and consent v3 carry the new words, verifies **AC-11**.
-- Retention: no code other than the erasure path deletes `reportViews` rows (source scan), verifies **AC-5**.
+- Retention: no code deletes `reportViews` rows (source scan; spec 0014 keeps them as the team access log, and spec 0023 holds the data map), verifies **AC-5**.
 
 ## Build plan
 

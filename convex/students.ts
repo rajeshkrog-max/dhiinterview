@@ -3,6 +3,8 @@
 import { v } from "convex/values";
 import { env, mutation, query } from "./_generated/server";
 import { isPictureAgreed, pictureEnabled, pictureView } from "./avatarState";
+import { recordPendingReferral } from "./challengeCore";
+import { isLive } from "./challengeRules";
 import { CONSENT_KINDS, CONSENT_TEXTS, CONSENT_VERSION, consentHash } from "./consentText";
 import { classValidator } from "./schema";
 import { MAX_NAME, ADULT_AGE, answersOf, cleanName, fail, getSignedInUser, requireSignedIn, requireStudent, validAge } from "./helpers";
@@ -143,6 +145,8 @@ export const createProfile = mutation({
       acceptedAt: now,
     });
     await ctx.db.insert("checks", { studentId, seed: crypto.randomUUID(), source: "fresh" });
+    // A pending referral for the owner of the code, when there is one and the challenge is open (spec 0016, AC-3). A bad code is dropped.
+    await recordPendingReferral(ctx, studentId, code, isLive(env), now);
     return { studentId };
   },
 });

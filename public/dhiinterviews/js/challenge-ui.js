@@ -25,8 +25,7 @@
   var TROPHY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7M10 17h4"/></svg>';
   function joinedText(me, rank) { return "Your code " + me.code + (rank && rank.rank ? " · Rank #" + rank.rank : "") + " · Leaderboard →"; }
 
-  /* reaching the report counts toward a valid referral */
-  api.markReportComplete().catch(function () {});
+  /* reaching the report counts toward a valid referral; the server notes it itself (DhiSession.markReportSeen), so nothing is sent from here */
 
   Promise.all([api.getMe(), api.getMyRank()]).then(function (a) {
     var me = a[0] || {}, rank = a[1] || {};

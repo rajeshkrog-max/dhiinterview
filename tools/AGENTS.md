@@ -10,6 +10,8 @@ Helpers that run outside the pages. `lead-sheet.gs` is the Google Apps Script th
 |---|---|
 | `lead-sheet.gs` | Web app receiver. `doPost` writes leads (from `done.html`) to a **Leads** tab and `{type:"feedback"}` posts (from the report) to a **Feedback** tab. |
 | `LEAD-SHEET-SETUP.md` | The 5 step setup and redeploy notes. |
+| `WINNER-REVIEW.md` | The written procedure for the winner review after the challenge ends (spec 0019): who runs it, the commands, what to look for, contacting the winner, deleting the CSV. |
+| `winner-csv.mjs` | Runs `challengeAdmin:exportCsv` and writes the real CSV file (the CLI prints it as a JSON string). Never overwrites; prints only a file name and a row count. |
 | `prepare_report_slides.py` | Builds `assets/report/web/slideN.webp` and `.jpg` (max 1080 px wide) for `who.html` from `assets/report/slideN.png`. |
 | `prepare_cards.py` | Retired. Built the old frame card art into `assets/cards/_unused/final/`. Kept for reference. |
 
@@ -29,6 +31,7 @@ python tools/prepare_report_slides.py
 ## Gotchas
 
 - After editing `lead-sheet.gs`, redeploy with **Deploy, Manage deployments, Edit, New version**. Otherwise the old version keeps running. The URL stays the same.
+- The winner review output holds students' emails and notes: it is run only by the owner or the person the owner names, never in an AI session, and a `review-*.csv` file is git ignored and deleted after the announcement.
 - The sheet holds phone numbers and comments. Share it only with people who need it, and never commit exports.
 - The `/exec` URL goes in `js/funnel-config.js` at deploy time, and that file stays empty in the repo.
 - `AREAS` and `INDICES` in the script mirror `js/engine/score.js`. Keep them in step.

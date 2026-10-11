@@ -237,10 +237,8 @@
         $("formErr").textContent = ERRORS[r.code] || ERRORS.offline;
         return;
       }
-      /* the mock challenge layer notes the referral use (js/api.js); a wrong code never blocks */
-      var go = function () { location.href = DhiStore.resumeTarget(); };
-      if (!code || !window.DhiApi) { go(); return; }
-      DhiApi.recordReferralUse(code).then(go, go);
+      /* the server records the referral inside createProfile (spec 0016); a wrong code never blocks */
+      location.href = DhiStore.resumeTarget();
     });
   });
 
@@ -261,8 +259,9 @@
     if (!window.DhiApi) return;
     DhiApi.validateCode(code).then(function (v) {
       if (mine !== checking) return;                         /* an older answer arrived late */
-      if (v.ok) showRef(true, "Invited by " + v.referrerFirstName);
-      else if (v.reason === "self") showRef(false, "That's your own code. You can still continue.");
+      /* the code check cannot tell new from existing, so the line about new students is shown for any good code (spec 0016, AC-4; draft words) */
+      if (v.ok) showRef(true, "Invited by " + v.referrerFirstName + ". An invite counts when you are new to DhiRise.");
+      else if (v.reason === "unchecked") refStatus.textContent = "";        /* could not be checked: the code is still sent and the server decides */
       else if (v.reason === "ended") showRef(false, "The challenge has ended. You can still continue.");
       else showRef(false, "Code not found. You can still continue.");
     }, function () { if (mine === checking) refStatus.textContent = ""; });

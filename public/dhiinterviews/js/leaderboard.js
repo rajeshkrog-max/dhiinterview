@@ -1,9 +1,9 @@
 /* DhiRise · leaderboard.html. Podium (top 3), ranks 4–50, and a sticky card with your rank, milestones and Share
-   (or "Join the challenge →" if you haven't joined). Refreshes every 5 minutes until endsAt; after that the board freezes.
-   Data only through js/api.js. Owl avatars by style: assets/cards/owl-{builder|achiever|explorer}.webp, cropped to the face in CSS.
+   (or "Join the challenge →" if you haven't joined). Refreshes every 5 minutes until endsAt; after that the board is final ("Challenge ended").
+   The rows are the ones the server job wrote (spec 0018): nothing is ranked or invented here. Data only through js/api.js. Owl avatars by style: assets/cards/owl-{builder|achiever|explorer}.webp, cropped to the face in CSS.
    Spec 0011 (AC-4): a row that carries an `avatar` (a same origin picture path, sent by the server only while LEADERBOARD_PICTURES_ENABLED
    is on, and only for a student who agreed, has not removed it and is not blocked) shows that picture in place of the owl: 28px in the
-   list, 40px on the podium, with the student's initial if it fails. A row without one, and every demo row, keeps its owl. */
+   list, 40px on the podium, with the student's initial if it fails. A row without one keeps its owl. */
 (function () {
   "use strict";
   var C = window.DHI_CHALLENGE, api = window.DhiApi;
@@ -17,7 +17,7 @@
   function add(p) { for (var i = 1; i < arguments.length; i++) if (arguments[i]) p.appendChild(arguments[i]); return p; }
   function picturesOn() { return !!(window.DhiAvatar && window.DhiSession && DhiSession.pictureEnabled && DhiSession.pictureEnabled()); }
   function avatar(style, cls, row) {
-    if (row && row.avatar && !row.demo && picturesOn()) {
+    if (row && row.avatar && picturesOn()) {
       /* the wrapper keeps the owl's box, so the list and the podium do not move */
       return add(el("span", "lb-pic" + (cls ? " " + cls : "")), DhiAvatar.make({ url: row.avatar, name: row.displayName, size: cls === "big" ? 40 : 28, lazy: true }));
     }
@@ -30,7 +30,7 @@
   /* ---------- top bar chip + prize ---------- */
   function paintChip() {
     var ms = END - Date.now();
-    if (ms <= 0) { $("lbChip").textContent = "Closed"; return; }
+    if (ms <= 0) { $("lbChip").textContent = "Ended"; return; }
     var d = Math.floor(ms / 86400000), h = Math.floor(ms / 3600000) % 24, m = Math.floor(ms / 60000) % 60;
     $("lbChip").textContent = d ? d + "d " + h + "h left" : h + "h " + m + "m left";
   }
@@ -42,24 +42,32 @@
 
   /* ---------- the board ---------- */
   var first = true;
+  /* "Updated 2:35 pm · Every 5 minutes", from the time the server job wrote the board; "Final board" once it is frozen */
+  var FOOT = "Only completed checks with feedback count.";
+  function paintFoot(info) {
+    var t = info && info.computedAt ? new Date(info.computedAt).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" }) : "";
+    $("lbFoot").textContent = info && info.frozen ? "Final board · " + FOOT : t ? "Updated " + t + " · Every 5 minutes · " + FOOT : "Updated every 5 minutes · " + FOOT;
+  }
   function load() {
-    var over = api.isOver();
-    $("lbClosed").hidden = !over;
     return Promise.all([api.getLeaderboard(), api.getMe(), api.getMyRank()]).then(function (a) {
+      if (!a[0]) return;                                                /* the board could not be had: keep what is drawn */
+      var info = api.boardInfo(), over = api.isOver() || !!(info && info.frozen);
+      $("lbClosed").hidden = !over;
+      $("lbEmpty").hidden = a[0].length > 0;
+      paintFoot(info);
       podium(a[0].slice(0, 3));
       list(a[0].slice(3));
       you(a[1] || {}, a[2] || {}, over);
       first = false;
     }).catch(function () {});
   }
-  var refresh = 0;
-  load().then(function () {
-    if (api.isOver()) { clearInterval(chipT); return; }                 /* closed: the list freezes */
-    refresh = setInterval(function () {
-      if (api.isOver()) { clearInterval(refresh); clearInterval(chipT); paintChip(); load(); return; }
-      load();
-    }, 5 * 60 * 1000);
-  });
+  /* every 5 minutes; once the deadline has passed, every minute until the server says the board is final (its last run can come a few minutes late) */
+  function final() { var i = api.boardInfo(); return !!(i && i.frozen); }
+  function later() {
+    if (final()) { clearInterval(chipT); paintChip(); return; }
+    setTimeout(function () { load().then(later); }, api.isOver() ? 60 * 1000 : 5 * 60 * 1000);
+  }
+  load().then(later);
 
   function podium(top) {
     var box = $("lbPodium");
@@ -123,8 +131,8 @@
       add(head, shareBtn);
     }
     /* progress to the next rank */
-    var line = rank.nextRank ? rank.toNext + " more to pass #" + rank.nextRank : "You're leading. Keep going.";
-    var pct = rank.nextRank ? Math.round(rank.valid / (rank.valid + rank.toNext) * 100) : 100;
+    var line = over ? "The challenge has ended." : !rank.rank ? "Your first valid friend puts you on the board." : rank.nextRank ? rank.toNext + " more to pass #" + rank.nextRank : "You're leading. Keep going.";
+    var pct = !rank.rank ? 0 : rank.nextRank ? Math.round(rank.valid / (rank.valid + rank.toNext) * 100) : 100;
     var prog = add(el("div", "lb-prog"), el("span", "lb-prog-text", line),
       add(el("span", "lb-prog-bar"), (function () { var i = el("i"); i.style.width = pct + "%"; return i; })()));
     /* milestones */

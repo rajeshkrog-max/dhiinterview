@@ -11,7 +11,7 @@ The engine holds everything that decides what a student sees about themselves: t
 | `questions.js` | `DhiQuestions`: the 18 questions, 72 options, their scoring and tip card text. The single source of truth. |
 | `score.js` | `DhiScore.score(answers, { seed })`, `order`, `ENGINE_VERSION`. Style, mind state, 7 areas, 4 indices, Dhi starting score, flags. Also the seeded option shuffle. |
 | `store.js` | `DhiStore`: the signed in student's local copy of the check (`dhirise.session.v1`) and, from `result()`, the saved result copy (`dhirise.result.v1`). Pages get the result itself from `DhiSession.result()` (a promise; `src/lib/session.ts`). |
-| `screen.js` | `window.dhiriseScreen(n, back)`: fills one question screen from the engine, hands it to `js/question.js`. |
+| `screen.js` | `window.dhiriseScreen(start)`: the controller for all 18 questions in one page. Fills the screen from the engine, hands it to `js/question.js`, and on Next / Back swaps the question in place (`history.pushState` with the `urlFor` addresses, `popstate` for the browser's Back), so the page never reloads between questions and the music (`js/music.js`) keeps playing. The background is `js/qbg.js`. |
 | `reportText.js` | `DhiReportText`: every word on `report-student.html`, plus `band(score)` and `VERSION` (the report version, bump it by hand when the report's words or layout change). |
 | `storyText.js` | `DhiStoryText`: every word on `who.html`. |
 | `identity.js` | `DhiIdentity`: style theme and name, the Founding ID (`dhirise.founding.v1`), sound effects. |

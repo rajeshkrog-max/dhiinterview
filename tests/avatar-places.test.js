@@ -2,7 +2,7 @@
 // and its render page, the team list and viewer, and the leaderboard rows. What can be checked from the source and the mock api without a
 // browser; the real pages are looked at in M5. The server side of each place is in convex/avatars.test.ts, reportCopy.test.ts and team.test.ts.
 import { readFileSync } from "node:fs";
-import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), "utf8");
 // the code only, so a comment that names a word does not count
@@ -70,8 +70,8 @@ describe("the team pages (AC-4, AC-13)", () => {
 describe("the leaderboard rows (AC-4, AC-5)", () => {
   const board = read("public/dhiinterviews/js/leaderboard.js");
 
-  test("covers AC-4: a row's picture replaces its owl only when the row carries a path, is not a demo row, and the feature is on in this browser", () => {
-    expect(board).toMatch(/if \(row && row\.avatar && !row\.demo && picturesOn\(\)\)/);
+  test("covers AC-4: a row's picture replaces its owl only when the row carries a path and the feature is on in this browser", () => {
+    expect(board).toMatch(/if \(row && row\.avatar && picturesOn\(\)\)/);
     expect(board).toMatch(/size: cls === "big" \? 40 : 28, lazy: true/);
     expect(board).toMatch(/avatar\(row\.style, "big", row\)/);
     expect(board).toMatch(/avatar\(row\.style, "", row\)/);
@@ -85,7 +85,15 @@ describe("the leaderboard rows (AC-4, AC-5)", () => {
   });
 });
 
-describe("the challenge mock api: the avatar contract on leaderboard rows (AC-4, AC-5)", () => {
+describe("the challenge api: the avatar contract on leaderboard rows (AC-4, AC-5)", () => {
+  const BOARD = {
+    rows: [
+      { rank: 1, displayName: "Ananya S.", cls: "Class 10", style: "Builder", valid: 3, avatar: "/api/avatar/abcdefghijklmnopqrstuv" },
+      { rank: 2, displayName: "Ravi K.", cls: "College", style: "Explorer", valid: 2 },
+      { rank: 3, displayName: "Anonymous Achiever", style: "Achiever", valid: 1 },
+    ],
+    computedAt: 1, frozen: false, endsAt: 2, myRank: 2,
+  };
   function makeStorage() {
     const m = new Map();
     return { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => void m.set(k, String(v)), removeItem: (k) => void m.delete(k) };
@@ -97,14 +105,22 @@ describe("the challenge mock api: the avatar contract on leaderboard rows (AC-4,
     vi.resetModules();
     globalThis.localStorage = makeStorage();
     delete globalThis.DhiApi;
+    globalThis.DhiSession = { challenge: { leaderboard: async () => BOARD, me: async () => null } };
     await import("../public/dhiinterviews/js/api.js");
   });
+  afterEach(() => {
+    delete globalThis.DhiSession;
+  });
 
-  test("covers AC-5: every row has an avatar field, and the demo rows never carry a picture", async () => {
+  test("covers AC-5: every row has an avatar field, a path the server sent is passed on, a row without one gets null, and there are no demo rows", async () => {
     const rows = await globalThis.DhiApi.getLeaderboard();
-    expect(rows.length).toBeGreaterThan(0);
-    for (const r of rows) expect(r, r.displayName).toHaveProperty("avatar", null);
-    expect(rows.every((r) => r.demo)).toBe(true);
+    expect(rows.map((r) => r.avatar)).toEqual(["/api/avatar/abcdefghijklmnopqrstuv", null, null]);
+    for (const r of rows) expect(r).not.toHaveProperty("demo");
+  });
+
+  test("covers AC-4: a picture path is passed on only as text", async () => {
+    globalThis.DhiSession.challenge.leaderboard = async () => ({ ...BOARD, rows: [{ ...BOARD.rows[0], avatar: { url: "x" } }] });
+    expect((await globalThis.DhiApi.getLeaderboard())[0].avatar).toBeNull();
   });
 
   test("covers AC-4: the contract is documented where the backend will read it", () => {

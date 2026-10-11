@@ -19,6 +19,16 @@ export const classValidator = v.union(
 export const styleKeyValidator = v.union(v.literal("v"), v.literal("p"), v.literal("k"));
 export const confidenceValidator = v.union(v.literal("clear"), v.literal("leaning"), v.literal("blended"));
 
+// What the public leaderboard shows for one student (spec 0018, AC-2). Built only by `rowFor` in challengeBoard.ts.
+export const boardRowValidator = v.object({
+  rank: v.number(),
+  displayName: v.string(), // first name and last initial, or "Anonymous <Style>"
+  cls: v.optional(v.string()), // omitted when the name is hidden
+  style: v.string(), // Builder, Achiever or Explorer
+  valid: v.number(),
+  avatar: v.optional(v.string()),
+});
+
 export default defineSchema({
   // One row per Google account. Personal data of minors: never returned by a public function except through `me`.
   students: defineTable({
@@ -43,7 +53,7 @@ export default defineSchema({
   // Only ever added to. The audit trail for what a student (and a guardian) agreed to.
   consents: defineTable({
     studentId: v.id("students"),
-    kind: v.union(v.literal("landing"), v.literal("lead"), v.literal("share")),
+    kind: v.union(v.literal("landing"), v.literal("lead"), v.literal("share"), v.literal("challenge")),
     textVersion: v.string(),
     ageAtConsent: v.number(),
     guardianPresent: v.boolean(),
@@ -120,6 +130,7 @@ export default defineSchema({
     text: v.string(),
     chars: v.number(),
     genuine: v.boolean(),
+    genuineAt: v.optional(v.number()), // when the note became genuine (spec 0016): set at save for a genuine note; read by the challenge job
     canShare: v.boolean(),
   }).index("by_checkId", ["checkId"]),
 
@@ -217,6 +228,52 @@ export default defineSchema({
     expiresAt: v.number(), // min(last Share tap + 90 days, createdAt + 365 days)
     offAt: v.optional(v.number()), // set by Stop sharing or by the team
   }).index("by_studentId", ["studentId"]), // at most one row per student; also for erasing a student's data (scope row 15)
+
+  // A student who joined the Founding Circle Challenge (spec 0015, children 0016 and 0017). One row per student; a leave deletes it (M2) and
+  // the `challenge` consent row stays. `code` is the referral code. `validCount` and `lastValidAt` are written only by the job and the team
+  // commands, always through `recount` in challengeCore.ts. `rank`, `toNext` and `nextRank` are written by the job (spec 0018, M3).
+  challengeEntries: defineTable({
+    studentId: v.id("students"),
+    code: v.string(), // 7 chars, CODE_RE
+    joinedAt: v.number(),
+    consentId: v.id("consents"), // the `challenge` consent row made at join
+    hideName: v.boolean(),
+    validCount: v.number(),
+    lastValidAt: v.optional(v.number()),
+    rank: v.optional(v.number()),
+    toNext: v.optional(v.number()),
+    nextRank: v.optional(v.number()),
+  })
+    .index("by_studentId", ["studentId"])
+    .index("by_code", ["code"])
+    .index("by_validCount", ["validCount"]) // the job ranks every entry above 0 (spec 0018); spec 0022's Challenge tab reads it too
+    .index("by_rank", ["rank"]), // entries that hold a rank: the job clears stale ones, and a removal after the freeze moves those below up
+
+  // The public leaderboard (spec 0018). One row, written only by the 5 minute job (and the one row removal after the freeze). A row holds
+  // exactly these keys and no id, email, phone, age, flag or last name; `convex/challenge.test.ts` scans them. `avatar` is a same origin
+  // picture path, only while LEADERBOARD_PICTURES_ENABLED is on and the student did not hide their name.
+  leaderboardSnapshots: defineTable({
+    rows: v.array(boardRowValidator),
+    computedAt: v.number(),
+    frozen: v.boolean(), // true after the final run at the deadline; later runs change nothing
+  }),
+
+  // One row per friend who signed up with a referrer's code (spec 0016). Made by `students.createProfile`; settled by the 5 minute job
+  // from the friend's own step times (`checks.completedAt`, `checks.reportSeenAt`, `feedback.genuineAt`). Never written by a browser call.
+  referrals: defineTable({
+    referrerId: v.id("students"),
+    friendId: v.id("students"),
+    code: v.string(),
+    usedAt: v.number(),
+    status: v.union(v.literal("pending"), v.literal("valid"), v.literal("rejected")),
+    validAt: v.optional(v.number()), // the latest of the three step times, when the referral became valid
+    rejectReason: v.optional(v.union(v.literal("deadline"), v.literal("review"))),
+    reviewNote: v.optional(v.string()),
+    reviewedAt: v.optional(v.number()),
+  })
+    .index("by_friendId", ["friendId"]) // at most one referral per friend, kept by createProfile looking here first
+    .index("by_referrerId_and_status", ["referrerId", "status"])
+    .index("by_status", ["status"]),
 
   // One row: the one at a time lease of the copy job, and the numbers the Sync status tab shows.
   sheetStatus: defineTable({

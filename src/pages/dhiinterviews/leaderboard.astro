@@ -29,7 +29,7 @@ import { PRIZE_TITLE } from "../../lib/prize";
 </header>
 
 <main class="lb" id="lb">
-  <p class="lb-closed" id="lbClosed" hidden>Challenge closed · Winner will be announced soon</p>
+  <p class="lb-closed" id="lbClosed" hidden>Challenge ended · Winner will be announced soon</p>
 
   <section class="lb-prize" aria-label="Prize">
     <img id="lbPrize" alt="" width="48" height="48">
@@ -37,10 +37,11 @@ import { PRIZE_TITLE } from "../../lib/prize";
   </section>
 
   <section class="lb-podium" id="lbPodium" aria-label="Top 3"></section>
+  <p class="lb-empty" id="lbEmpty" hidden>No one is on the board yet. The first friend to finish counts.</p>
 
   <ol class="lb-list" id="lbList" start="4" aria-label="Ranks 4 to 50"></ol>
 
-  <p class="lb-foot">Updated every 5 minutes · Only completed checks with feedback count.</p>
+  <p class="lb-foot" id="lbFoot">Updated every 5 minutes · Only completed checks with feedback count.</p>
 </main>
 
 <!-- sticky: your card, or "Join the challenge →" -->

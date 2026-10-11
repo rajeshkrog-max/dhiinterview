@@ -5,7 +5,7 @@ Turn the DhiRise student funnel (a finished frontend that keeps everything in th
 **Build approach:** Tracer Bullet (vertical slices, each built end to end through every layer, working). Prove one thin real thread first (sign in, save an answer, read it back), then thicken one strand at a time. (basis: tracer bullet practice, a thin end to end path first)
 **Workflow:** GA (after develop: `/check verify`, `/test`, a fresh model `/check review`, then `/document`). The project default level of rigor, chosen because the app holds sign in and personal data of minors. `/architect` is the recommended first stop for a feature with a real decision, but skippable when you already know the build. Any feature can carry its own tag (e.g. `· Beta`) to do more or less. (basis: your `AGENTS.md` rules on sensitive data and parent consent)
 
-**Data for now:** the challenge side runs on demo rows only (leaderboard, referral counts, admin lists). Sign in, checks, leads, reports and the Sheet copy stay real, as built. Rows 10 to 13 (live referrals and leaderboard) stay planned and are not part of the current pass; the demo rows get replaced there. (your call, 2026-10-09)
+**Data for now:** the challenge side runs on demo rows only (leaderboard, referral counts, admin lists). Sign in, checks, leads, reports and the Sheet copy stay real, as built. Rows 10 to 13 (live referrals and leaderboard) were left out of the first pass; on 2026-10-11 you asked for them to be designed (spec [0015](../specs/0015-live-challenge/index.md)), and the demo rows get replaced when they are built. The challenge ends 2026-10-30 23:59 IST, so build rows 10 to 12 first; row 13 is needed only after the deadline. (your calls, 2026-10-09 and 2026-10-11)
 
 _These are recommendations to keep your build orderly, not requirements. Skip anything that does not fit: if you already know how to build a feature, use `/develop` and skip `/architect`. You decide when a feature is `done`._
 
@@ -16,7 +16,7 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | A | Student funnel screens (landing to report) | Existing | existing |
 | B | Challenge screens on a mock data layer | Existing | existing |
 | 1 | Stack & architecture | Foundation | in-progress |
-| 2 | Data model | Foundation | planned |
+| 2 | Data model | Foundation | in-progress |
 | 3 | Coding standards & tooling | Foundation | planned |
 | 19 | Live smoke test and fixes | Prototype pass | planned |
 | 20 | Site layout, root address and 404 | Prototype pass | in-progress |
@@ -28,24 +28,25 @@ _These are recommendations to keep your build orderly, not requirements. Skip an
 | 31 | Prize amount changed to up to ₹5,000 | Student polish | in-progress |
 | 32 | Share buttons that really send the report | Student polish | in-progress |
 | 30 | Google profile picture shown across the screens | Student polish | in-progress |
+| 33 | Faster images and a blur fade between them | Student polish | in-progress |
 | 4 | Real sign in and saved check | Slice 1 | in-progress |
 | 5 | Leads and feedback saved | Slice 2 | in-progress |
 | 6 | Results and report from saved data | Slice 2 | done |
 | 7 | Sheet copy | Slice 3 | in-progress |
 | 8 | Product analytics with consent | Slice 3 | planned |
-| 9 | Error monitoring and alerts | Slice 3 | planned |
+| 9 | Error monitoring and alerts | Slice 3 | in-progress |
 | 22 | Report copy saved when seen, with Download | Report copies | in-progress |
 | 23 | Team link to the saved report, in the admin view and the Sheet | Report copies | in-progress |
 | 25 | Privacy notice names Cloudflare Browser Run | Report copies | in-progress |
-| 28 | Team list keeps its order when copies are replaced | Report copies | planned |
+| 28 | Team list keeps its order when copies are replaced | Report copies | in-progress |
 | 26 | Ship what is built to production | Go live | planned |
-| 10 | Live referral codes and tracking | Slice 4 | planned |
-| 11 | Challenge join with parent consent | Slice 4 | planned |
-| 12 | Live leaderboard | Slice 4 | planned |
-| 13 | Winner review tools | Slice 4 | planned |
-| 14 | Team admin view | Slice 5 | planned |
-| 15 | Data export and deletion | Slice 5 | planned |
-| 16 | Share previews and SEO | Launch readiness | planned |
+| 10 | Live referral codes and tracking | Slice 4 | in-progress |
+| 11 | Challenge join with parent consent | Slice 4 | in-progress |
+| 12 | Live leaderboard | Slice 4 | in-progress |
+| 13 | Winner review tools | Slice 4 | in-progress |
+| 14 | Team admin view | Slice 5 | in-progress |
+| 15 | Data export and deletion | Slice 5 | in-progress |
+| 16 | Share previews and SEO | Launch readiness | in-progress |
 | 17 | Accessibility pass | Launch readiness | planned |
 
 ## Already built (for context)
@@ -72,10 +73,19 @@ Decide how data is stored, how sign in works, where the app is hosted, how the e
 - [ ] Document it: `/document stack & architecture`
 Spec [0001](../specs/0001-adopt-astro-convex-cloudflare-stack/index.md) · code in `src/pages/`, `public/`, `convex/`, `functions/`, `astro.config.mjs`
 
-### 2. Data model · needs a decision
+### 2. Data model · in-progress
 The core records every slice reads and writes: students, consent records (with the consent text version), checks and answers, saved results, leads, feedback, referral codes and uses, challenge entries.
 **Done when:** the entities cover slices 1 to 4 without a breaking change, answers are kept as option ids, and sensitive flags are stored apart from anything public.
-- [ ] Design it (spec): `/architect data model`
+- [x] Design it (spec): `/architect data model` (designed as a map, not a rewrite: every table with its owning spec, what erase does, and how long it is kept, plus a test that fails when a table is not classified; a same model cross check ran and its gaps are closed)
+- [ ] Build it: `/develop data model`
+  - [ ] M1 The map and its guard: `convex/dataMap.ts`, `convex/dataMap.test.ts`, the `COMPONENT_DATA` list (AC-1, 3, 4)
+  - [ ] M2 Tidy: the `reportViews` comment in `schema.ts` and the line in `convex/AGENTS.md` (AC-4, 5)
+  - [ ] Later: the erase list from the map when row 15 is built; flip each planned table to built as it ships (AC-1, 2)
+- [ ] Verify it: `/check verify data model`
+- [ ] Test it: `/test data model`
+- [ ] Review it (fresh model): `/check review data model`
+- [ ] Document it: `/document data model`
+Spec [0023](../specs/0023-data-model-map.md) · code will be in `convex/dataMap.ts`, `convex/dataMap.test.ts`, `convex/schema.ts`, `convex/AGENTS.md` · Owed: the lawyer's view on how long `consents` and `reportViews` are kept
 
 ### 3. Coding standards & tooling
 Refresh `AGENTS.md` for the chosen stack, then add lint, format, type checks and a commit check from the real project.
@@ -175,7 +185,20 @@ Take each student's Google profile picture, and only that picture (no other Goog
 - [x] Document it: `/document google profile picture across the screens` · changelog entry written 2026-10-10 in `CHANGELOG.md`
 Spec [0011](../specs/0011-google-profile-picture/index.md) · code is in `convex/avatars*.ts`, `convex/auth.ts`, `convex/consentText.ts`, `functions/api/avatar/`, `public/dhiinterviews/js/avatar.js` and `css/avatar.css`, and the pages that show a student · Before it ships: you approve the v4 words, a lawyer checks showing a child's picture to others, `PROFILE_PICTURE_ENABLED` stays off in production until then, and leaderboard pictures stay off until the team can review them · Also owed elsewhere: row 15 deletes `avatars` rows and files, row 12 sends an optional `avatar` per row, row 26's legal list gets this item · Specs 0006, 0008 and 0010 were updated to carry the picture
 
-## Slice 1: the thinnest real thread
+### 33. Faster images and a blur fade between them · in-progress · Beta
+Added 2026-10-11. Make every picture load fast and change softly. Today the 18 question backgrounds are PNG files of 1.5 to 2.1 MB each (about 30 MB in all, `public/dhiinterviews/assets/interview bg/`), and the page script swaps the next one in with a hard cut (`js/questions.js`), so a phone on mobile data waits on every question. The plan: resize and recompress the pictures into small modern formats, load the next question's picture before the student taps Next, show a small blurred stand in that sharpens into the real picture, and when one picture changes to another (question to question, and the report, story and card screens) fade through a blur instead of a hard cut, with plain quick swaps when the student asks for reduced motion. Pairs with row 29 (own fonts): both are about what loads and from where.
+**Where the files live is the decision.** My recommendation is to keep them on Cloudflare Pages, not move them to R2. The slowness is the file size, not the location: Pages already serves from Cloudflare's edge near the student, so the same big file from R2 would load no faster, and R2 would add a second address to set up (public access or a custom domain, cache rules, the content security policy, a deploy step to upload) for no gain. Shrinking the files does most of the work (roughly 30 MB down to a few MB). Your bucket `dhi-interviews` is empty today and has public access off; it stays ready for later, where it fits better: large files that change without a deploy, or files people add. If you still want R2 now, say so and the spec will design it that way.
+**Done when:** no question background is more than about 200 KB on a phone; on a normal connection the next question's picture is already loaded when the student taps Next; a change from one picture to another is a blur fade, and with reduced motion it is a quick plain swap; the screens look the same as today; no screen loads a picture from a third party; and the spec records the host choice (Pages or R2) with the sizes and timings behind it.
+- [x] Design it (spec): `/architect faster images and a blur fade between them` (you chose: stay on Pages, WebP in two widths, question backgrounds only, versioned names kept a year, tiny blurred stand in, preload the next picture, browser page transition at 0.4 seconds and 12px; a same model cross check ran and its gaps are closed in the spec)
+- [ ] Build it: `/develop faster images and a blur fade between them`
+  - [ ] M1 The thin thread: the make script, originals moved out of the served folder, Q1 as two WebP files with the stand in, the `_headers` rule, proved on the built site with a throttled load (AC-1, 2, 4)
+  - [ ] M2 All 18 questions and the loading ahead: every question page and `meet` on the picture layer, old `interview bg` addresses gone, next picture preload with the data saver check (AC-1, 2, 3, 4, 5)
+  - [ ] M3 The fade between pages: `fade.css`, the named picture layer, the render wait, reduced motion off switch, then the other funnel pages (AC-6, 7, 9)
+  - [ ] M4 Slides inside a page and clean up: the story slides in `js/who.js`, tests, notes in `AGENTS.md` files (AC-8, 9, 10, 11)
+- [ ] Verify it: `/check verify faster images and a blur fade between them`
+- [ ] Test it: `/test faster images and a blur fade between them`
+Spec [0012](../specs/0012-faster-images-and-blur-fade.md) · code will be in `tools/prepare_question_backgrounds.py`, `public/dhiinterviews/assets/interview-bg/`, `css/question-bg.css`, `css/fade.css`, `js/question-bg-map.js`, `js/questions.js`, `question*.astro`, `meet.astro`, `public/_headers` · Owed: the iPhone look (Safari) on the real phone check; the report slides, card pictures, hero and prize PNGs are left for a later row
+
 
 ### 4. Real sign in and saved check · in-progress
 A student signs in with Google, their name, age, class and consent are stored, and each answer is saved as they go. They can close the tab, come back on another device and resume. This is the walking skeleton: real sign in, real storage, real screens, narrow.
@@ -244,10 +267,21 @@ Measure drop off per step, lead conversion, referral growth and report feedback 
 **Done when:** events cover each funnel step and the referral steps; nothing is sent before the analytics choice; no names, phone numbers or sensitive flags go into events.
 - [ ] Design it (spec): `/architect product analytics with consent`
 
-### 9. Error monitoring and alerts · needs a decision
+### 9. Error monitoring and alerts · in-progress
 Know when sign in, saving or the sheet copy breaks, before students tell you.
 **Done when:** a forced failure in sign in, saving and the sheet copy each raises an alert to the team; student personal data is kept out of error reports.
-- [ ] Design it (spec): `/architect error monitoring and alerts`
+- [x] Design it (spec): `/architect error monitoring and alerts` (you chose PostHog, built in another session: our own small reporters send errors to a new PostHog EU project, on by default for everyone with no personal data in a report; alerts to a Slack or Discord channel; works on the free Convex plan; a same model cross check ran and its gaps are closed)
+- [ ] Build it: `/develop error monitoring and alerts`
+  - [ ] M1 The thin thread: `redact`, the forwarder, `js/errors.js` on one page, the PostHog EU project and first alert (AC-1, 2, 3, 6, 7)
+  - [ ] M2 Every page and forwarder: `errors.js` everywhere it belongs, 5xx reports from the forwarders, settings and environment values (AC-1, 5, 8)
+  - [ ] M3 The health check: `monitor.claim`, `report`, `check`, the heartbeat and the `/api/health` 503 (AC-4, 11, 12)
+  - [ ] M4 Words and setup: privacy page section, `tools/MONITORING.md`, the outside ping, the `AGENTS.md` line (AC-7, 10, 11)
+  - [ ] M5 Proof: tests and the three forced failures on dev ending in an alert (AC-9)
+- [ ] Verify it: `/check verify error monitoring and alerts`
+- [ ] Test it: `/test error monitoring and alerts`
+- [ ] Review it (fresh model): `/check review error monitoring and alerts`
+- [ ] Document it: `/document error monitoring and alerts`
+Spec [0021](../specs/0021-error-monitoring-and-alerts.md) · code will be in `public/dhiinterviews/js/errors.js`, `functions/api/report-error.ts`, `functions/api/_lib/report.ts`, `convex/monitor.ts`, `convex/redact.ts`, `convex/health.ts`, `tools/MONITORING.md` · Owed: the lawyer check (monitoring by default for minors), your PostHog EU project and team channel, approval of the privacy words
 
 ## Report copies: saved when seen, linked for the team
 Added 2026-10-09. Needs row 6 (saved results with a report version) first. Row 22 is the same work as milestone 4 of row 4 (spec 0002, AC-13), now with its own row so it is not lost.
@@ -290,10 +324,19 @@ _Reconciled 2026-10-09: built. Consent v2 names Cloudflare Browser Run (v1 froze
 - [x] Design it (spec): skipped on purpose, you approved the wording in chat and it was built inside specs [0006](../specs/0006-report-copy-saved-when-seen/index.md), [0007](../specs/0007-privacy-page-and-grievance-contact.md) and [0008](../specs/0008-team-link-to-saved-report/index.md)
 - [x] Ship it to production: done in row 26 (consent v3 and the privacy page are live on dhirise.com)
 
-### 28. Team list keeps its order when copies are replaced · needs a decision · from the review of spec 0008
+### 28. Team list keeps its order when copies are replaced · in-progress · from the review of spec 0008
 The team list pages by the time a copy was made, and that time moves when a copy is replaced (a report version change replaces every copy over days), so Load more can skip or repeat a student. Also the spec's AC-4 still says the fake test sign in skips Google's verified check on dev, but the code now allows that only for fake `@example.com` addresses.
 **Done when:** Load more never skips or repeats a student when a copy is replaced between clicks (the code box already finds anyone); spec 0008's words match the narrower dev rule.
-- [ ] Design it (spec): `/architect team list order and gate wording`
+- [x] Design it (spec): `/architect team list order and gate wording` (you chose: order and show the date a student's first copy became ready, which never changes; spec 0008's wording was corrected in the same pass; a same model cross check ran and its gaps are closed)
+- [ ] Build it: `/develop team list order and gate wording`
+  - [ ] M1 The date is written, not yet read: `firstCopyAt` and its index, set in `attach`, the repeatable backfill, run on dev (AC-5)
+  - [ ] M2 Switch the list: list by `firstCopyAt`, `madeAt` kept one release as deprecated, the Refresh message for old cursors, paging on empty pages, tests (AC-1, 2, 3, 4, 7)
+  - [ ] M3 Proof and ship: push M1, run the backfill with your consent, push M2, on dev then production (AC-5)
+- [ ] Verify it: `/check verify team list order and gate wording`
+- [ ] Test it: `/test team list order and gate wording`
+- [ ] Review it (fresh model): `/check review team list order and gate wording`
+- [ ] Document it: `/document team list order and gate wording`
+Spec [0013](../specs/0013-team-list-stable-order.md) · code will be in `convex/schema.ts`, `convex/reportCopy.ts`, `convex/team.ts`, `src/lib/team.ts`, `convex/team.test.ts`, `e2e/team.spec.ts` · spec [0008](../specs/0008-team-link-to-saved-report/index.md) was corrected · a later release drops the deprecated `madeAt` field and the `by_readyAt` index
 
 ## Go live: ship what is built
 
@@ -307,44 +350,107 @@ Owner decisions this row needs (from the specs' follow ups): move Google's conse
 
 ## Slice 4: the challenge goes live
 
-### 10. Live referral codes and tracking · needs a decision
+### 10. Live referral codes and tracking · in-progress
 Replace the mock in `js/api.js` with real codes and uses. A referral counts only when the friend is new, used the code at sign in, finished all 18 questions, reached the report and left real feedback. No self referrals.
 **Done when:** the ten test scenarios in `BACKEND.md` section 15 pass against the real service; a wrong code never blocks sign in; the rules are enforced on the server, not the browser; an imported check never counts and a feedback note counts only when it is genuine.
-- [ ] Design it (spec): `/architect live referral codes and tracking`
+- [x] Design it (spec): `/architect live referral codes and tracking` (child [0016](../specs/0015-live-challenge/0016-referral-codes-and-tracking.md) of the live challenge umbrella; a same model cross check ran and its gaps are closed; you kept the BACKEND.md section 8 rules, and chose the 5 minute job to decide validity, no device marker for now, and a genuine note may replace a weak one)
+- [ ] Build it: `/develop live referral codes and tracking`
+  - [x] M1 The thin thread (shared with row 11): tables, `challengeRules.ts`, `CHALLENGE_LIVE`, a pending referral at profile creation, `feedback.genuineAt`, the job's settle and recount (AC-3, 5, 7) · built 2026-10-11, pushed to dev only (`CHALLENGE_LIVE=true` on dev; unset on production): 763 unit tests pass and `e2e/challenge.spec.ts` (3 specs) passes against dev with two fake test accounts: join, the friend signs up through the landing form with the code, finishes, sees the report, leaves a genuine note, and after the job the referrer's count goes from 0 valid, 1 pending to 1 valid, 0 pending; owed: the same with two real Google accounts
+  - [x] M2 Checks and edges: the public code check route with its limit, code rules, the weak note replacement, deadline rejection, scenarios 1 to 9 (AC-1, 2, 4, 6, 8, 9, 10) · built 2026-10-11, pushed to dev only: `GET /api/referral/validate` (`convex/referral.ts`, `referralHttp.ts`, the Pages forwarder `functions/api/referral/`, 28 a minute for each visitor), the landing hint now real ("Invited by <name>" or "a friend", no self answer), a genuine note replaces a weak one before the deadline and queues the Sheet row again; scenarios 1 to 9 and 11 are tests named by number; 808 unit tests pass; owed: the forwarder on a real Pages preview (the site cannot be built on this machine), the line "An invite counts when you are new to DhiRise" is draft words you approve
+- [ ] Verify it: `/check verify live referral codes and tracking`
+- [ ] Test it: `/test live referral codes and tracking`
+- [ ] Review it (fresh model): `/check review live referral codes and tracking`
+- [ ] Document it: `/document live referral codes and tracking`
+Spec [0015](../specs/0015-live-challenge/index.md) (umbrella) · code in `convex/challengeRules.ts`, `challengeCore.ts`, `challengeBoard.ts`, `students.ts`, `feedback.ts`, `src/lib/session.ts`, `js/api.js`, `js/gate.js`, `convex/referral.ts`, `convex/referralHttp.ts`, `functions/api/referral/`, `e2e/challenge.spec.ts` · the words and the lawyer check are owed before the switch `CHALLENGE_LIVE` is turned on
 
-### 11. Challenge join with parent consent · needs a decision
+### 11. Challenge join with parent consent · in-progress
 Joining the challenge records the student's rules acceptance and, for under 18s, a parent or guardian's consent, with proof kept.
 **Done when:** a student under 18 cannot join without the consent step; the consent text version and time are stored; an adult joins without it.
-- [ ] Design it (spec): `/architect challenge join with parent consent`
+- [x] Design it (spec): `/architect challenge join with parent consent` (child [0017](../specs/0015-live-challenge/0017-challenge-join-with-parent-consent.md); the guardian is a tick recorded as a `challenge` consent; hide my name and a leave function are in)
+- [ ] Build it: `/develop challenge join with parent consent`
+  - [x] M1 The thin thread: `challenge.join` for an adult, the `challenge` consent and `challenge-v1` text, the switch, the bridge for join and `me` (AC-1, 3, 4) · built 2026-10-11 with the shared M1 above; `join` already checks the rules tick, the parent tick under 18, a finished check and the 5 an hour limit (so M2 is mostly the join form words, hide my name and leave); the `challenge-v1` words are a draft you approve
+  - [x] M2 The rest: the rules and parent ticks, no result check, rate limit, hide my name, leave, the join form (AC-2, 5, 6, 7, 8, 9) · built 2026-10-11, pushed to dev only: `setHideName` and `leave` (leave keeps the consent and the referral rows; joining again gives a new code and counts the valid referrals already earned), the join form on `challenge.html` shows the `challenge-v1` words, the rules, parent and hide my name ticks, and after joining a hide my name switch and a two tap Leave; the privacy and terms lines for the challenge are still not written (you approve the words first)
+- [ ] Verify it: `/check verify challenge join with parent consent`
+- [ ] Test it: `/test challenge join with parent consent`
+- [ ] Review it (fresh model): `/check review challenge join with parent consent`
+- [ ] Document it: `/document challenge join with parent consent`
+Spec [0015](../specs/0015-live-challenge/index.md) (umbrella) · code in `convex/challenge.ts`, `convex/consentText.ts`, `src/lib/session.ts`, `js/challenge.js` (the spec's `js/done.js` `#join` is the phone step, not the challenge; the challenge form is on `challenge.html`, so it needs no change there) · the `challenge-v1` words are a draft you approve
 
-### 12. Live leaderboard · needs a decision
+### 12. Live leaderboard · in-progress
 The podium and ranks 4 to 50 from real data, showing only first name plus last initial, class and style. Refreshes every few minutes and freezes at the end date.
 **Done when:** ranks match valid referral counts; no email, phone, age or flags ever appear in the response; after the end date it stops changing.
-- [ ] Design it (spec): `/architect live leaderboard`
+- [x] Design it (spec): `/architect live leaderboard` (child [0018](../specs/0015-live-challenge/0018-live-leaderboard.md); a 5 minute job writes ranks and one snapshot, signed in students only, first name and last initial or Anonymous with no class, frozen at the deadline)
+- [x] Build it: `/develop live leaderboard` (built 2026-10-11, pushed to dev only; `CHALLENGE_LIVE` stays unset on production)
+  - [x] M1 Ranking and the snapshot: `rowFor`, the job's rank step, `challenge.leaderboard`, the cron (AC-1, 2, 3) · `rowFor` is the one function that builds a public row (rank, displayName, cls, style, valid, avatar); the order is more valid referrals, then the earlier last valid time, then the earlier join, then creation order, so it is total; the `leaderboardSnapshots` table and the indexes `by_validCount` and `by_rank` are added (additive); a student with no valid referral is not ranked
+  - [x] M2 Freeze and own rank: the final run, the removal for erase and leave, `rank`/`toNext`/`nextRank` on `me` (AC-4, 5, 7) · the first run that began after 23:59 on 30 October settles from the stored step times, writes the final board with `frozen: true`, and later runs do nothing; `dropEntry` takes a student who leaves off the board at once (before or after the freeze) and closes the ranks up without re-ranking from live counts; hiding or showing a name also changes the board at once; the erase request (spec 0014) must call `dropEntry`
+  - [x] M3 The page: `js/leaderboard.js` and `js/api.js` on the bridge, demo rows removed, "Challenge ended", then pictures behind their switch (AC-6, 8, 9, 10) · `DhiSession.challenge.leaderboard`, the footer line uses `computedAt` and says "Final board" once frozen, the page keeps polling until the server says final; all twelve scenarios of BACKEND.md section 15 are tests (10 and 12 in `convex/challengeBoard.test.ts`); 888 unit tests pass; `e2e/leaderboard.spec.ts` passes against dev; owed: real Google accounts, a real picture on the board; the words "Your first valid friend puts you on the board.", "No one is on the board yet. The first friend to finish counts." and "Challenge ended" were approved by the owner on 2026-10-11
+- [ ] Verify it: `/check verify live leaderboard`
+- [ ] Test it: `/test live leaderboard`
+- [ ] Review it (fresh model): `/check review live leaderboard`
+- [ ] Document it: `/document live leaderboard`
+Spec [0015](../specs/0015-live-challenge/index.md) (umbrella) · code in `convex/challengeBoard.ts`, `convex/challengeCore.ts`, `convex/challenge.ts`, `convex/schema.ts`, `src/lib/session.ts`, `js/leaderboard.js`, `js/api.js`, `e2e/leaderboard.spec.ts`, `convex/challengeBoard.test.ts`
 
-### 13. Winner review tools · needs a decision
+### 13. Winner review tools · in-progress
 A private screen to review the top 10 referrers by hand (their valid and pending referrals) before a winner is announced.
 **Done when:** a team member can open the top 10, inspect each referral's checks, mark one as removed with a reason, and the leaderboard reflects it.
-- [ ] Design it (spec): `/architect winner review tools`
+- [x] Design it (spec): `/architect winner review tools` (child [0019](../specs/0015-live-challenge/0019-winner-review-tools.md); checked terminal commands and a CSV, not a screen, built last since it is needed only after 30 October)
+- [x] Build it: `/develop winner review tools` (built 2026-10-11, pushed to dev only; the deadline in code is unchanged)
+  - [x] M1 Read side: `top10`, `ranking`, the CSV and the warnings (AC-1, 2, 4) · all internal, so `npx convex run` only; the warnings are `burst` (more than 5 sign ups in one hour), `same_text` and `fast_finish` (under 3 minutes from the first answer); `tools/winner-csv.mjs` writes the real file because the CLI prints a string as JSON; a cell that would run as a spreadsheet formula is made safe
+  - [x] M2 Change side and the procedure: `reject`, `restore`, `tools/WINNER-REVIEW.md`, tests (AC-3, 5, 6, 7) · `reject` and `restore` count the referrer again through `recount` and keep the words and time on the referral; `restore` settles the referral itself at once (the job does nothing once the board is frozen); 62 unit tests for rows 12 and 13 together with `e2e/leaderboard.spec.ts` (top 10, the CSV, a reject and a restore on dev); the public board does not change after the freeze, so the winner is the first line of `challengeAdmin:ranking`
+- [ ] Verify it: `/check verify winner review tools`
+- [ ] Test it: `/test winner review tools`
+- [ ] Review it (fresh model): `/check review winner review tools`
+- [ ] Document it: `/document winner review tools`
+Spec [0015](../specs/0015-live-challenge/index.md) (umbrella) · code in `convex/challengeAdmin.ts`, `convex/challengeAdminCore.ts`, `tools/WINNER-REVIEW.md`, `tools/winner-csv.mjs`, `convex/challengeAdmin.test.ts`, `tests/winner-review.test.js`, `e2e/leaderboard.spec.ts` · the procedure is for the owner to read before 30 October
 
 ## Slice 5: team tools and privacy
 
-### 14. Team admin view · needs a decision
+### 14. Team admin view · in-progress
 A private screen for the team to see leads, feedback and referral counts without opening the sheet, with access limited to named team members.
 **Done when:** only signed in team members can open it; it lists leads, feedback and referral totals; phone numbers are shown only to the roles that need them. (Row 23 builds the team sign in and the report list first; this row widens it into roles, audits who reads phone numbers and decides whether browsing the list is audited, and replaces the hand edits to the WhatsApp status.)
-- [ ] Design it (spec): `/architect team admin view`
+- [x] Design it (spec): `/architect team admin view` (you chose: two levels, team and phone viewers; totals, students, leads, feedback and challenge screens; WhatsApp status, block picture and switch off share link as phone viewer actions; everything audited including browsing; a same model cross check ran and its gaps are closed, with a lower reveal cap and an Access log added)
+- [ ] Build it: `/develop team admin view`
+  - [ ] M1 The thin thread: `TEAM_PHONE_EMAILS`, `phoneGate`, `teamAudit`, POST through the forwarder, the Leads tab with an audited Reveal (AC-1, 2, 3, 9, 13)
+  - [ ] M2 The other tabs and audit on reads: Totals and its hourly job, Feedback, the audited Students list, the reference code box (AC-4, 5, 6, 9)
+  - [ ] M3 The actions: WhatsApp status with the Sheet queue, picture block, share off, limits (AC-7, 8, 12)
+  - [ ] M4 Access log, retention and words: the panel, the 2 year sweep, `tools/TEAM-ACCESS.md`, consent and privacy lines (AC-10, 11, 14)
+  - [ ] M5 Proof: tests and a live check on dev with two accounts (AC-15)
+  - [ ] Later with row 12: the Challenge tab and challenge totals once spec 0015's tables exist (AC-1, 4, 9)
+- [ ] Verify it: `/check verify team admin view`
+- [ ] Test it: `/test team admin view`
+- [ ] Review it (fresh model): `/check review team admin view`
+- [ ] Document it: `/document team admin view`
+Spec [0022](../specs/0022-team-admin-view.md) · code will be in `convex/team*.ts`, `convex/teamAudit.ts`, `convex/limits.ts`, `convex/leads.ts`, `convex/feedback.ts`, `convex/avatars.ts`, `convex/shares.ts`, `functions/api/team/`, `src/lib/team.ts`, `src/pages/dhiinterviews/team.astro`, `tools/TEAM-ACCESS.md` · Owed: who is on `TEAM_PHONE_EMAILS`, your approval of the consent and privacy lines, the lawyer check on the team reading children's phone numbers
 
-### 15. Data export and deletion · needs a decision
+### 15. Data export and deletion · in-progress
 A student, or a parent, can ask for their data to be exported or erased, and the erase reaches the database, the sheet copy and analytics. (basis: India's data protection law on correction and erasure, a named practice)
-**Done when:** a request produces a complete export or a full erase across every store, including the saved report PDF and its record, the sign in account and the Sheet rows; erased students no longer appear on the leaderboard or in the sheet. The team's open records (`reportViews`, ids and a team email only) stay, and this row is the only code that may delete them.
-- [ ] Design it (spec): `/architect data export and deletion`
+**Done when:** a request produces a complete export or a full erase across every store, including the saved report PDF and its record, the sign in account and the Sheet rows; erased students no longer appear on the leaderboard or in the sheet. What stays by your decision (spec 0014): the consent proof, the team's access log (`reportViews`, ids and a team email only), a receipt of the erase, and a 30 day hashed email block after a student's own erase; no code deletes the consent or access log rows.
+- [x] Design it (spec): `/architect data export and deletion` (you chose: a Your data page for students, parents by email to the team with a two fact check, immediate erase after a clear confirm, a readable file plus the PDF for export, flags left out of a parent's export, and a 30 day email block for a student's own erase; a same model cross check ran and its gaps are closed)
+- [ ] Build it: `/develop data export and deletion`
+  - [ ] M1 The thin thread: `erasures` and `erasedEmails` tables, `eraseMine` for the core rows, the Your data page with Delete, the wipe of the browser copy, the updated source scan (AC-2, 4, 6, 11)
+  - [ ] M2 Everything else erased: leads, feedback, report copy and file, picture and file, share, Sheet delete queue, sign in rows, late jobs, the 30 day block and the daily sweep (AC-2, 3, 5, 7, 10)
+  - [ ] M3 Export and team commands: `exportMine`, the download button, `adminExport` and `adminErase` with the two fact check, `tools/DATA-REQUESTS.md` (AC-1, 8, 9, 12)
+  - [ ] M4 Words and links: privacy page section, footer and report links, the Your data wording (draft, you approve) (AC-11, 14)
+  - [ ] M5 Proof: tests, browser specs, a live check on dev with a real Google account, a production dry run (AC-1 to 14)
+- [ ] Verify it: `/check verify data export and deletion`
+- [ ] Test it: `/test data export and deletion`
+- [ ] Review it (fresh model): `/check review data export and deletion`
+- [ ] Document it: `/document data export and deletion`
+Spec [0014](../specs/0014-data-export-and-erasure/index.md) · code will be in `convex/dataRights.ts`, `convex/schema.ts`, `convex/students.ts`, `convex/crons.ts`, `src/pages/dhiinterviews/your-data.astro`, `src/lib/session.ts`, `tools/DATA-REQUESTS.md` · Owed: the lawyer check (under 18s erasing alone, keeping consent proof, the block, the 3 year receipts), your approval of the words, and `ERASURE_HASH_SECRET` set on each deployment · Specs 0006, 0008, 0010 and 0011 point here for their owed erase work
 
 ## Launch readiness
 
-### 16. Share previews and SEO · needs a decision · Beta
+### 16. Share previews and SEO · in-progress · Beta
 Proper titles, descriptions and share images for the landing page and referral links, so WhatsApp and social previews look right. (basis: Open Graph protocol)
 **Done when:** the landing page and a `?ref=` link show the right title, description and image in WhatsApp, Instagram and Facebook previews; the landing page has metadata and a sitemap entry.
-- [ ] Design it (spec): `/architect share previews and SEO`
+- [x] Design it (spec): `/architect share previews and SEO` (you chose: list only the landing, privacy and terms pages, your own 1200 by 630 artwork with the stand in until it arrives, and one invitation preview for every ?ref= link; a same model cross check ran and its gaps are closed, including dropping the /s/ block from robots.txt)
+- [ ] Build it: `/develop share previews and SEO`
+  - [ ] M1 The thin thread: `src/lib/site.ts`, the full tag set on the landing page, the stand in picture under a versioned name (AC-1, 5, 6)
+  - [ ] M2 The other pages and the files: `Frame.astro` props for privacy and terms, noindex in `Guard.astro`, the `pages.dev` rule in `_headers`, `robots.txt`, `sitemap.xml` (AC-2, 3, 4, 7)
+  - [ ] M3 Proof: the `tests/` file over `dist/`, the added `verify:pages` checks, the live checks on Facebook's debugger and a real phone (AC-8, 9)
+- [ ] Verify it: `/check verify share previews and SEO`
+- [ ] Test it: `/test share previews and SEO`
+Spec [0020](../specs/0020-share-previews-and-seo.md) · code will be in `src/lib/site.ts`, `src/layouts/Frame.astro`, `src/components/Guard.astro`, `src/pages/dhiinterviews/landing.astro`, `public/robots.txt`, `public/sitemap.xml`, `public/_headers` · Owed from you: the 1200 by 630 artwork (under 300 KB) and approval of the draft words
 
 ### 17. Accessibility pass · Beta
 Check keyboard use, focus, contrast and reduced motion across the funnel and the challenge against WCAG 2.2 AA, and fix what fails. (basis: WCAG 2.2 AA)

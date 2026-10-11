@@ -7,6 +7,7 @@ import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
 import { authComponent, createAuth } from "./auth";
 import { avatarImage } from "./avatarHttp";
+import { referralValidate } from "./referralHttp";
 import { reportFile, renderPayload } from "./reportHttp";
 import { sharedPayload } from "./shareHttp";
 import { teamList, teamReport } from "./teamHttp";
@@ -30,6 +31,9 @@ http.route({ path: "/api/render/payload", method: "GET", handler: renderPayload 
 
 // The private link to a report (spec 0010): the data the public page draws from, for a valid signed link code only.
 http.route({ path: "/api/shared/payload", method: "GET", handler: sharedPayload });
+
+// The public code check of the live challenge (spec 0016): the owner's first name for a real code, nothing else.
+http.route({ path: "/api/referral/validate", method: "GET", handler: referralValidate });
 
 // The team link to the saved report (spec 0008): the list and the PDF, for named Google accounts only.
 http.route({ path: "/api/team/list", method: "GET", handler: teamList });

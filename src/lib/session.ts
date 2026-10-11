@@ -12,6 +12,7 @@
 //    localStorage); the bridge calls `avatars.ensure` once per page load when the server says a fetch may be due, and re-reads `me`
 //    once, a few seconds later, so a first picture appears without a reload; `pictureControl()`, `removePicture()` and `restorePicture()`
 //    are the report page's own Remove / Use my Google picture row
+//  - the Founding Circle Challenge (spec 0015): `challenge.me`, `leaderboard`, `join`, `setHideName` and `leave`, called on demand and never stored, plus the join words; js/api.js and js/challenge.js are the callers
 //  - the private report link (spec 0010): `share` holds the notice words, the link's state (memory only), `make` (the explicit Share tap)
 //    and `stop`; it is inert unless the deploy time config says `publicShare: true`
 //
@@ -21,6 +22,10 @@ import { ConvexClient } from "convex/browser";
 import { ConvexError } from "convex/values";
 import { api } from "../../convex/_generated/api";
 import {
+  CHALLENGE_CONSENT_LINES,
+  CHALLENGE_CONSENT_VERSION,
+  CHALLENGE_PARENT_TICK,
+  CHALLENGE_RULES_TICK,
   CONSENT_LINES,
   CONSENT_TEXTS,
   CONSENT_VERSION,
@@ -1084,6 +1089,100 @@ async function shareStop(): Promise<{ ok: true } | { ok: false; code: "offline" 
   }
 }
 
+// ---------- the Founding Circle Challenge (spec 0015) ----------
+
+export type ChallengeMe = {
+  open: boolean; // the server switch CHALLENGE_LIVE is on
+  joined: boolean;
+  code: string | null;
+  hideName: boolean;
+  valid: number; // from the 5 minute job, so up to 5 minutes behind
+  pending: number;
+  rank: number | null;
+  toNext: number | null;
+  nextRank: number | null;
+  endsAt: number; // ms since 1970, the deadline from convex/challengeRules.ts
+  frozen: boolean;
+};
+
+// The student's own challenge state, or null when it cannot be had right now (offline, not signed in). Nothing is kept on the device.
+async function challengeMe(): Promise<ChallengeMe | null> {
+  try {
+    const c = await getClient();
+    if (!c) return null;
+    return await withTimeout(c.query(api.challenge.me, {}), 10000);
+  } catch {
+    return null;
+  }
+}
+
+// A row of the public leaderboard (spec 0018): only these keys; `avatar` is a same origin picture path and only when the server switch is on.
+export type ChallengeBoardRow = { rank: number; displayName: string; cls?: string; style: string; valid: number; avatar?: string };
+export type ChallengeBoard = {
+  rows: ChallengeBoardRow[];
+  computedAt: number | null; // when the 5 minute job last wrote the board
+  frozen: boolean; // the board is final
+  endsAt: number;
+  myRank: number | null; // the signed in student's place when they are on the board, so the page can mark their row
+};
+
+// The leaderboard, or null when it cannot be had right now (offline, not signed in). Nothing is kept on the device.
+async function challengeLeaderboard(): Promise<ChallengeBoard | null> {
+  try {
+    const c = await getClient();
+    if (!c) return null;
+    return await withTimeout(c.query(api.challenge.leaderboard, {}), 10000);
+  } catch {
+    return null;
+  }
+}
+
+export type ChallengeJoined = { ok: true; code: string } | { ok: false; code: string };
+
+// Joins the challenge. The ticks are the student's own: `rulesAccepted` is the rules box, `parentConsent` the parent box (under 18). The server
+// reads the age itself and refuses without them. Every failure comes back as a code, never a throw; "offline" covers any network problem.
+async function challengeJoin(opts: { rulesAccepted: boolean; parentConsent?: boolean; hideName?: boolean }): Promise<ChallengeJoined> {
+  const c = await getClient();
+  if (!c) return { ok: false, code: "offline" };
+  try {
+    const res = await withTimeout(
+      c.mutation(api.challenge.join, {
+        rulesAccepted: opts.rulesAccepted === true,
+        ...(opts.parentConsent ? { parentConsent: true } : {}),
+        ...(opts.hideName ? { hideName: true } : {}),
+      }),
+      15000,
+    );
+    return res.ok ? { ok: true, code: res.code } : { ok: false, code: res.code };
+  } catch (e) {
+    return { ok: false, code: codeOf(e) ?? "offline" };
+  }
+}
+
+// Hide my name on the leaderboard (spec 0017, AC-5). Every failure is a code: "not_joined", "ended" or "offline".
+async function challengeSetHideName(hideName: boolean): Promise<{ ok: true } | { ok: false; code: string }> {
+  const c = await getClient();
+  if (!c) return { ok: false, code: "offline" };
+  try {
+    const res = await withTimeout(c.mutation(api.challenge.setHideName, { hideName }), 10000);
+    return res.ok ? { ok: true } : { ok: false, code: res.code };
+  } catch (e) {
+    return { ok: false, code: codeOf(e) ?? "offline" };
+  }
+}
+
+// Leave the challenge (spec 0017, AC-6). The code stops working at once; the consent stays on record. "not_joined" counts as left.
+async function challengeLeave(): Promise<{ ok: true } | { ok: false; code: string }> {
+  const c = await getClient();
+  if (!c) return { ok: false, code: "offline" };
+  try {
+    const res = await withTimeout(c.mutation(api.challenge.leave, {}), 10000);
+    return res.ok || res.code === "not_joined" ? { ok: true } : { ok: false, code: res.code };
+  } catch (e) {
+    return { ok: false, code: codeOf(e) ?? "offline" };
+  }
+}
+
 // ---------- what the page scripts see ----------
 
 export const DhiSession = {
@@ -1152,6 +1251,17 @@ export const DhiSession = {
     make: shareMake,
     stop: shareStop,
     onChange: (fn: (info: ShareInfo | null) => void) => shareListeners.add(fn),
+  },
+  /** The Founding Circle Challenge (spec 0015): `me` is the student's own code and counts (null when it cannot be had); `join`, `setHideName` and `leave` change it. Read on demand, never stored. */
+  challenge: {
+    me: challengeMe,
+    /** The public board (spec 0018): the top 50 as the job last wrote them (null when it cannot be had). Read on demand, never stored. */
+    leaderboard: challengeLeaderboard,
+    join: challengeJoin,
+    setHideName: challengeSetHideName,
+    leave: challengeLeave,
+    /** The words a student agrees to when joining (challenge-v1, draft), and the two tick labels. The server holds the same text. */
+    consent: { version: CHALLENGE_CONSENT_VERSION, lines: CHALLENGE_CONSENT_LINES, rulesTick: CHALLENGE_RULES_TICK, parentTick: CHALLENGE_PARENT_TICK },
   },
   hasCache: () => readCache() !== null,
   /** The cached student, for "Continue as" when the server cannot be reached. */

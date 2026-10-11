@@ -5,7 +5,7 @@
 // Every version belongs to one kind (spec 0003, AC-14): the landing text works only for creating a profile,
 // and the phone text works only for a lead, so the two cannot be swapped.
 
-export type ConsentKind = "landing" | "lead" | "share";
+export type ConsentKind = "landing" | "lead" | "share" | "challenge";
 
 // v1 is frozen: consent rows already saved point at its exact text. Never edit it.
 export const CONSENT_VERSION_V1 = "v1";
@@ -78,6 +78,22 @@ export const SHARE_CONSENT_LINES: readonly string[] = [
 
 export const SHARE_GUARDIAN_TICK = "I have checked with a parent or guardian.";
 
+// The rules a student agrees to when joining the Founding Circle Challenge (spec 0017, AC-3). DRAFT WORDS: the owner has not approved them yet
+// (spec 0015, follow up), so do not turn CHALLENGE_LIVE on in production before they do. A change of wording after the first use is a new
+// version, because a consent row points at the exact text. The kind `challenge` works only for joining. A student under 18 also ticks
+// CHALLENGE_PARENT_TICK, which is kept as `guardianPresent`. The prize amount is not written here, so it cannot drift from src/lib/prize.ts.
+export const CHALLENGE_CONSENT_VERSION = "challenge-v1";
+
+export const CHALLENGE_CONSENT_LINES: readonly string[] = [
+  "The Founding Circle Challenge is a contest. The student whose friends complete the DhiRise check the most times by 11:59 pm India time on 30 October 2026 wins one gift hamper. The prize cannot be swapped for cash.",
+  "A friend counts only when they are new to DhiRise, sign in with your code, finish all 18 questions, see their report and leave a real note about it. The DhiRise team checks the top 10 by hand before a winner is announced.",
+  "Other students can see your first name, the first letter of your last name, your class and your style on the leaderboard. You can choose to show as Anonymous instead, and you can leave the challenge at any time.",
+  "If you are under 18, a parent or guardian must agree before you join.",
+];
+
+export const CHALLENGE_RULES_TICK = "I agree to the rules.";
+export const CHALLENGE_PARENT_TICK = "My parent or guardian agrees.";
+
 // Every known version, by version string. Add a new key for new wording; keep the old ones.
 export const CONSENT_TEXTS: Readonly<Record<string, string>> = {
   [CONSENT_VERSION_V1]: CONSENT_LINES_V1.join("\n\n"),
@@ -86,6 +102,7 @@ export const CONSENT_TEXTS: Readonly<Record<string, string>> = {
   [CONSENT_VERSION]: CONSENT_LINES.join("\n\n"),
   [LEAD_CONSENT_VERSION]: LEAD_CONSENT_LINES.join("\n\n"),
   [SHARE_CONSENT_VERSION]: SHARE_CONSENT_LINES.join("\n\n"),
+  [CHALLENGE_CONSENT_VERSION]: CHALLENGE_CONSENT_LINES.join("\n\n"),
 };
 
 // The kind each version belongs to.
@@ -96,6 +113,7 @@ export const CONSENT_KINDS: Readonly<Record<string, ConsentKind>> = {
   [CONSENT_VERSION]: "landing",
   [LEAD_CONSENT_VERSION]: "lead",
   [SHARE_CONSENT_VERSION]: "share",
+  [CHALLENGE_CONSENT_VERSION]: "challenge",
 };
 
 // SHA 256 of the text with line endings turned into \n, as lowercase hex. Same code in the page and on the server.

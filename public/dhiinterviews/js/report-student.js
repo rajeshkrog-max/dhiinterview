@@ -563,9 +563,7 @@
           hint.textContent = res.code === "rate_limited" ? T.feedbackLater : res.code === "invalid_input" ? fill(T.feedbackTooShort, { n: MIN }) : T.feedbackRetry;
           return;
         }
-        /* the challenge mock in js/api.js still keeps its own copy until scope row 10 (live referrals) */
-        var api = window.DhiApi;
-        if (api) api.submitFeedback({ rating: rating, text: said }).then(function () { return api.markReportComplete(); }).catch(function () {});
+        /* the challenge counts a genuine note from the server's own copy (spec 0016); nothing more is sent from here */
         c.textContent = "";
         add(c, el("h2", "eyebrow", T.feedbackTitle), thanks);
         /* a valid (genuine) feedback opens the challenge invite (js/challenge-ui.js) */
