@@ -1,5 +1,6 @@
-/* Dhirise · shared question screen. One engine for every question; each screen passes its own config:
-   dhiriseQuestion({ n, tips: {1..4}, load(): choice|null, save(choice), back: url, next: url })
+/* Dhirise · shared question screen. One engine for every question; the page passes a config for the question on screen:
+   var q = dhiriseQuestion({ n, tips: {1..4}, load(): choice|null, save(choice), back: url|fn, next: url|fn })
+   and calls q.set(config) to move to the next question inside the same page (no reload, so the music keeps playing).
    Choosing an option shows the tip card; a gold line drains under it for 10 seconds, then Next unlocks.
    The card stays until the student taps Next or Back (it drifts away first) or picks another option (new tip).
    No auto-advance. Coming back to a screen shows the saved answer still marked. */
@@ -70,13 +71,24 @@
       e.preventDefault(); var t = buttons[(i + d + buttons.length) % buttons.length]; t.focus(); choose(t);
     });
 
-    /* returning to this screen: the saved answer is still marked and Next is open (the tip was already read) */
-    var saved = null;
-    try { saved = cfg.load(); } catch (e) {}
-    if (saved >= 1 && saved <= 4) { mark(saved); next.disabled = false; }
+    /* a fresh question: nothing marked and Next shut, unless there is a saved answer; then it is still marked and
+       Next is open (the tip was already read) */
+    function reset() {
+      clearTimers();
+      tip.hidden = true; tip.classList.remove("enter", "leave", "reading");
+      options.classList.remove("chosen");
+      buttons.forEach(function (b) { b.setAttribute("aria-checked", "false"); });
+      next.disabled = true;
+      var saved = null;
+      try { saved = cfg.load(); } catch (e) {}
+      if (saved >= 1 && saved <= 4) { mark(saved); next.disabled = false; }
+    }
+    reset();
 
     window.addEventListener("resize", function () { if (!tip.hidden) placeTip(); });
-    $("back").addEventListener("click", function () { leaveThen(function () { location.href = cfg.back; }); });
+    $("back").addEventListener("click", function () {
+      leaveThen(function () { if (typeof cfg.back === "function") cfg.back(); else location.href = cfg.back; });
+    });
     next.addEventListener("click", function () {
       if (next.disabled) return;
       next.disabled = true;                                   /* one tap only while the card drifts away */
@@ -93,5 +105,6 @@
     });
 
     if (window.dhiriseLeaves) window.dhiriseLeaves();        /* the shared leaf layer (js/leaves.js) */
+    return { set: function (c) { cfg = c; reset(); } };
   };
 })();

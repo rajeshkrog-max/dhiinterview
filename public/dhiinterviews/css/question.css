@@ -16,10 +16,15 @@ body{font-family:var(--f-body);color:var(--white);-webkit-font-smoothing:antiali
   position:relative;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;
   padding:calc(12px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right))
           calc(var(--nav-h) + var(--nav-gap) * 2 + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
-  background:var(--ink) url("../assets/interview%20bg/Q1.png") no-repeat;
+  background:transparent no-repeat;                  /* the question image is the .qbg layers behind (js/qbg.js); meet sets its own */
   background-size:cover;background-position:center 14%;
 }
-.qscreen.q2{background-image:url("../assets/interview%20bg/Q2.png")}
+
+/* ---------- the question image: two stacked layers, the blur fade between questions is js/qbg.js ---------- */
+.qbg{position:fixed;inset:0;z-index:0;overflow:hidden;background:var(--ink);pointer-events:none}
+.qbg i{position:absolute;inset:0;opacity:0;background:no-repeat center 14% / cover;will-change:opacity,filter,transform}
+@media (min-width:900px){.qbg i{background-position:center 12%}}
+#qText:focus{outline:none}
 
 /* ---------- top: slim glass bar + thin gold track ---------- */
 .topbar{

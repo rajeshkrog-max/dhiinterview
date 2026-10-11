@@ -16,7 +16,8 @@ import Guard from "../../components/Guard.astro";
 </head>
 <body>
 <div id="dhiBoot" hidden></div>
-<!-- questions 3–18: one page, filled from js/questions.js by ?q=N -->
+<div class="qbg" id="qbg" aria-hidden="true"><i></i><i></i></div>
+<!-- all 18 questions: one page, opened on the question the address names and filled from js/questions.js -->
 <main class="qscreen" id="qscreen">
 
   <header class="topbar">
@@ -55,6 +56,7 @@ import Guard from "../../components/Guard.astro";
 <script is:inline type="text/dhi-deferred" src="js/engine/store.js"></script>
 <script is:inline type="text/dhi-deferred" src="js/engine/screen.js"></script>
 <script is:inline type="text/dhi-deferred" src="js/question.js"></script>
+<script is:inline type="text/dhi-deferred" src="js/qbg.js"></script>
 <script is:inline type="text/dhi-deferred" src="js/questions.js"></script>
 <script is:inline type="text/dhi-deferred" src="js/music.js"></script>
 </body>
